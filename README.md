@@ -15,6 +15,12 @@ computers, targeting the 800XL first.
   multicolour map, split with display list interrupts.
 - Menus and item selection on the keyboard for now; this is a computer.
 
+## Contributing
+
+Humans and coding agents: start with [AGENTS.md](AGENTS.md). Planning docs:
+[SPEC](docs/SPEC.md), [ARCHITECTURE](docs/ARCHITECTURE.md), [PLAN](docs/PLAN.md),
+[DECISIONS](docs/DECISIONS.md), [OPEN-QUESTIONS](docs/OPEN-QUESTIONS.md).
+
 ## Building
 
 Requires [ATasm](https://github.com/CycoPH/atasm) (MAC/65 compatible) and,
