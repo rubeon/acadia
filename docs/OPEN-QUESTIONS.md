@@ -21,7 +21,7 @@ display (pixels are 2 scan lines tall). On the Atari:
 Decided 2026-10-24: mode 5 (D12). The M0 test still uses mode 4 and
 moves to mode 5 in T-DES-1.
 
-## Q2. Sprite allocation
+## Q2. Sprite allocation — **Closed (D13, D14): option A**
 
 ### What has to move
 
@@ -173,6 +173,15 @@ fifth player. Things to decide with it:
 - The hurricane already differs by size. Should rain and tropical
   storm differ by shape or animation only, or should a DLI recolour
   `COLPF3` to keep the original's two colours?
+
+## Q7. Rain and tropical storm colours
+
+From Q2. With weather on the single-colour fifth player (D13), rain
+and tropical storm can't keep the original's two colours for free; the
+hurricane already differs by size. Options: tell rain and storm apart
+by shape or animation only, or have a DLI recolour `COLPF3` on the
+storm's rows, which also recolours inverse-character tiles there
+(see Q3). Undecided.
 
 ## Q3. Item visuals and colours
 
