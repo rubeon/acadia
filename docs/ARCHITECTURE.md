@@ -79,6 +79,7 @@ provide the same symbols.
 | `JOY0`, `JOY1` | Direction bits, 1 = pressed: b0 up, b1 down, b2 left, b3 right |
 | `FIRE0`, `FIRE1` | 1 = fire held |
 | `KEY` | Item key 0-9 pressed this poll (edge), else `$FF` |
+| `KEYPL` | Player the key belongs to: 0 or 1 (D17: fire held picks the player; neither → 0); `$FF` if both held, and then `KEY` is `$FF` too |
 | `CONKEY` | (planned) START/SELECT/OPTION edge bits |
 
 5200 mapping (later): analog sticks thresholded into `JOY*`; keypad
