@@ -49,9 +49,10 @@ on the Atari. Requirement IDs (`R-...`) are referenced from PLAN.md.
 | ID | Requirement |
 |---|---|
 | R-CTL-1 | Joystick moves the player's cursor (or a held boat). |
-| R-CTL-2 | Keys 1-9 buy item 1-9 at the cursor. In 2P mode both players use the keyboard; the key buys for the player whose cursor last moved / whose fire button is held (Q4). |
+| R-CTL-2 | Keys 1-9 buy item 1-9 at the cursor. In 2P mode both players use the keyboard; the key buys for the player whose fire button is held; neither → player 1; both → ignored (D17). |
 | R-CTL-3 | Key 0 toggles cursor mode / picks up and drops boats, as in the original. |
-| R-CTL-4 | Info displays (total score, population, last round score) on keys or console keys (START/SELECT/OPTION) (Q4). |
+| R-CTL-4 | Info displays (total score, population, last round score) while START (total scores), SELECT (populations) or OPTION (previous round scores) is held (D18). |
+| R-CTL-6 | P toggles pause (5200: keypad PAUSE); either player can pause or unpause. Paused: tic, clock, events, AI and sprites frozen, sound muted, item keys and joystick ignored, PAUSED on the status bar; map colours may dim (D19). |
 | R-CTL-5 | All input goes through the input layer (ARCHITECTURE §4). |
 
 ## 6. Timing
