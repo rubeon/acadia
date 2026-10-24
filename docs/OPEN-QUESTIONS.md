@@ -29,13 +29,30 @@ The original has 8 hardware sprites (MOBs). From its sprite tables:
 
 | Slots | Object | Size in map squares | Frames | Notes |
 |---|---|---|---|---|
-| 0, 1 | Weather: rain, tropical storm, hurricane | 2 wide, up to 4 tall | 5 (rain/storm), 6 (hurricane) | White. Tropical storm is rain's art in another colour. At most 2 at once. Drift and leave the screen |
+| 0, 1 | Weather: rain, tropical storm, hurricane | rain/storm 2 x 1, hurricane 2 x 4 | 5 (rain/storm), 6 (hurricane) | Tropical storm is rain's art in another colour. Both slots can be active at once |
 | 2, 3 | Player sprite: cursor, or the boat being steered | 1 x 1 | cursor 1, boats 1, sinking 8 | One per player, needs that player's colour. Never cursor and boat at once |
 | 4, 5 | Pirate ships | 1 x 1 | 1 + 8 sinking | Spawn at random, leave the screen |
 | 6, 7 | Fish schools | 1 x 1 | 4 | Drift, leave the screen |
 
 Buildings, parked boats and a parked boat sinking are background
 tiles, not sprites.
+
+Behaviour that matters for allocation (ROM addresses for checking):
+
+- **Weather** [`$51C6`]: type roll `rand(12)`: 0 hurricane, 1-3 and
+  4-11 the two rain-art colours (most likely 1-3 tropical storm, 4-11
+  rain; the disassembly's comments disagree). Starts at the top of the
+  screen. Each tic, a 1 in 10 chance of a +/-1 kick to X or Y velocity,
+  with no limit, so it random-walks. Removed off screen.
+- **Pirates and fish** [`$526A`]: spawn in one of **two bands**, near
+  the top or near the bottom of the screen (50/50), entering from the
+  left or right edge (50/50) and moving horizontally. Same 1 in 10
+  velocity kick as weather [`$52E5`]. Pirates can't cross land. Two of
+  each can exist at once.
+- **Speeds** (original units): cursor 15, steered boat 10, fish and
+  pirates start at 3, weather at (4, 5). Fish and pirates move at
+  about a third of boat speed.
+- **Priority:** fish are drawn behind background cards.
 
 ### Atari sizes (mode 5 map, D12)
 
@@ -68,7 +85,11 @@ wide, and 16 scan lines tall.
 
 - **For:** all eight objects are hardware sprites with smooth
   movement and no software drawing. The cursors never share or flicker.
-  Weather comes out exactly 2 squares wide. The original's weather is
+  Weather comes out exactly 2 squares wide: 8 P/M lines tall for rain
+  and storms, 32 for a hurricane. With `PRIOR` = `$02` the cursors are
+  above the map and P2/P3 below it, so fish and pirates go behind
+  background cards as fish do in the original; the fifth player sits
+  at playfield priority, above pirates and fish and below the cursors. The original's weather is
   white, and `COLPF3` = white also suits schools, which are white in the
   original, if those use inverse characters (see Q3).
 - **Against:** weather is one colour, so rain and tropical storm must
@@ -118,11 +139,13 @@ wide, and 16 scan lines tall.
 
 When two objects need the same player in overlapping rows:
 
-1. **Spawn rule (proposed):** don't spawn a second pirate, fish
-   school or storm into rows already used by the first. If the random
-   spawn position overlaps, try another row, or skip the spawn that
-   tic. This slightly lowers how often things appear. Record it in
-   DECISIONS.md as a deviation.
+1. **Spawn rule (proposed):** pirates and fish already pick the top
+   or bottom band at random. If the band is taken by the other object
+   of the same kind, use the other band instead. The odds of each band
+   are 50/50 anyway, so this is barely visible; record it in
+   DECISIONS.md as a deviation. Weather always starts at the top, so a
+   second storm waits until the first has drifted at least a row clear
+   (or spawns on a later tic).
 2. **Movement:** if two drifting objects come to overlap vertically,
    show them in alternate frames (30 Hz flicker) while they overlap.
    That should be rare and brief.
@@ -147,8 +170,9 @@ fifth player. Things to decide with it:
 
 - Is the spawn rule acceptable as a small deviation, or do you want
   flicker only?
-- Should weather types differ by shape only, or should a DLI recolour
-  `COLPF3` to keep the original's rain and tropical storm colours?
+- The hurricane already differs by size. Should rain and tropical
+  storm differ by shape or animation only, or should a DLI recolour
+  `COLPF3` to keep the original's two colours?
 
 ## Q3. Item visuals and colours
 
