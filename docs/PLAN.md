@@ -25,7 +25,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 | T-SVC-2 | `rand.asm`: `RAND_N` uniform 0..N−1 | R-RULE-4 | — | Histogram over 10,000 calls within ±5% | todo |
 | T-SVC-3 | `tic.asm`: 20 Hz tic + seconds, NTSC and PAL | R-TIME-1..3 | — | 60 s of game clock = 60 s real on both (`-ntsc`/`-pal`) | todo |
 | T-SVC-4 | `text.asm`: print string / 1-4 digit decimal into status lines | R-SCR-1 | — | Status bar shows rounds, seconds, gold | todo |
-| T-DES-1 | Switch the map to mode 5 (D12), resolve Q3 (item visuals) and draw the tile set | R-SCR-2, R-SCR-5 | — | Decision recorded; font with all terrain + 9 items × 2 owners | todo |
+| T-DES-1 | Switch the map to mode 5 (D12) and draw the final tile set with the D16 palette; start from the art in branch `mockup/q3-palette` (`tools/mkmock.py`) | R-SCR-2, R-SCR-5 | — | Font with all terrain and 9 items in main; Q3 closed (D16) | todo |
 
 ## M2 — Map and building (playable sandbox)
 
@@ -35,6 +35,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 | T-MAP-2 | Tile get/set with owner; "fort adjacent" check | R-RULE-5,7 | T-MAP-1 | Check routine verified on test layouts | todo |
 | T-SPR-1 | P/M setup, two cursors moved by joysticks, snap to grid | R-CTL-1, R-SCR-4 | T-MAP-1 | Both cursors move smoothly, stay on screen | todo |
 | T-ECO-1 | Purchase: key 1-9 at cursor, price check, refusal sound stub, item counts | R-RULE-1,7, R-CTL-2 | T-MAP-2, T-SPR-1 | Items appear, gold decreases, illegal squares refused | todo |
+| T-CTL-1 | Pause: `PAUSEK` edge flag in `input.asm`, freeze tic/clock/sprites/AI, mute and restore POKEY, PAUSED on status bar | R-CTL-6 | T-SVC-3, T-SVC-4 | Pausing mid-round and resuming changes nothing in game state; no keys or stick act while paused | todo |
 | T-SCR-1 | Setup screen: rounds, round length, mode | R-MODE-3 | T-SVC-4 | Values validated to original ranges | todo |
 
 ## M3 — Rounds and scoring (the economic game)

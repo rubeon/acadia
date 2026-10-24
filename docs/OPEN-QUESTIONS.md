@@ -56,18 +56,20 @@ Behaviour that matters for allocation (ROM addresses for checking):
 
 ### Atari sizes (mode 5 map, D12)
 
-A map square is 8 pixels of 160-resolution, so 16 colour clocks
-wide, and 16 scan lines tall.
+A map square is 8 pixels of 160-resolution. In mode 5 one pixel is
+one colour clock, so a square is 8 colour clocks wide and 16 scan
+lines tall.
 
-- A **player** at double width is 8 bits x 2 colour clocks =
-  16 colour clocks: exactly one square, at the same pixel width as the
+- A **player** at normal width is 8 bits x 1 colour clock =
+  8 colour clocks: exactly one square, at the same pixel width as the
   map. With double-line P/M resolution its pixels are also 2 scan
   lines tall, like the map's.
-- A player at **quad width** is two squares wide, with pixels twice as
-  wide as the map's.
-- A **missile** is 2 bits. At quad width it covers half a square.
+- A player at **double width** is two squares wide, with pixels twice
+  as wide as the map's.
+- A **missile** is 2 bits. At double width it covers half a square.
   The four missiles side by side as a **fifth player** make 8 bits:
-  at quad width, two squares wide, in one colour (`COLPF3`).
+  at double width (`SIZEM` = `$55`, missiles 4 colour clocks apart),
+  two squares wide, in one colour (`COLPF3`).
 - **Vertical reuse:** a DLI can move a player to a new horizontal
   position partway down the screen. Mode 5 rows are 16 lines, so the
   DLI on each map row has plenty of time. Two objects can share one
@@ -81,7 +83,7 @@ wide, and 16 scan lines tall.
 | P0, P1 | Player 1 and player 2 sprite (cursor or boat), own colours |
 | P2 | Both pirate ships, reused vertically by DLI |
 | P3 | Both fish schools, reused vertically by DLI |
-| M0-M3 as fifth player, quad width | Weather, both storms reused vertically by DLI |
+| M0-M3 as fifth player, double width | Weather, both storms reused vertically by DLI |
 
 - **For:** all eight objects are hardware sprites with smooth
   movement and no software drawing. The cursors never share or flicker.
@@ -104,8 +106,8 @@ wide, and 16 scan lines tall.
 | Hardware | Use |
 |---|---|
 | P0, P1 | Player sprites |
-| P2, P3 at quad width | One storm each |
-| M0+M1, M2+M3 at quad width | Pirates and fish, two missiles side by side per object, reused vertically |
+| P2, P3 at double width | One storm each |
+| M0+M1, M2+M3 at double width | Pirates and fish, two missiles side by side per object, reused vertically |
 
 - **For:** two storms can be anywhere, each in its own colour, so
   rain and tropical storm can keep different colours as in the
@@ -183,7 +185,11 @@ by shape or animation only, or have a DLI recolour `COLPF3` on the
 storm's rows, which also recolours inverse-character tiles there
 (see Q3). Undecided.
 
-## Q3. Item visuals and colours
+## Q3. Item visuals and colours — **Closed (D16)**
+
+Decided 2026-10-24 from the `mockup/q3-palette` mock-up; see D16.
+The analysis below is kept for history.
+
 
 Mode 4/5 gives background + 3 colours per char (+1 via inverse chars),
 the same for the whole line unless changed by DLI. The original gives
@@ -195,7 +201,11 @@ dark, light); ownership is implicit (left/right island) except for
 boats and rebels, which are sprites or use the inverse-char colour.
 Needs a tile mock-up.
 
-## Q4. Two-player keyboard controls
+## Q4. Two-player keyboard controls — **Closed (D17, D18)**
+
+Key sharing is decided provisionally in D17 (fire button picks the
+player); info displays on the console keys in D18.
+
 
 Both players share one keyboard to buy items. Options:
 
