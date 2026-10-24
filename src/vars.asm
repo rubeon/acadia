@@ -32,11 +32,8 @@ KEYDOWN *= *+1          ; key held flag (edge detection)
 FRAME   *= *+1          ; frame counter, incremented by the VBI
 ROWLO   *= *+MAPROWS    ; map row addresses, low bytes
 ROWHI   *= *+MAPROWS    ; map row addresses, high bytes
-RROW    *= *+1          ; FILLRECT arguments
-RCOL    *= *+1
-RWID    *= *+1
-RHGT    *= *+1
-RTILE   *= *+1
+MROW    *= *+1          ; MAP_DRAW: current square row
+GIDX    *= *+1          ; MAP_DRAW: index into the tile grid
 STATUS1 *= *+40         ; status bar line 1 (screen memory)
 STATUS2 *= *+40         ; status bar line 2 (screen memory)
 

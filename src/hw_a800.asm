@@ -98,6 +98,7 @@ DL_DLI    = $80         ; display list interrupt (OR with mode)
 DL_JVB    = $41         ; jump and wait for vertical blank
 DL_MODE2  = $02         ; 40 col text, 8 lines
 DL_MODE4  = $04         ; 40 col 4-colour text, 8 lines
+DL_MODE5  = $05         ; 40 col 4-colour text, 16 lines
 
 ; DMACTL values
 DMA_OFF   = $00
