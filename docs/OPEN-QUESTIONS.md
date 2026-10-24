@@ -201,10 +201,10 @@ dark, light); ownership is implicit (left/right island) except for
 boats and rebels, which are sprites or use the inverse-char colour.
 Needs a tile mock-up.
 
-## Q4. Two-player keyboard controls — **Partly closed (D17)**
+## Q4. Two-player keyboard controls — **Closed (D17, D18)**
 
 Key sharing is decided provisionally in D17 (fire button picks the
-player). Still open: the console-key info displays below.
+player); info displays on the console keys in D18.
 
 
 Both players share one keyboard to buy items. Options:

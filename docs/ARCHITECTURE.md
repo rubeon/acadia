@@ -80,7 +80,8 @@ provide the same symbols.
 | `FIRE0`, `FIRE1` | 1 = fire held |
 | `KEY` | Item key 0-9 pressed this poll (edge), else `$FF` |
 | `KEYPL` | Player the key belongs to: 0 or 1 (D17: fire held picks the player; neither → 0); `$FF` if both held, and then `KEY` is `$FF` too |
-| `CONKEY` | (planned) START/SELECT/OPTION edge bits |
+| `CONKEY` | (planned) START/SELECT/OPTION held bits, for the D18 info displays |
+| `PAUSEK` | (planned) 1 on the poll where the pause key was pressed (P on the 800, PAUSE on a 5200 keypad), D19 |
 
 5200 mapping (later): analog sticks thresholded into `JOY*`; keypad
 0-9 → `KEY` (per controller); second fire button → mode toggle (key 0)
