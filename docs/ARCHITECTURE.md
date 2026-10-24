@@ -53,6 +53,16 @@ Current files are marked ✓; the rest are planned (see PLAN.md).
 | `$4000-$47FF` | (planned) P/M graphics, double-line resolution, 2K aligned |
 | `$4800-$BFFF` | Free: more code, fonts, music, screens |
 
+Variables: all RAM variables live in one block (planned `src/vars.asm`),
+never inline after code, so the same source can run from a 5200
+cartridge (AGENTS.md rule 8). Today `input.asm` and `display.asm` still
+keep variables inline; T-INFRA-5 moves them.
+
+5200 budget: the 5200 has only 16K of RAM (`$0000-$3FFF`), with code
+and constant data in cartridge ROM. Screen, display list, P/M graphics,
+any RAM-resident font and all variables must fit in roughly 14K. Keep
+that in mind before growing RAM buffers.
+
 Constraints: fonts 1K aligned (modes 2/4/5); screen memory must not
 cross a 4K boundary without a new LMS; display lists must not cross a
 1K boundary; P/M base 1K (double-line) or 2K (single-line) aligned.

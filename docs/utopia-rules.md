@@ -138,3 +138,26 @@ Checked per player after scoring:
 
 After the last round, controllers are disabled, "FINAL SCORE" is shown,
 and the winner is the player with the higher total score.
+
+## Worked example (for tests)
+
+One player, start of round: population 1000, 2 factories, 4 crops,
+1 school, 1 hospital, 1 house, 1 fishing boat, no forts or rebels.
+
+- Income: 2 x 4 + 1 = 9; bonus `min(30, 2 * (1 + 1) + 1)` = 5;
+  earned = **14**; gold rises by 14 + 10 = **24**.
+- Fertility: 40 + 4x3 + 3 + 1 - 3 = **53** (under the 64 cap).
+- Mortality: 11 - 3 = 8 (not below 2), + 2 factories = **10**.
+- Births `round(100 * 53 / 100)` = 53; deaths `round(100 * 10 / 100)` = 10;
+  population **1043**.
+- Score, using the updated population (`p100` = 10):
+  housing `min(30, (1 * 500 / 10) / 3)` = 16;
+  GDP `min(30, (14 * 100 / 10) / 12)` = 11;
+  food `min(30, ((4 + 1) * 500 / 10) / 3)` = 30;
+  welfare 2; round score **59**.
+
+Not yet verified: whether the score routine `[$5ABD]` uses the
+population before or after this round's update. With the old
+population (`p100` = 10 here as well) this example gives the same
+result; a test case with a population near a multiple of 100 will
+tell them apart.

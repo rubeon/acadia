@@ -54,6 +54,11 @@ A change is not done until `make` succeeds with **0 warnings**.
    ARCHITECTURE.md). Don't grab ZP bytes ad hoc.
 7. **Follow the original's numbers** from `docs/utopia-rules.md` unless a
    decision in DECISIONS.md says otherwise. If you deviate, record it.
+8. **Keep code ROM-safe.** The 5200 port runs code from cartridge ROM,
+   so: no self-modifying code, and no variables stored inline after
+   code (`FOO .BYTE 0` next to a routine). Variables go in the RAM
+   variables block (see ARCHITECTURE.md § 3). Constant tables may sit
+   with the code.
 
 ## Workflow
 
