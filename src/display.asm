@@ -42,6 +42,12 @@ DISP_INIT
         STA SDMCTL
         STA DMACTL
 
+        LDX #STATLEN-1  ; status lines from template
+DI_STAT LDA STATTPL,X
+        STA STATUS1,X
+        DEX
+        BPL DI_STAT
+
         JSR MAP_BUILD
 
         LDA #<DLI_MAP
@@ -200,10 +206,12 @@ RECTS   .BYTE 5,3,13,13,T_SAND        ; left island
         .BYTE $FF
 
 ; ---------------------------------------------------------------------
-;  Status bar text (screen codes), 2 lines of 40
+;  Status bar template (screen codes), 2 lines of 40.  Copied into the
+;  RAM status lines STATUS1/STATUS2 (VARS.ASM) by DISP_INIT.
 ; ---------------------------------------------------------------------
-STATUS1 .SBYTE " ACADIA - UTOPIA FOR THE ATARI 800XL    "
-STATUS2 .SBYTE "J0:0 F0:0 J1:0 F1:0 KEY:- FRM:00        "
+STATTPL .SBYTE " ACADIA - UTOPIA FOR THE ATARI 800XL    "
+        .SBYTE "J0:0 F0:0 J1:0 F1:0 KEY:- FRM:00        "
+STATLEN =  80
 
 ; Offsets of the live fields in STATUS2
 ST_J0   =  3
@@ -213,17 +221,8 @@ ST_F1   =  18
 ST_KEY  =  24
 ST_FRM  =  30
 
-; ---------------------------------------------------------------------
-;  Display variables
-; ---------------------------------------------------------------------
-FRAME   .BYTE 0
-ROWLO   *= *+MAPROWS
-ROWHI   *= *+MAPROWS
-RROW    .BYTE 0
-RCOL    .BYTE 0
-RWID    .BYTE 0
-RHGT    .BYTE 0
-RTILE   .BYTE 0
+; Display variables (FRAME, ROWLO/ROWHI, RROW..RTILE, STATUS1/2) live in
+; VARS.ASM.
 
 ; =====================================================================
 ;  Fixed-address data.  Each block must stay on its own boundary:
