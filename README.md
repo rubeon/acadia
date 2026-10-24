@@ -11,7 +11,7 @@ computers, targeting the 800XL first.
 - A single-player mode against a CPU opponent, alongside the original
   two-player game.
 - POKEY sound effects and music.
-- Mixed ANTIC modes: a mode 2 text status bar over a mode 4
+- Mixed ANTIC modes: a mode 2 text status bar over a mode 5
   multicolour map, split with display list interrupts.
 - Menus and item selection on the keyboard for now; this is a computer.
 

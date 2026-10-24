@@ -20,11 +20,12 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 |---|---|---|---|---|---|
 | T-INFRA-3 | Headless test harness: run XEX in atari800 for N frames, dump screen/RAM, compare | — | — | `make test` runs at least one check without a display | todo |
 | T-INFRA-4 | ATR build target (`make atr`) with a boot loader or DOS + autorun | — | — | ATR boots in atari800 and MiSTer | todo |
+| T-INFRA-5 | Move all variables out of code into one RAM block (`src/vars.asm`); no inline `.BYTE` variables | — | — | `grep` finds no variable storage in code modules; build and display test unchanged | todo |
 | T-SVC-1 | `math.asm`: 8×8→16 multiply, 16÷8 divide with rounding | R-RULE-2 | — | Unit check against table of known results | todo |
 | T-SVC-2 | `rand.asm`: `RAND_N` uniform 0..N−1 | R-RULE-4 | — | Histogram over 10,000 calls within ±5% | todo |
 | T-SVC-3 | `tic.asm`: 20 Hz tic + seconds, NTSC and PAL | R-TIME-1..3 | — | 60 s of game clock = 60 s real on both (`-ntsc`/`-pal`) | todo |
 | T-SVC-4 | `text.asm`: print string / 1-4 digit decimal into status lines | R-SCR-1 | — | Status bar shows rounds, seconds, gold | todo |
-| T-DES-1 | Resolve Q1 (map mode and tile size) and Q3 (item visuals); draw the tile set | R-SCR-2, R-SCR-5 | — | Decision recorded; font with all terrain + 9 items × 2 owners | todo |
+| T-DES-1 | Switch the map to mode 5 (D12), resolve Q3 (item visuals) and draw the tile set | R-SCR-2, R-SCR-5 | — | Decision recorded; font with all terrain + 9 items × 2 owners | todo |
 
 ## M2 — Map and building (playable sandbox)
 
@@ -51,7 +52,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 
 | ID | Task | Reqs | Deps | Acceptance | Status |
 |---|---|---|---|---|---|
-| T-DES-2 | Resolve Q2 (P/M allocation, multiplexing) | R-SCR-4 | T-SPR-1 | Decision recorded | todo |
+| T-DES-2 | Resolve Q2 (P/M allocation, multiplexing) | R-SCR-4 | T-SPR-1 | Decision recorded | done (D13, D14; colour detail in Q7) |
 | T-EVT-1 | Boats: buy into harbour, pick up/drop (key 0), move, island collision | R-RULE-6, R-CTL-3 | T-DES-2 | Boats can't cross land | todo |
 | T-EVT-2 | Fish schools: spawn, drift, fishing income | R-RULE-4,6 | T-EVT-1 | 1 gold per 50 tic-overlaps | todo |
 | T-EVT-3 | Pirates: spawn, move, sink fishing boats, sunk by PT boats, fort protection | R-RULE-6 | T-EVT-1 | Verify sinking rules against original `$54F8-$5600` first | todo |

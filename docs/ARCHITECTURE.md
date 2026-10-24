@@ -53,6 +53,16 @@ Current files are marked ✓; the rest are planned (see PLAN.md).
 | `$4000-$47FF` | (planned) P/M graphics, double-line resolution, 2K aligned |
 | `$4800-$BFFF` | Free: more code, fonts, music, screens |
 
+Variables: all RAM variables live in one block (planned `src/vars.asm`),
+never inline after code, so the same source can run from a 5200
+cartridge (AGENTS.md rule 8). Today `input.asm` and `display.asm` still
+keep variables inline; T-INFRA-5 moves them.
+
+5200 budget: the 5200 has only 16K of RAM (`$0000-$3FFF`), with code
+and constant data in cartridge ROM. Screen, display list, P/M graphics,
+any RAM-resident font and all variables must fit in roughly 14K. Keep
+that in mind before growing RAM buffers.
+
 Constraints: fonts 1K aligned (modes 2/4/5); screen memory must not
 cross a 4K boundary without a new LMS; display lists must not cross a
 1K boundary; P/M base 1K (double-line) or 2K (single-line) aligned.
@@ -100,7 +110,7 @@ code writes RAM copies).
 
 ## 6. CPU budget
 
-NTSC frame ≈ 29,800 cycles; with mode 4 + mode 2 DMA and P/M DMA,
+NTSC frame ≈ 29,800 cycles; with mode 5 + mode 2 DMA and P/M DMA,
 assume ~18,000 usable per frame. Targets:
 
 - VBI (sound + sprites): ≤ 2,500 cycles
@@ -125,8 +135,10 @@ original's layout so the formulas port directly:
 | timers | 8-bit | `REMSEC`, `TICSEC`, `CURTRN`, `NUMTRN`, `TRNLEN` |
 | event counters | 8-bit | fishing, rain-on-crop, weather damage per player |
 
-Map grid size depends on Q1; the logical grid is the original's
-20 × 12 cards (each card = one island square).
+The logical grid is the original's 20 × 12 cards (each card = one
+island square). On screen each square is 2 × 1 mode 5 characters
+(D12); 11 of the 12 rows are visible under the status bar, which is
+enough because the islands use about 7-8 rows.
 
 ## 8. Naming conventions
 
