@@ -9,84 +9,96 @@ MAPFONT
 ; tile 0: open sea
         .BYTE $00,$00,$00,$00,$00,$00,$00,$00
         .BYTE $00,$00,$00,$00,$00,$00,$00,$00
-; tile 1: grass, beach mask 0 (plain)
+; tile 1: plain grass
         .BYTE $55,$55,$55,$55,$55,$55,$55,$55
         .BYTE $55,$55,$55,$55,$55,$55,$55,$55
-; tile 2: grass, beach mask 1
-        .BYTE $FF,$55,$55,$55,$55,$55,$55,$55
-        .BYTE $FF,$55,$55,$55,$55,$55,$55,$55
-; tile 3: grass, beach mask 2
-        .BYTE $55,$55,$55,$55,$55,$55,$55,$55
-        .BYTE $57,$57,$57,$57,$57,$57,$57,$57
-; tile 4: grass, beach mask 3
-        .BYTE $FF,$55,$55,$55,$55,$55,$55,$55
-        .BYTE $FF,$57,$57,$57,$57,$57,$57,$57
-; tile 5: grass, beach mask 4
-        .BYTE $55,$55,$55,$55,$55,$55,$55,$FF
-        .BYTE $55,$55,$55,$55,$55,$55,$55,$FF
-; tile 6: grass, beach mask 5
-        .BYTE $FF,$55,$55,$55,$55,$55,$55,$FF
-        .BYTE $FF,$55,$55,$55,$55,$55,$55,$FF
-; tile 7: grass, beach mask 6
-        .BYTE $55,$55,$55,$55,$55,$55,$55,$FF
-        .BYTE $57,$57,$57,$57,$57,$57,$57,$FF
-; tile 8: grass, beach mask 7
-        .BYTE $FF,$55,$55,$55,$55,$55,$55,$FF
-        .BYTE $FF,$57,$57,$57,$57,$57,$57,$FF
-; tile 9: grass, beach mask 8
-        .BYTE $D5,$D5,$D5,$D5,$D5,$D5,$D5,$D5
-        .BYTE $55,$55,$55,$55,$55,$55,$55,$55
-; tile 10: grass, beach mask 9
-        .BYTE $FF,$D5,$D5,$D5,$D5,$D5,$D5,$D5
-        .BYTE $FF,$55,$55,$55,$55,$55,$55,$55
-; tile 11: grass, beach mask 10
-        .BYTE $D5,$D5,$D5,$D5,$D5,$D5,$D5,$D5
-        .BYTE $57,$57,$57,$57,$57,$57,$57,$57
-; tile 12: grass, beach mask 11
-        .BYTE $FF,$D5,$D5,$D5,$D5,$D5,$D5,$D5
-        .BYTE $FF,$57,$57,$57,$57,$57,$57,$57
-; tile 13: grass, beach mask 12
-        .BYTE $D5,$D5,$D5,$D5,$D5,$D5,$D5,$FF
-        .BYTE $55,$55,$55,$55,$55,$55,$55,$FF
-; tile 14: grass, beach mask 13
-        .BYTE $FF,$D5,$D5,$D5,$D5,$D5,$D5,$FF
-        .BYTE $FF,$55,$55,$55,$55,$55,$55,$FF
-; tile 15: grass, beach mask 14
-        .BYTE $D5,$D5,$D5,$D5,$D5,$D5,$D5,$FF
-        .BYTE $57,$57,$57,$57,$57,$57,$57,$FF
-; tile 16: grass, beach mask 15
-        .BYTE $FF,$D5,$D5,$D5,$D5,$D5,$D5,$FF
-        .BYTE $FF,$57,$57,$57,$57,$57,$57,$FF
-; tile 17: 1 fort
+; tile 2: 1 fort
         .BYTE $99,$AA,$6A,$6A,$69,$69,$6A,$55
         .BYTE $66,$AA,$A9,$A9,$69,$69,$A9,$55
-; tile 18: 2 factory
+; tile 3: 2 factory
         .BYTE $55,$55,$55,$66,$AA,$AA,$BB,$55
         .BYTE $7D,$F5,$65,$65,$A9,$A9,$B9,$55
-; tile 19: 3 crop
+; tile 4: 3 crop
         .BYTE $65,$65,$55,$96,$96,$55,$65,$65
         .BYTE $96,$96,$55,$59,$59,$55,$96,$96
-; tile 20: 4 school (inverse chars)
+; tile 5: 4 school (inverse chars)
         .BYTE $56,$56,$5F,$7F,$FF,$7B,$7E,$55
         .BYTE $F5,$55,$F5,$FD,$FF,$ED,$BD,$55
-; tile 21: 5 hospital (inverse chars)
+; tile 6: 5 hospital (inverse chars)
         .BYTE $55,$7F,$7E,$7A,$7A,$7E,$7F,$55
         .BYTE $55,$FD,$BD,$AD,$AD,$BD,$FD,$55
-; tile 22: 6 house
+; tile 7: 6 house
         .BYTE $57,$5F,$7F,$FF,$6A,$6E,$6A,$55
         .BYTE $D5,$F5,$FD,$FF,$A9,$B9,$A9,$55
-; tile 23: 7 rebel
+; tile 8: 7 rebel
         .BYTE $56,$56,$6A,$9A,$5A,$59,$59,$69
         .BYTE $95,$95,$A9,$A6,$A5,$65,$65,$69
-; tile 24: 8 PT boat
+; tile 9: 8 PT boat
         .BYTE $00,$00,$02,$0A,$EA,$2A,$00,$00
         .BYTE $00,$00,$80,$A0,$AA,$A8,$00,$00
-; tile 25: 9 fishing boat
+; tile 10: 9 fishing boat
         .BYTE $02,$02,$02,$02,$02,$AA,$2A,$00
         .BYTE $00,$C0,$F0,$FC,$00,$AA,$A8,$00
-; tile 26: wreck of a parked boat
+; tile 11: wreck of a parked boat
         .BYTE $00,$00,$00,$00,$0A,$22,$00,$00
         .BYTE $00,$08,$20,$80,$A8,$20,$00,$00
-; tile 27: spare (blank)
+; tile 12: spare (blank)
         .BYTE $00,$00,$00,$00,$00,$00,$00,$00
         .BYTE $00,$00,$00,$00,$00,$00,$00,$00
+; tile 13: rock (decorative)
+        .BYTE $00,$00,$02,$0A,$2A,$2A,$00,$00
+        .BYTE $00,$00,$00,$80,$E0,$A8,$00,$00
+; tile 14: diagonal coast, land side mask 6
+        .BYTE $00,$00,$00,$00,$03,$0D,$35,$D5
+        .BYTE $03,$0D,$35,$D5,$55,$55,$55,$55
+; tile 15: grass, beach mask 1, notch mask 0
+        .BYTE $FF,$55,$55,$55,$55,$55,$55,$55
+        .BYTE $FF,$55,$55,$55,$55,$55,$55,$55
+; tile 16: diagonal coast, land side mask 12
+        .BYTE $C0,$70,$5C,$57,$55,$55,$55,$55
+        .BYTE $00,$00,$00,$00,$C0,$70,$5C,$57
+; tile 17: grass, beach mask 8, notch mask 0
+        .BYTE $D5,$D5,$D5,$D5,$D5,$D5,$D5,$D5
+        .BYTE $55,$55,$55,$55,$55,$55,$55,$55
+; tile 18: grass, beach mask 0, notch mask 1
+        .BYTE $55,$55,$55,$55,$55,$55,$55,$55
+        .BYTE $57,$55,$55,$55,$55,$55,$55,$55
+; tile 19: grass, beach mask 0, notch mask 8
+        .BYTE $D5,$55,$55,$55,$55,$55,$55,$55
+        .BYTE $55,$55,$55,$55,$55,$55,$55,$55
+; tile 20: grass, beach mask 2, notch mask 0
+        .BYTE $55,$55,$55,$55,$55,$55,$55,$55
+        .BYTE $57,$57,$57,$57,$57,$57,$57,$57
+; tile 21: harbour pier, land to the east
+        .BYTE $00,$00,$3F,$2A,$20,$20,$00,$00
+        .BYTE $00,$00,$FF,$AA,$82,$82,$00,$00
+; tile 22: grass, beach mask 0, notch mask 2
+        .BYTE $55,$55,$55,$55,$55,$55,$55,$55
+        .BYTE $55,$55,$55,$55,$55,$55,$55,$57
+; tile 23: grass, beach mask 4, notch mask 0
+        .BYTE $55,$55,$55,$55,$55,$55,$55,$FF
+        .BYTE $55,$55,$55,$55,$55,$55,$55,$FF
+; tile 24: grass, beach mask 0, notch mask 4
+        .BYTE $55,$55,$55,$55,$55,$55,$55,$D5
+        .BYTE $55,$55,$55,$55,$55,$55,$55,$55
+; tile 25: grass, beach mask 3, notch mask 0
+        .BYTE $FF,$55,$55,$55,$55,$55,$55,$55
+        .BYTE $F0,$5C,$57,$57,$57,$57,$57,$57
+; tile 26: grass, beach mask 9, notch mask 0
+        .BYTE $0F,$35,$D5,$D5,$D5,$D5,$D5,$D5
+        .BYTE $FF,$55,$55,$55,$55,$55,$55,$55
+; tile 27: harbour pier, land to the west
+        .BYTE $00,$00,$FF,$AA,$82,$82,$00,$00
+        .BYTE $00,$00,$FC,$A8,$08,$08,$00,$00
+; tile 28: diagonal coast, land side mask 9
+        .BYTE $55,$55,$55,$55,$57,$5C,$70,$C0
+        .BYTE $57,$5C,$70,$C0,$00,$00,$00,$00
+; tile 29: diagonal coast, land side mask 3
+        .BYTE $D5,$35,$0D,$03,$00,$00,$00,$00
+        .BYTE $55,$55,$55,$55,$D5,$35,$0D,$03
+; tile 30: grass, beach mask 12, notch mask 0
+        .BYTE $D5,$D5,$D5,$D5,$D5,$D5,$35,$0F
+        .BYTE $55,$55,$55,$55,$55,$55,$55,$FF
+; tile 31: grass, beach mask 6, notch mask 0
+        .BYTE $55,$55,$55,$55,$55,$55,$55,$FF
+        .BYTE $57,$57,$57,$57,$57,$57,$5C,$F0
