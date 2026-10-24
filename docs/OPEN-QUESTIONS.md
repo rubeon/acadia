@@ -185,7 +185,11 @@ by shape or animation only, or have a DLI recolour `COLPF3` on the
 storm's rows, which also recolours inverse-character tiles there
 (see Q3). Undecided.
 
-## Q3. Item visuals and colours
+## Q3. Item visuals and colours — **Closed (D16)**
+
+Decided 2026-10-24 from the `mockup/q3-palette` mock-up; see D16.
+The analysis below is kept for history.
+
 
 Mode 4/5 gives background + 3 colours per char (+1 via inverse chars),
 the same for the whole line unless changed by DLI. The original gives
