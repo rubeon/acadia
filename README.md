@@ -45,7 +45,12 @@ Output is an XEX load file for now; an ATR disk image will follow.
 | `src/acadia.asm` | Main file, entry point, main loop; includes the rest |
 | `src/hw_a800.asm` | GTIA, POKEY, PIA, ANTIC equates and OS shadow registers |
 | `src/input.asm` | Input layer: joysticks, triggers, digit keys 0-9 |
-| `src/display.asm` | Display list, DLI, VBI, map font, test map |
+| `src/display.asm` | Display list, DLI, VBI, map drawing (mode 5) |
+| `src/vars.asm` | All RAM variables, one block at `$3900` |
+| `src/tiles.asm` | Tile-number equates (generated) |
+| `src/font_map.asm` | Map font (generated) |
+| `src/testmap.asm` | Tile-to-character table and placeholder test map (generated) |
+| `tools/mkfont.py` | Tile art (ASCII) and generator for the three files above |
 | `docs/utopia-rules.md` | Rules and constants taken from the original game |
 
 ## Assembler compatibility

@@ -7,12 +7,13 @@
 ;    $00CB-$00CF  zero page work area (free with or without BASIC)
 ;    $2000-       code and variables
 ;    $3000-$33FF  map font (1K aligned)
-;    $3400-$376F  map screen (22 x 40)
+;    $3400-$35B7  map screen (11 x 40, mode 5)
 ;    $3800-       display list
 ;    $3900-$3FFF  RAM variables (VARS.ASM)
 ; =====================================================================
 
         .INCLUDE "hw_a800.asm"
+        .INCLUDE "tiles.asm"
 
 ; ---------------------------------------------------------------------
 ;  Zero page
