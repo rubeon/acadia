@@ -50,13 +50,18 @@ Current files are marked ✓; the rest are planned (see PLAN.md).
 | `$3000-$33FF` | Map font (1K aligned) |
 | `$3400-$37FF` | Map screen memory |
 | `$3800-$38FF` | Display list(s) |
+| `$3900-$3FFF` | RAM variables (`src/vars.asm`), cleared by `VARS_INIT` at start-up |
 | `$4000-$47FF` | (planned) P/M graphics, double-line resolution, 2K aligned |
 | `$4800-$BFFF` | Free: more code, fonts, music, screens |
 
-Variables: all RAM variables live in one block (planned `src/vars.asm`),
-never inline after code, so the same source can run from a 5200
-cartridge (AGENTS.md rule 8). Today `input.asm` and `display.asm` still
-keep variables inline; T-INFRA-5 moves them.
+Variables: all RAM variables live in one block, `src/vars.asm` at
+`$3900`, never inline after code, so the same source can run from a
+5200 cartridge (AGENTS.md rule 8). Storage is reserved with `*= *+n`
+only, so nothing depends on the loader: `VARS_INIT` clears the block
+and sets the few non-zero start values (e.g. `KEY` = `$FF`). This
+includes RAM screen memory such as the status lines, which are copied
+from a constant template at start-up. Add new variables to `vars.asm`,
+grouped by module.
 
 5200 budget: the 5200 has only 16K of RAM (`$0000-$3FFF`), with code
 and constant data in cartridge ROM. Screen, display list, P/M graphics,

@@ -61,12 +61,4 @@ IP_GOT  STX KEY
 ; Keyboard codes for the digit keys 0-9
 KEYTAB  .BYTE $32,$1F,$1E,$1A,$18,$1D,$1B,$33,$35,$30
 
-; ---------------------------------------------------------------------
-;  Input variables
-; ---------------------------------------------------------------------
-JOY0    .BYTE 0
-JOY1    .BYTE 0
-FIRE0   .BYTE 0
-FIRE1   .BYTE 0
-KEY     .BYTE $FF
-KEYDOWN .BYTE 0
+; Input variables (JOY0/1, FIRE0/1, KEY, KEYDOWN) live in VARS.ASM.

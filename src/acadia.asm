@@ -9,6 +9,7 @@
 ;    $3000-$33FF  map font (1K aligned)
 ;    $3400-$376F  map screen (22 x 40)
 ;    $3800-       display list
+;    $3900-$3FFF  RAM variables (VARS.ASM)
 ; =====================================================================
 
         .INCLUDE "hw_a800.asm"
@@ -25,6 +26,7 @@ OLDVBD  =  $CD          ; 2-byte saved deferred VBI vector
         *= $2000
 START
         CLD
+        JSR VARS_INIT
         JSR DISP_INIT
 
 MAIN    LDA FRAME       ; wait for the next frame
@@ -73,8 +75,32 @@ SI_FRM  LDA FRAME
 
 HEXTAB  .SBYTE "0123456789ABCDEF"
 
+; ---------------------------------------------------------------------
+;  VARS_INIT -- clear the RAM variable block, then set the variables
+;  that do not start at zero.  Trashes A, X, Y, ZPTR.
+; ---------------------------------------------------------------------
+VARS_INIT
+        LDA #<VARBASE
+        STA ZPTR
+        LDA #>VARBASE
+        STA ZPTR+1
+        LDX #VARPAGES
+        LDA #0
+        TAY
+VI_CLR  STA (ZPTR),Y
+        INY
+        BNE VI_CLR
+        INC ZPTR+1
+        DEX
+        BNE VI_CLR
+
+        LDA #$FF        ; no key pressed yet
+        STA KEY
+        RTS
+
         .INCLUDE "input.asm"
         .INCLUDE "display.asm"
+        .INCLUDE "vars.asm"
 
 ; ---------------------------------------------------------------------
 ;  Run address
