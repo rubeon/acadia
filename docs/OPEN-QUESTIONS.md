@@ -242,14 +242,23 @@ steer around them. Undecided; no rocks block anything until decided.
 ## Q9. Which island pair
 
 T-MAP-1 ships two candidate pairs, switchable at build time
-(`make run` for A, `make ISLANDS=B run` for B):
+(`make run` for A, `make ISLANDS=B run` for B). Coasts are ragged at
+pixel level (D23).
 
 - **A: mirror pair.** The right island is the left one mirrored.
   Perfectly fair by construction.
-- **B: different shapes, equal numbers.** Same left island; the right
-  island has its own shape (a western bay and a southern peninsula).
+- **B: different shapes, equal square count.** Same left island; the
+  right island has its own shape (arms to the west, a body to the
+  east, a southern tip).
 
-Both: 34 buildable squares per island, 28 coastline edges per island,
-land in rows 2-8 (one row clear of each band), harbour on the outer
-side at row 4. Diagonal coast squares: A 8 / 8, B 8 / 6. The PR merges
-only the pair the owner picks.
+Numbers from the generator (land squares are all buildable):
+
+| Island | Land squares | Full / coast squares | Land pixels | Coastline (px) |
+|---|---|---|---|---|
+| Left (A and B) | 35 | 5 / 30 | 1605 | 466 |
+| Right A (mirror) | 35 | 5 / 30 | 1605 | 466 |
+| Right B | 35 | 8 / 27 | 1684 | 400 |
+
+All islands: land in rows 2-8 (one sea row clear of each band),
+harbour on the outer side at row 4. The PR merges only the pair the
+owner picks.

@@ -52,9 +52,9 @@ Output is an XEX load file for now; an ATR disk image will follow.
 | `src/display.asm` | Display list, DLI, VBI, map drawing (mode 5) |
 | `src/vars.asm` | All RAM variables, one block at `$3900` |
 | `src/tiles.asm` | Tile-number equates (generated) |
-| `src/font_map.asm` | Map font (generated) |
+| `src/font_map.asm` | Map fonts (generated) |
 | `src/islands.asm` | Tile-to-character table and island data (generated) |
-| `tools/mkfont.py` | Tile art and island pictures (ASCII); generates the three files above |
+| `tools/mkfont.py` | Tile art and island outlines; generates the three files above (`--preview DIR` renders PNGs) |
 | `docs/utopia-rules.md` | Rules and constants taken from the original game |
 
 ## Assembler compatibility

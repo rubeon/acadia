@@ -30,6 +30,7 @@ KEYDOWN *= *+1          ; key held flag (edge detection)
 ;  Display (DISPLAY.ASM)
 ; ---------------------------------------------------------------------
 FRAME   *= *+1          ; frame counter, incremented by the VBI
+DLIROW  *= *+1          ; DLI_ROW: map row whose font is set next
 ROWLO   *= *+MAPROWS    ; map row addresses, low bytes
 ROWHI   *= *+MAPROWS    ; map row addresses, high bytes
 MROW    *= *+1          ; MAP_DRAW: current square row
