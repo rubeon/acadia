@@ -4,7 +4,7 @@ Design questions not yet decided. Add analysis, options and a
 recommendation under each; the owner decides. When decided, move the
 outcome to DECISIONS.md and mark the question **Closed (Dn)**.
 
-## Q1. Map character mode and tile size
+## Q1. Map character mode and tile size — **Closed (D12): mode 5**
 
 The original screen is 20 × 12 cards of 8 × 8 pixels on a 160 × 96
 display (pixels are 2 scan lines tall). On the Atari:
@@ -18,8 +18,8 @@ display (pixels are 2 scan lines tall). On the Atari:
   16 scan lines tall. Half the screen memory and font use, simpler
   addressing, closer to the original's chunky look.
 
-Initial lean: mode 5 for simplicity, unless item art needs the extra
-vertical detail. The M0 test uses mode 4.
+Decided 2026-10-24: mode 5 (D12). The M0 test still uses mode 4 and
+moves to mode 5 in T-DES-1.
 
 ## Q2. Sprite allocation
 

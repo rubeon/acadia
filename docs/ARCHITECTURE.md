@@ -110,7 +110,7 @@ code writes RAM copies).
 
 ## 6. CPU budget
 
-NTSC frame ≈ 29,800 cycles; with mode 4 + mode 2 DMA and P/M DMA,
+NTSC frame ≈ 29,800 cycles; with mode 5 + mode 2 DMA and P/M DMA,
 assume ~18,000 usable per frame. Targets:
 
 - VBI (sound + sprites): ≤ 2,500 cycles
@@ -135,8 +135,10 @@ original's layout so the formulas port directly:
 | timers | 8-bit | `REMSEC`, `TICSEC`, `CURTRN`, `NUMTRN`, `TRNLEN` |
 | event counters | 8-bit | fishing, rain-on-crop, weather damage per player |
 
-Map grid size depends on Q1; the logical grid is the original's
-20 × 12 cards (each card = one island square).
+The logical grid is the original's 20 × 12 cards (each card = one
+island square). On screen each square is 2 × 1 mode 5 characters
+(D12); 11 of the 12 rows are visible under the status bar, which is
+enough because the islands use about 7-8 rows.
 
 ## 8. Naming conventions
 

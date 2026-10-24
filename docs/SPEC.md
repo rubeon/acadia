@@ -38,7 +38,7 @@ on the Atari. Requirement IDs (`R-...`) are referenced from PLAN.md.
 | ID | Requirement |
 |---|---|
 | R-SCR-1 | Status bar in ANTIC mode 2 text: rounds left, seconds left, each player's gold. Score/population shown on demand (R-CTL-4). |
-| R-SCR-2 | Map in a multicolour character mode (mode 4 or 5, see OPEN-QUESTIONS Q1) with sea, two islands, harbours and all items drawn as tiles. |
+| R-SCR-2 | Map in a multicolour character mode (ANTIC mode 5, 2 × 1 characters per square; DECISIONS D12) with sea, two islands, harbours and all items drawn as tiles. |
 | R-SCR-3 | DLIs split colours/fonts between the status bar and the map. |
 | R-SCR-4 | Moving objects (cursors, boats, fish, pirates, weather) as player/missile graphics, with multiplexing if needed (Q2). |
 | R-SCR-5 | Each item recognisable by shape, not only colour; each player's items distinguishable (Q3). |
