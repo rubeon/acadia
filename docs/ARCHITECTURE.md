@@ -178,16 +178,21 @@ pairs, with and without the beach rim):
 
 **Islands (D23).** Each island is a square outline in the generator
 (`.` sea, `#` land, `H` harbour, `r` rock). A seeded, deterministic
-erosion pass (smooth value noise plus per-pixel jitter, depth 0-6 px
-from the sea) makes the coast ragged inside the land squares; it never
-adds land to a sea square, keeps each land square's centre, keeps the
-square behind a harbour whole, and fills any enclosed lakes. The
+erosion pass (value noise at 3 and 6 px scales plus per-pixel jitter,
+depth 0-3 px from the sea, mostly 1) makes the coast ragged inside the
+land squares, which stay about 85-90 % land. It never adds land to a
+sea square, keeps each land square's centre, keeps a 4-pixel band
+through squares that join land on opposite sides (no thin necks),
+keeps the square behind a harbour whole, and fills enclosed lakes. The
+generator also rejects sea squares enclosed by land. Harbours sit one
+square in from the screen edge (column 1 / 18) so the pier isn't
+clipped by overscan. The
 bitmap is then cut into 8 × 8 squares and a 1-pixel yellow beach is
 drawn on every land pixel that touches sea. Every square with any land
 is a land square: buildable, and boats can't enter it. The generator
 checks the open sea bands and channel and prints per-island numbers
-(land squares, full vs coast squares, land pixels, coastline length,
-harbour position).
+(land squares, full vs coast squares, land pixels and their share of
+the land squares, coastline length, harbour position).
 
 **Tiles and fonts.** Fixed tiles come first and have the same
 character codes in every font:

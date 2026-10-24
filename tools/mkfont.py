@@ -177,13 +177,13 @@ BEACH = True        # 1-pixel yellow beach along the coast (D16)
 LEFT_A = [
     "..........",
     "..........",
-    ".###..#...",
-    ".####.##..",
-    "H#######..",
-    ".#####....",
     "..###..##.",
+    "..######..",
+    ".H#####...",
+    "..#######.",
     "...######.",
-    ".......##.",
+    "..###..##.",
+    "..#.......",
     "..........",
     "..........",
 ]
@@ -191,13 +191,13 @@ LEFT_A = [
 RIGHT_B = [
     "..........",
     "..........",
-    ".##..##...",
+    ".##..###..",
     ".#######..",
-    "...######H",
-    "....#####.",
-    "..#######.",
-    "....####..",
-    ".....##...",
+    "...#####H.",
+    "..######..",
+    ".####.##..",
+    "..###.##..",
+    "...#......",
     "..........",
     "..........",
 ]
@@ -257,16 +257,21 @@ def island_bitmap(outline, seed):
         frontier = nxt
     rng = random.Random(seed)
     big = value_noise(rng, w, h, 6)
-    small = value_noise(rng, w, h, 2)
+    small = value_noise(rng, w, h, 3)
     out = [[False] * w for _ in range(h)]
     for y in range(h):
         for x in range(w):
             if not land[y][x]:
                 continue
-            e = int(big(x, y) * 4.2) + (1 if small(x, y) > 0.55 else 0) \
-                + (1 if rng.random() < 0.22 else 0)
+            # erosion depth 0-3 px (mostly 1): a ragged rim on solid squares
+            e = (1 if small(x, y) > 0.5 else 0) + (1 if big(x, y) > 0.68 else 0) \
+                + (1 if rng.random() < 0.12 else 0)
             out[y][x] = dist[y][x] > e
-    # keep every land square's centre, and the square behind a harbour
+    # keep every land square's centre, a 4-pixel band through squares
+    # that link land on opposite sides (so necks and arms stay solid),
+    # and the square behind a harbour
+    def isl(sy, sx):
+        return 0 <= sy < ROWS and 0 <= sx < 10 and outline[sy][sx] == "#"
     for sy in range(ROWS):
         for sx in range(10):
             if outline[sy][sx] != "#":
@@ -274,6 +279,14 @@ def island_bitmap(outline, seed):
             for y in range(sy * 8 + 3, sy * 8 + 5):
                 for x in range(sx * 8 + 3, sx * 8 + 5):
                     out[y][x] = True
+            if isl(sy, sx - 1) and isl(sy, sx + 1):
+                for y in range(sy * 8 + 2, sy * 8 + 6):
+                    for x in range(sx * 8, sx * 8 + 8):
+                        out[y][x] = True
+            if isl(sy - 1, sx) and isl(sy + 1, sx):
+                for y in range(sy * 8, sy * 8 + 8):
+                    for x in range(sx * 8 + 2, sx * 8 + 6):
+                        out[y][x] = True
             for dx in (-1, 1):
                 if 0 <= sx + dx < 10 and outline[sy][sx + dx] == "H":
                     for y in range(sy * 8, sy * 8 + 8):
@@ -354,6 +367,19 @@ def build_pair(name, desc, left, right, seed_r, beach):
     bm, outline = pair_map(left, right, 11, SEED_RIGHT_B if not mirror else seed_r, mirror)
     for r in BANDS:
         assert set(outline[r]) <= set(".r"), "pair %s row %d must be open sea" % (name, r)
+    # every sea square must connect to the map edge through sea squares
+    seen, stack = set(), [(r, c) for r in range(ROWS) for c in range(COLS)
+                          if (r in (0, ROWS - 1) or c in (0, COLS - 1)) and outline[r][c] != "#"]
+    while stack:
+        r, c = stack.pop()
+        if (r, c) in seen or not (0 <= r < ROWS and 0 <= c < COLS) or outline[r][c] == "#":
+            continue
+        seen.add((r, c))
+        stack += [(r + 1, c), (r - 1, c), (r, c + 1), (r, c - 1)]
+    for r in range(ROWS):
+        for c in range(COLS):
+            if outline[r][c] != "#" and (r, c) not in seen:
+                sys.exit("pair %s: sea square row %d col %d is enclosed by land" % (name, r, c))
     for r in range(ROWS):
         for c in CHANNEL:
             assert outline[r][c] in ".r", "pair %s channel at row %d" % (name, r)
@@ -426,9 +452,10 @@ def build_pair(name, desc, left, right, seed_r, beach):
         rows = [r for r, c in land]
         harb = [(r, c if side == "left" else COLS - 1 - c)
                 for r in range(ROWS) for c in cols if outline[r][c] == "H"]
-        stats.append("  %-5s land squares %d (%d full, %d coast), land pixels %d, "
-                     "coastline %d px, land rows %d-%d, harbour %s"
-                     % (side, len(land), full, len(land) - full, px, edge,
+        stats.append("  %-5s land squares %d (%d full, %d coast), land pixels %d "
+                     "(%.0f%% of its squares), coastline %d px, land rows %d-%d, harbour %s"
+                     % (side, len(land), full, len(land) - full, px,
+                        100.0 * px / (64 * len(land)), edge,
                         min(rows), max(rows),
                         ", ".join("row %d, %d from the outer edge" % h for h in harb)))
     return dict(name=name, desc=desc, bm=bm, outline=outline, tiles=tiles,

@@ -253,12 +253,13 @@ pixel level (D23).
 
 Numbers from the generator (land squares are all buildable):
 
-| Island | Land squares | Full / coast squares | Land pixels | Coastline (px) |
+| Island | Land squares | Full / coast squares | Land pixels (share) | Coastline (px) |
 |---|---|---|---|---|
-| Left (A and B) | 35 | 5 / 30 | 1605 | 466 |
-| Right A (mirror) | 35 | 5 / 30 | 1605 | 466 |
-| Right B | 35 | 8 / 27 | 1684 | 400 |
+| Left (A and B) | 35 | 6 / 29 | 1995 (89 %) | 398 |
+| Right A (mirror) | 35 | 6 / 29 | 1995 (89 %) | 398 |
+| Right B | 35 | 6 / 29 | 1977 (88 %) | 402 |
 
 All islands: land in rows 2-8 (one sea row clear of each band),
-harbour on the outer side at row 4. The PR merges only the pair the
-owner picks.
+columns 2-8 / 11-17 (channel columns 9-10 open), harbour on the outer
+side at row 4, one square in from the screen edge. The PR merges only
+the pair the owner picks.
