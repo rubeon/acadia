@@ -98,10 +98,19 @@ DL_DLI    = $80         ; display list interrupt (OR with mode)
 DL_JVB    = $41         ; jump and wait for vertical blank
 DL_MODE2  = $02         ; 40 col text, 8 lines
 DL_MODE4  = $04         ; 40 col 4-colour text, 8 lines
+DL_MODE5  = $05         ; 40 col 4-colour text, 16 lines
 
 ; DMACTL values
 DMA_OFF   = $00
 DMA_NORM  = $22         ; normal playfield + DL DMA
+DMA_PM    = $0C         ; player + missile DMA (double-line)
+
+; GRACTL values
+GR_PM     = $03         ; enable players and missiles
+
+; PRIOR values
+PRI_MAP   = $02         ; P0-P1 over playfield, P2-P3 under (D13)
+PRI_5TH   = $10         ; missiles form a fifth player in COLPF3
 
 ; NMIEN values
 NMI_VBI   = $40
