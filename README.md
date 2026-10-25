@@ -33,10 +33,6 @@ make run        # build and run in atari800 (800XL, BASIC off)
 make clean      # remove build/
 ```
 
-While the island pair is being chosen (OPEN-QUESTIONS Q9), `make` builds
-pair A and `make ISLANDS=B run` builds and runs pair B
-(`build/acadia-B.xex`).
-
 Use a different assembler or emulator binary with
 `make ATASM=/path/to/atasm` or `make ATARI800=/path/to/atari800`.
 
@@ -54,7 +50,7 @@ Output is an XEX load file for now; an ATR disk image will follow.
 | `src/tiles.asm` | Tile-number equates (generated) |
 | `src/font_map.asm` | Map fonts (generated) |
 | `src/islands.asm` | Tile-to-character table and island data (generated) |
-| `tools/mkfont.py` | Tile art and island outlines; generates the three files above (`--preview DIR` renders PNGs) |
+| `tools/mkfont.py` | Tile art and island outlines; generates the three files above (`--preview DIR` renders PNG previews of the islands) |
 | `docs/utopia-rules.md` | Rules and constants taken from the original game |
 
 ## Assembler compatibility

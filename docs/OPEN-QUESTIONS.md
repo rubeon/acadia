@@ -239,11 +239,10 @@ pirates and fish would add tactics (sheltered harbours, choke points)
 but changes how the original plays, and moving objects would need to
 steer around them. Undecided; no rocks block anything until decided.
 
-## Q9. Which island pair
+## Q9. Which island pair — **Closed (D24): pair B**
 
-T-MAP-1 ships two candidate pairs, switchable at build time
-(`make run` for A, `make ISLANDS=B run` for B). Coasts are ragged at
-pixel level (D23).
+T-MAP-1 offered two candidate pairs; the owner chose B on 2026-10-25
+(D24), and pair A was removed. Coasts are ragged at pixel level (D23).
 
 - **A: mirror pair.** The right island is the left one mirrored.
   Perfectly fair by construction.
@@ -261,5 +260,4 @@ Numbers from the generator (land squares are all buildable):
 
 All islands: land in rows 2-8 (one sea row clear of each band),
 columns 2-8 / 11-17 (channel columns 9-10 open), harbour on the outer
-side at row 4, one square in from the screen edge. The PR merges only
-the pair the owner picks.
+side at row 4, one square in from the screen edge.

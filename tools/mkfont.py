@@ -4,14 +4,13 @@
 Writes three files (do not edit them by hand):
 
   src/tiles.asm     tile-number and cell-kind equates
-  src/font_map.asm  the map fonts (1K each, fixed addresses), with the
-                    island pair chosen by ISL_B at assembly time
-  src/islands.asm   per island pair: TILECH (tile -> character code),
+  src/font_map.asm  the map fonts (1K each, fixed addresses)
+  src/islands.asm   TILECH (tile -> character code),
                     ROWFONT (font page per map row), ISLKIND (cell
                     kinds) and ISLTILE (terrain tile per square)
 
 Islands are drawn at pixel level.  Each island starts as a square
-outline (PAIRS below); a seeded, deterministic erosion pass makes the
+outline (LEFT and RIGHT below); a seeded, deterministic erosion pass makes the
 coast ragged, then the bitmap is cut into 8 x 8 squares.  Every square
 holding any land is a land square (buildable, boats can't enter), as
 in the original.  Identical squares share a tile.  Fixed tiles (sea,
@@ -174,7 +173,7 @@ BEACH = True        # 1-pixel yellow beach along the coast (D16)
 #  count.  Rows 0-1 and 9-10 stay open sea (fish and pirate bands);
 #  screen columns 9-10 stay open sea (channel).
 # ---------------------------------------------------------------------
-LEFT_A = [
+LEFT = [
     "..........",
     "..........",
     "..###..##.",
@@ -188,7 +187,7 @@ LEFT_A = [
     "..........",
 ]
 
-RIGHT_B = [
+RIGHT = [
     "..........",
     "..........",
     ".##..###..",
@@ -202,11 +201,9 @@ RIGHT_B = [
     "..........",
 ]
 
-PAIRS = [
-    ("A", "mirror pair", LEFT_A, None, 11),
-    ("B", "same left island, different right island", LEFT_A, RIGHT_B, 11),
-]
-SEED_RIGHT_B = 29
+# Island pair B was chosen (D24): this left island and a different,
+# non-mirrored right island with the same number of land squares.
+SEED_LEFT, SEED_RIGHT = 11, 29
 
 ROWS, COLS = 11, 20
 PW, PH = COLS * 8, ROWS * 8
@@ -312,14 +309,10 @@ def island_bitmap(outline, seed):
     return out
 
 
-def pair_map(left, right, seed_left, seed_right, mirror):
+def pair_map(left, right):
     """Full 160 x 88 land bitmap plus the 20-column outline."""
-    lb = island_bitmap(left, seed_left)
-    if mirror:
-        rb = [row[::-1] for row in lb]
-        right = [r[::-1] for r in left]
-    else:
-        rb = island_bitmap(right, seed_right)
+    lb = island_bitmap(left, SEED_LEFT)
+    rb = island_bitmap(right, SEED_RIGHT)
     bm = [lb[y] + rb[y] for y in range(PH)]
     outline = [l + r for l, r in zip(left, right)]
     return bm, outline
@@ -362,9 +355,8 @@ NFIX = len(FIXED)
 PER_FONT = 64 - NFIX          # coast tiles that fit in one font
 
 
-def build_pair(name, desc, left, right, seed_r, beach):
-    mirror = right is None
-    bm, outline = pair_map(left, right, 11, SEED_RIGHT_B if not mirror else seed_r, mirror)
+def build_pair(name, desc, left, right, beach):
+    bm, outline = pair_map(left, right)
     for r in BANDS:
         assert set(outline[r]) <= set(".r"), "pair %s row %d must be open sea" % (name, r)
     # every sea square must connect to the map edge through sea squares
@@ -529,13 +521,12 @@ def main():
     if "--preview" in sys.argv:
         prev_dir = sys.argv[sys.argv.index("--preview") + 1]
         os.makedirs(prev_dir, exist_ok=True)
-    built = [build_pair(n, d, l, r, s, BEACH) for n, d, l, r, s in PAIRS]
+    built = [build_pair("B", "the island pair (D24)", LEFT, RIGHT, BEACH)]
     if prev_dir:
-        for n, d, l, r, s in PAIRS:
-            for beach in (True, False):
-                p = build_pair(n, d, l, r, s, beach)
-                preview(p, os.path.join(prev_dir, "islands-%s-%s.png"
-                                        % (n, "beach" if beach else "plain")))
+        for beach in (True, False):
+            p = build_pair("B", "", LEFT, RIGHT, beach)
+            preview(p, os.path.join(prev_dir, "islands-%s.png"
+                                    % ("beach" if beach else "plain")))
 
     # tiles.asm
     out = banner("TILES.ASM", "Map tile numbers and cell kinds.")
@@ -560,10 +551,9 @@ def main():
                  ";  Fixed tiles first (same codes in every font), then this font's\n"
                  ";  coast tiles.")
     for p in built:
-        out.append("        .IF ISL_B" if p["name"] == "B" else "        .IF ISL_B=0")
         for fi, f in enumerate(p["fonts"]):
-            out.append("; pair %s, font %d: rows %s, %d coast tiles"
-                       % (p["name"], fi, ",".join(str(r) for r in range(ROWS)
+            out.append("; font %d: rows %s, %d coast tiles"
+                       % (fi, ",".join(str(r) for r in range(ROWS)
                                                   if p["rowfont"][r] == fi), len(f)))
             out.append("        *= $%04X" % FONT_ADDR[fi])
             out.append("MAPFONT" if fi == 0 else "MAPFNT%d" % fi)
@@ -573,14 +563,11 @@ def main():
                 out.append("; tile %d: %s%s" % (t, comment, " (inverse chars)" if inv else ""))
                 out.append("        .BYTE " + hexes(l))
                 out.append("        .BYTE " + hexes(r))
-        out.append("        .ENDIF")
     open("src/font_map.asm", "w").write("\n".join(out) + "\n")
 
     # islands.asm
     out = banner("ISLANDS.ASM", "Island data, tile codes and font per row (20 x 11).")
     for p in built:
-        out.append("        .IF ISL_B" if p["name"] == "B" else "        .IF ISL_B=0")
-        out.append("; Island pair %s: %s" % (p["name"], p["desc"]))
         codes = [p["code"][t] for t in range(len(p["tiles"]))]
         out.append("; TILECH: character code of each tile's left half (bit 7 = white)")
         out.append("TILECH")
@@ -599,12 +586,11 @@ def main():
             out.append("        .BYTE " + hexes(p["tgrid"][r]))
         out.append("N_TILES = %d" % len(p["tiles"]))
         out.append("N_FONTS = %d" % len(p["fonts"]))
-        out.append("        .ENDIF")
     open("src/islands.asm", "w").write("\n".join(out) + "\n")
 
     for p in built:
-        print("Pair %s (%s): %d tiles, %d fonts (coast tiles per font %s), rows->font %s"
-              % (p["name"], p["desc"], len(p["tiles"]), len(p["fonts"]),
+        print("%d tiles, %d fonts (coast tiles per font %s), rows->font %s"
+              % (len(p["tiles"]), len(p["fonts"]),
                  "/".join(str(len(f)) for f in p["fonts"]), "".join(map(str, p["rowfont"]))))
         print("\n".join(p["stats"]))
 
