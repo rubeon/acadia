@@ -34,7 +34,8 @@ Current files are marked ✓; the rest are planned (see PLAN.md).
 | `src/tic.asm` ✓ | services | 20 Hz tic from `FRAME` (D20): `TIC_INIT` (GTIA `PAL` → NTSC 0,0,1 / PAL 0,1,0,0,1 pattern), `TIC_POLL` (main loop: frames → `TICDUE`), `TIC_NEXT` (C = tic taken, A = `TICSEC` 0-19, Z = new second), `TIC_SYNC` (drop frames after a pause) |
 | `src/rand.asm` ✓ | services | `RAND_N`: unbiased 0..N−1 (N = 0 → any byte) from POKEY `RANDOM`, mask and reject; keeps X, Y |
 | `src/text.asm` ✓ | services | Status bar printing at offsets 0-79 (line 1, line 2): `TXT_STR` (screen codes ending in `$FF`), `TXT_DEC` (`M_NUM` in decimal, width 1-5, leading spaces, `*` if too wide) |
-| `src/sprites.asm` | services | Player/missile objects, movement, multiplexing |
+| `src/sprites.asm` ✓ | services | P/M graphics (double-line, `$4000`): `PM_INIT`, `SPR_PUT` (player X at map pixel A, Y; redraws the shape when the line changes), `SPR_VBI` (HPOS from the deferred VBI). P0/P1 only so far; P2/P3, fifth player and multiplexing in M4 |
+| `src/cursor.asm` ✓ | game | The two cursors (R-CTL-1): `CUR_INIT`, `CUR_MOVE` (per frame: `JOY0`/`JOY1`, 1 map pixel per frame, snap to the nearest square on release, clamped to the map); `CURCOL`/`CURROW` = square under each cursor |
 | `src/sound.asm` | services | POKEY SFX and music driver (VBI) |
 | `src/map.asm` | game | Island layout, ownership, tile get/set, adjacency (fort) checks |
 | `src/economy.asm` | game | Purchases, end-of-round income, population, score |
@@ -50,14 +51,15 @@ Current files are marked ✓; the rest are planned (see PLAN.md).
 |---|---|
 | `$0080-$0087` | ZP: math work area `M_NUM` (3), `M_TMP` (3), `M_OP`, `M_OVF` |
 | `$0088-$0089` | ZP: `TPTR` string pointer (`text.asm`) |
-| `$008A-$00CA` | Free while BASIC is off; reserved for game ZP (allocate in `acadia.asm`) |
+| `$008A-$008B` | ZP: `SPTR` P/M pointer (`sprites.asm`) |
+| `$008C-$00CA` | Free while BASIC is off; reserved for game ZP (allocate in `acadia.asm`) |
 | `$00CB-$00CE` | `ZPTR` (2), `OLDVBD` (2) — in use |
 | `$2000-$2FFF` | Code and variables |
 | `$3000-$33FF` | Map font 0 (1K aligned): fixed tiles + coast tiles of the first rows |
 | `$3400-$37FF` | Map screen memory (`$3400-$35B7` used: 11 rows × 40) |
 | `$3800-$38FF` | Display list(s) |
 | `$3900-$3FFF` | RAM variables (`src/vars.asm`), cleared by `VARS_INIT` at start-up |
-| `$4000-$47FF` | (planned) P/M graphics, double-line resolution, 2K aligned |
+| `$4000-$43FF` | P/M graphics, double-line resolution, 1K aligned (`PMAREA`); `$4400-$47FF` spare |
 | `$4800-$4FFF` | Map fonts 1-2 if needed (1K each; the current islands use font 1 at `$4800`) |
 | `$5000-$BFFF` | Free: more code, fonts, music, screens |
 

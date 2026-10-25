@@ -55,6 +55,7 @@ DI_STAT LDA STATTPL,X
 
         JSR MAP_ROWS
         JSR MAP_DRAW
+        JSR PM_INIT
 
         LDA #<DLI_MAP
         STA VDSLST
@@ -84,7 +85,7 @@ DI_STAT LDA STATTPL,X
         LDA #ROMFONT
         STA CHBAS
 
-        LDA #DMA_NORM
+        LDA #DMA_NORM+DMA_PM
         STA SDMCTL
         LDA #NMI_VBI+NMI_DLI
         STA NMIEN
@@ -147,6 +148,7 @@ DLI_ROW
 ; ---------------------------------------------------------------------
 VBI_D
         INC FRAME
+        JSR SPR_VBI
         LDA #0
         STA ATRACT
         LDA #<DLI_MAP   ; first DLI of the next frame

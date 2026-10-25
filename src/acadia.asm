@@ -6,12 +6,14 @@
 ;  Memory map
 ;    $0080-$0087  zero page: math work area (MATH.ASM)
 ;    $0088-$0089  zero page: TPTR (TEXT.ASM)
+;    $008A-$008B  zero page: SPTR (SPRITES.ASM)
 ;    $00CB-$00CE  zero page: ZPTR, OLDVBD
 ;    $2000-       code and constant tables
 ;    $3000-$33FF  map font 0 (1K aligned)
 ;    $3400-$35B7  map screen (11 x 40, mode 5)
 ;    $3800-       display list
 ;    $3900-$3FFF  RAM variables (VARS.ASM)
+;    $4000-$43FF  P/M graphics, double-line (SPRITES.ASM)
 ;    $4800-$4BFF  map font 1
 ; =====================================================================
 
@@ -26,6 +28,7 @@ M_TMP   =  $83          ; 3-byte math work copy
 M_OP    =  $86          ; math multiplier / divisor
 M_OVF   =  $87          ; math overflow count
 TPTR    =  $88          ; 2-byte string pointer (TEXT.ASM)
+SPTR    =  $8A          ; 2-byte P/M pointer (SPRITES.ASM)
 ZPTR    =  $CB          ; 2-byte general pointer
 OLDVBD  =  $CD          ; 2-byte saved deferred VBI vector
 
@@ -37,6 +40,7 @@ START
         CLD
         JSR VARS_INIT
         JSR DISP_INIT
+        JSR CUR_INIT
         JSR TIC_INIT
         JSR DEMO_INIT
 
@@ -44,6 +48,7 @@ MAIN    LDA FRAME       ; wait for the next frame
 MN_WAIT CMP FRAME
         BEQ MN_WAIT
         JSR INPUT_POLL
+        JSR CUR_MOVE
         JSR TIC_POLL
 MN_TIC  JSR TIC_NEXT    ; run every due tic
         BCC MN_SHOW
@@ -205,6 +210,8 @@ VI_CLR  STA (ZPTR),Y
         .INCLUDE "rand.asm"
         .INCLUDE "tic.asm"
         .INCLUDE "text.asm"
+        .INCLUDE "sprites.asm"
+        .INCLUDE "cursor.asm"
         .INCLUDE "display.asm"
         .INCLUDE "vars.asm"
 
