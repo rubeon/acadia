@@ -36,9 +36,9 @@ Current files are marked ✓; the rest are planned (see PLAN.md).
 | `src/text.asm` ✓ | services | Status bar printing at offsets 0-79 (line 1, line 2): `TXT_STR` (screen codes ending in `$FF`), `TXT_DEC` (`M_NUM` in decimal, width 1-5, leading spaces, `*` if too wide) |
 | `src/sprites.asm` ✓ | services | P/M graphics (double-line, `$4000`): `PM_INIT`, `SPR_PUT` (player X at map pixel A, Y; redraws the shape when the line changes), `SPR_VBI` (HPOS from the deferred VBI). P0/P1 only so far; P2/P3, fifth player and multiplexing in M4 |
 | `src/cursor.asm` ✓ | game | The two cursors (R-CTL-1): `CUR_INIT`, `CUR_MOVE` (per frame: `JOY0`/`JOY1`, 1 map pixel per frame, snap to the nearest square on release, clamped to the map); `CURCOL`/`CURROW` = square under each cursor |
-| `src/sound.asm` | services | POKEY SFX and music driver (VBI) |
+| `src/sound.asm` ✓ (stubs) | services | Sound hooks `SND_BUY`, `SND_REFUSE` (RTS for now); the POKEY SFX and music driver (VBI) comes in M5 |
 | `src/map.asm` ✓ | game | Map grid: `MAP_INIT`, `MAP_GET` (column, row → item, `MKIND`; C = off map), `MAP_SET` (item 0-9 on a square, redrawn: item tile or the terrain), `FORT_NEAR` (fort on one of the 8 neighbours → C, owner) |
-| `src/economy.asm` | game | Purchases, end-of-round income, population, score |
+| `src/economy.asm` ✓ (buying) | game | `ECO_KEY` (this frame's `KEY` → `ECO_BUY` for `KEYPL`), `ECO_BUY` (item at the cursor square: own free land, enough gold; C + `R_` reason on refusal), `PRICES`; end-of-round income, population and score follow (T-ECO-2..6) |
 | `src/events.asm` | game | Weather, fish, pirates, boats, collisions, rebels |
 | `src/ai.asm` | game | CPU governor |
 | `src/screens.asm` | game | Setup, round summary, game over |
@@ -146,7 +146,7 @@ original's layout so the formulas port directly:
 | `SCORE[P]` | 16-bit | total score |
 | `RSCORE[P]`, `PRSCORE[P]` | 8-bit | this / previous round score |
 | `RGOLD[P]` | 16-bit | gold earned this round (8-bit in original; widened, R-RULE-8) |
-| `COUNT[P][1..9]` | 8-bit | number of each item |
+| `COUNT` | 8-bit × 20 | items owned: `COUNT`+k for player 1's item k, `COUNT`+10+k for player 2's |
 | `MAPITEM` | 8-bit × 220 | item on each square, 0 = none, 1-9 (RAM); kind + owner in `ISLKIND` and terrain in `ISLTILE` (constant), all 20 × 11, index = row × 20 + column |
 | timers | 8-bit | `REMSEC`, `TICSEC`, `CURTRN`, `NUMTRN`, `TRNLEN` |
 | event counters | 8-bit | fishing, rain-on-crop, weather damage per player |

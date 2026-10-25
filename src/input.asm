@@ -10,6 +10,9 @@
 ;    FIRE0, FIRE1  1 = trigger held
 ;    KEY           item key 0-9 pressed this poll, or $FF for none
 ;                  (edge triggered: reported once per key press)
+;    KEYPL         player the key belongs to (D17): the one holding
+;                  fire; neither holding fire -> 0; both -> the key is
+;                  dropped (KEY and KEYPL = $FF).  $FF with no key.
 ; =====================================================================
 
 ; ---------------------------------------------------------------------
@@ -38,6 +41,7 @@ INPUT_POLL
 
         LDA #$FF
         STA KEY
+        STA KEYPL
         LDA SKSTAT
         AND #$04        ; bit 2 clear = key held
         BEQ IP_HELD
@@ -56,9 +60,22 @@ IP_FIND CMP KEYTAB,X
         BPL IP_FIND
 IP_DONE RTS
 IP_GOT  STX KEY
+        LDA FIRE1       ; whose key is it? (D17)
+        BEQ IP_P0       ; player 2 not on fire: player 1's
+        LDA FIRE0
+        BNE IP_BOTH
+        LDA #1
+        STA KEYPL
+        RTS
+IP_P0   LDA #0
+        STA KEYPL
+        RTS
+IP_BOTH LDA #$FF        ; both on fire: ambiguous, drop the key
+        STA KEY
+        STA KEYPL
         RTS
 
 ; Keyboard codes for the digit keys 0-9
 KEYTAB  .BYTE $32,$1F,$1E,$1A,$18,$1D,$1B,$33,$35,$30
 
-; Input variables (JOY0/1, FIRE0/1, KEY, KEYDOWN) live in VARS.ASM.
+; Input variables (JOY0/1, FIRE0/1, KEY, KEYPL, KEYDOWN) live in VARS.ASM.

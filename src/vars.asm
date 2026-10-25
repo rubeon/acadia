@@ -24,6 +24,7 @@ JOY1    *= *+1
 FIRE0   *= *+1          ; 1 = trigger held
 FIRE1   *= *+1
 KEY     *= *+1          ; item key 0-9 pressed this poll, else $FF
+KEYPL   *= *+1          ; player the key belongs to (0/1), else $FF
 KEYDOWN *= *+1          ; key held flag (edge detection)
 
 ; ---------------------------------------------------------------------
@@ -61,6 +62,14 @@ FN_COL  *= *+1          ; FORT_NEAR: square asked about
 FN_ROW  *= *+1
 FN_I    *= *+1          ; FORT_NEAR: neighbour 0-7
 FN_C    *= *+1          ; FORT_NEAR: neighbour column
+
+; ---------------------------------------------------------------------
+;  Economy (ECONOMY.ASM)
+; ---------------------------------------------------------------------
+COUNT   *= *+20         ; items owned: COUNT+k player 1, COUNT+10+k player 2
+EB_ITEM *= *+1          ; ECO_BUY: item being bought
+EB_P    *= *+1          ; ECO_BUY: buying player
+EB_LO   *= *+1          ; ECO_BUY: gold after paying, low byte
 
 ; ---------------------------------------------------------------------
 ;  Services (RAND.ASM)

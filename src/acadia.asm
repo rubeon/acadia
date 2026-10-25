@@ -50,6 +50,7 @@ MN_WAIT CMP FRAME
         BEQ MN_WAIT
         JSR INPUT_POLL
         JSR CUR_MOVE
+        JSR ECO_KEY     ; buy with digit keys (D17)
         JSR TIC_POLL
 MN_TIC  JSR TIC_NEXT    ; run every due tic
         BCC MN_SHOW
@@ -214,6 +215,8 @@ VI_CLR  STA (ZPTR),Y
         .INCLUDE "sprites.asm"
         .INCLUDE "cursor.asm"
         .INCLUDE "map.asm"
+        .INCLUDE "economy.asm"
+        .INCLUDE "sound.asm"
         .INCLUDE "display.asm"
         .INCLUDE "vars.asm"
 
