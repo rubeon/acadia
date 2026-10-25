@@ -40,6 +40,17 @@ STATUS1 *= *+40         ; status bar line 1 (screen memory)
 STATUS2 *= *+40         ; status bar line 2 (screen memory)
 
 ; ---------------------------------------------------------------------
+;  Sprites (SPRITES.ASM) and cursors (CURSOR.ASM); 2 bytes = P0, P1
+; ---------------------------------------------------------------------
+SPRY    *= *+2          ; map line each player is drawn at ($FF = none)
+SPRHP   *= *+2          ; horizontal position for SPR_VBI
+CURX    *= *+2          ; cursor map pixel column, 0-152
+CURY    *= *+2          ; cursor map pixel line, 0-80
+CURCOL  *= *+2          ; square under each cursor: column 0-19
+CURROW  *= *+2          ;   and row 0-10
+CUJOY   *= *+1          ; CUR_MOVE: joystick bits being handled
+
+; ---------------------------------------------------------------------
 ;  Services (RAND.ASM)
 ; ---------------------------------------------------------------------
 RN_N    *= *+1          ; RAND_N: range
