@@ -39,4 +39,10 @@ MTILE   *= *+1          ; MAP_PUT: tile being drawn
 STATUS1 *= *+40         ; status bar line 1 (screen memory)
 STATUS2 *= *+40         ; status bar line 2 (screen memory)
 
+; ---------------------------------------------------------------------
+;  Services (RAND.ASM)
+; ---------------------------------------------------------------------
+RN_N    *= *+1          ; RAND_N: range
+RN_M    *= *+1          ; RAND_N: bit mask
+
 VAREND

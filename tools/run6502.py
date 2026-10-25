@@ -11,6 +11,7 @@ map logic), not for display or interrupt code.
     m = Machine()                       # build/acadia.xex + .lab
     m.call("MUL8", a=12, x=34)
     m.word("M_NUM")                     # read 16 bits
+    m.on_read("RANDOM", lambda: 42)     # fake a hardware register
 """
 
 import glob
@@ -18,6 +19,7 @@ import os
 import re
 
 from py65.devices.mpu6502 import MPU
+from py65.memory import ObservableMemory
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -26,8 +28,8 @@ class Machine:
     def __init__(self, xex=None, labels=None):
         xex = xex or os.path.join(ROOT, "build", "acadia.xex")
         labels = labels or os.path.join(ROOT, "build", "acadia.lab")
-        self.mpu = MPU()
-        self.mem = self.mpu.memory
+        self.mem = ObservableMemory()
+        self.mpu = MPU(memory=self.mem)
         self.sym = {}
         self._load_xex(open(xex, "rb").read())
         for line in open(labels):
@@ -53,6 +55,11 @@ class Machine:
             n = end - start + 1
             self.mem[start:start + n] = list(data[i:i + n])
             i += n
+
+    def on_read(self, name, func):
+        """Make reads of an address return func() (e.g. POKEY RANDOM)."""
+        a = self.addr(name)
+        self.mem.subscribe_to_read([a], lambda address: func() & 0xFF)
 
     def addr(self, name):
         return self.sym[name.upper()] if isinstance(name, str) else name
