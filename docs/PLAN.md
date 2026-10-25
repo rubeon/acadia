@@ -53,7 +53,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 
 | ID | Task | Reqs | Deps | Acceptance | Status |
 |---|---|---|---|---|---|
-| T-DES-2 | Resolve Q2 (P/M allocation, multiplexing) | R-SCR-4 | T-SPR-1 | Decision recorded | done (D13, D14; colour detail in Q7) |
+| T-DES-2 | Resolve Q2 (P/M allocation, multiplexing) | R-SCR-4 | T-SPR-1 | Decision recorded | done (D13, D14; colour detail D29) |
 | T-EVT-1 | Boats: buy into harbour, pick up/drop (key 0), move, island collision | R-RULE-6, R-CTL-3 | T-DES-2 | Boats can't cross land | todo |
 | T-EVT-2 | Fish schools: spawn, drift, fishing income | R-RULE-4,6 | T-EVT-1 | 1 gold per 50 tic-overlaps | todo |
 | T-EVT-3 | Pirates: spawn, move, sink fishing boats, sunk by PT boats, fort protection | R-RULE-6 | T-EVT-1 | Verify sinking rules against original `$54F8-$5600` first | todo |
