@@ -50,6 +50,8 @@ PI_CLR  STA PMAREA+$100,X       ; $4100-$43FF: missiles and players
         LDA #0          ; off screen until positioned
         STA SPRHP
         STA SPRHP+1
+        STA SPRSHP      ; both start as cursors (SH_CUR)
+        STA SPRSHP+1
         LDA #C_CUR0
         STA PCOLR0
         LDA #C_CUR1
@@ -84,12 +86,38 @@ SP_CLR  STA (SPTR),Y
 SP_NEW  PLA             ; draw at the new line
         STA SPRY,X
         JSR SP_ADDR
+        JMP SP_PAINT
+SP_DONE RTS
+
+; ---------------------------------------------------------------------
+;  SPR_SHAPE -- give player X (0 or 1) shape A (SH_CUR, SH_PT, SH_FISH)
+;  and redraw it where it is.  X kept; trashes A, Y, SPTR.
+; ---------------------------------------------------------------------
+SPR_SHAPE
+        STA SPRSHP,X
+        LDA SPRY,X
+        CMP #$FF
+        BEQ SP_DONE     ; not drawn yet: SPR_PUT will
+        JSR SP_ADDR
+        ; fall through
+
+; SP_PAINT -- draw player X's shape at SPTR.  X kept; trashes A, Y.
+SP_PAINT
+        STX SP_P
+        LDA SPRSHP,X    ; last byte of the shape: shape x 8 + 7
+        ASL A
+        ASL A
+        ASL A
+        ORA #SPR_H-1
+        TAX
         LDY #SPR_H-1
-SP_DRAW LDA CURSHP,Y
+SP_DRAW LDA SHAPES,X
         STA (SPTR),Y
+        DEX
         DEY
         BPL SP_DRAW
-SP_DONE RTS
+        LDX SP_P
+        RTS
 
 ; SP_ADDR -- SPTR = P/M address of map line A for player X (0 or 1)
 ; Players 0 and 1 share one page; map line + PM_MAP is below $80.
@@ -114,5 +142,10 @@ SPR_VBI
         STA HPOSP1
         RTS
 
-; Cursor: a hollow square frame, one square
-CURSHP  .BYTE $FF,$81,$81,$81,$81,$81,$81,$FF
+; Shapes, 8 bytes each, in SH_ order
+SH_CUR  =  0            ; cursor: a hollow square frame, one square
+SH_PT   =  1            ; PT boat being steered
+SH_FISH =  2            ; fishing boat being steered
+SHAPES  .BYTE $FF,$81,$81,$81,$81,$81,$81,$FF
+        .BYTE $00,$00,$18,$3C,$FF,$7E,$00,$00
+        .BYTE $10,$18,$1C,$1E,$10,$FF,$7E,$00

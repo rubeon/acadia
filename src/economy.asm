@@ -8,9 +8,11 @@
 ;  square is not free land on the player's own island, or if the
 ;  player has too little gold.
 ;
+;  Boats (8 PT, 9 fishing) appear in the player's harbour wherever
+;  the cursor is, as in the original ($5924); the harbour must be
+;  empty.  Key 0 picks a boat up or parks it (BOATS.ASM).
 ;  Not yet: 7 (a bought rebel, placed on the other island by T-ECO-5)
-;  and 8/9 (boats, launched from the harbour by T-EVT-1) are refused
-;  for now.  Key 0 (cursor/boat mode) is ignored until T-EVT-1.
+;  is refused for now.
 ;
 ;  COUNT holds how many of each item each player owns: COUNT+k for
 ;  player 1's item k, COUNT+10+k for player 2's (COUNT+0 and +10 are
@@ -30,13 +32,16 @@ R_GOLD  =  4            ; not enough gold
 ECO_KEY
         LDA KEY
         BMI EK_DONE     ; no key (or both players held fire)
-        BEQ EK_DONE     ; key 0: cursor/boat mode, later (T-EVT-1)
         LDX KEYPL
-        JMP ECO_BUY
+        CMP #0          ; (KEY's flags were tested before LDX)
+        BNE EK_BUY
+        JMP BOAT_KEY    ; key 0: pick up / park a boat (BOATS.ASM)
+EK_BUY  JMP ECO_BUY
 EK_DONE RTS
 
 ; ---------------------------------------------------------------------
-;  ECO_BUY -- player X buys item A at their cursor's square
+;  ECO_BUY -- player X buys item A at their cursor's square (a boat:
+;  in their harbour)
 ;  In: A = item 1-9, X = player 0/1.
 ;  Out: C clear: bought (gold, COUNT, map and status bar updated).
 ;       C set: refused, A = R_ reason; the refusal sound is played.
@@ -45,10 +50,23 @@ EK_DONE RTS
 ECO_BUY
         STA EB_ITEM
         STX EB_P
-        CMP #I_REBL     ; 7-9: not yet
-        BCS EB_NOIT
-        LDY CURROW,X    ; the square under this player's cursor
+        CMP #I_REBL
+        BCC EB_LND      ; 1-6: on land
+        BNE EB_BOAT     ; 8, 9: boats
+        JMP EB_NOIT     ; 7: not yet
+EB_BOAT TXA             ; a boat: into this player's harbour
+        JSR MAP_HARB
+        STX EB_C
+        STY EB_R
+        JSR MAP_GET
+        CMP #0
+        BEQ EB_PAY
+        JMP EB_TAKEN    ; harbour occupied
+EB_LND  LDA CURROW,X    ; the square under this player's cursor
+        STA EB_R
         LDA CURCOL,X
+        STA EB_C
+        LDY EB_R
         TAX
         JSR MAP_GET     ; A = item there, MKIND = kind
         BCS EB_LAND     ; off the map
@@ -64,7 +82,7 @@ ECO_BUY
         ROL A
         CMP EB_P
         BNE EB_LAND
-        LDA EB_P        ; X = player x 2, for GOLD
+EB_PAY  LDA EB_P        ; X = player x 2, for GOLD
         ASL A
         TAX
         LDY EB_ITEM
@@ -85,19 +103,23 @@ EB_CNT  CLC
         ADC EB_ITEM
         TAX
         INC COUNT,X
-        LDA EB_P        ; put it on the map
-        TAX
-        LDY CURROW,X
-        LDA CURCOL,X
-        TAX
+        LDY EB_R        ; put it on the map
+        LDX EB_C
         LDA EB_ITEM
-        JSR MAP_SET
+        CMP #I_PTBT     ; a boat of player 2's carries I_P1
+        BCC EB_SET
+        LDY EB_P
+        BEQ EB_SETR
+        ORA #I_P1
+EB_SETR LDY EB_R
+EB_SET  JSR MAP_SET
         JSR STAT_SHOW     ; gold, unless an info page is up
         JSR SND_BUY
         CLC
         RTS
 EB_NOIT LDA #R_ITEM
         BNE EB_NO
+
 EB_LAND LDA #R_LAND
         BNE EB_NO
 EB_TAKEN LDA #R_TAKEN

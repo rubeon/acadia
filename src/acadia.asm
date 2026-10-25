@@ -167,6 +167,7 @@ VI_CLR  STA (ZPTR),Y
 CODE2   =  $5000
         *= CODE2
         .INCLUDE "economy.asm"
+        .INCLUDE "boats.asm"
         .INCLUDE "sound.asm"
         .INCLUDE "pause.asm"
         .INCLUDE "screens.asm"

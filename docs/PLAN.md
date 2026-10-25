@@ -34,7 +34,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 | T-MAP-1 | Island layout data (own design, Utopia-like shape and size), harbours | R-SCR-2 | T-DES-1 | Two islands drawn from data; grid ↔ screen mapping routines | done |
 | T-MAP-2 | Tile get/set with owner; "fort adjacent" check | R-RULE-5,7 | T-MAP-1 | Check routine verified on test layouts | done |
 | T-SPR-1 | P/M setup, two cursors moved by joysticks, snap to grid | R-CTL-1, R-SCR-4 | T-MAP-1 | Both cursors move smoothly, stay on screen | done |
-| T-ECO-1 | Purchase: key 1-9 at cursor, price check, refusal sound stub, item counts | R-RULE-1,7, R-CTL-2 | T-MAP-2, T-SPR-1 | Items appear, gold decreases, illegal squares refused | done (keys 1-6; 7 waits for T-ECO-5, 8/9 for T-EVT-1, and are refused until then) |
+| T-ECO-1 | Purchase: key 1-9 at cursor, price check, refusal sound stub, item counts | R-RULE-1,7, R-CTL-2 | T-MAP-2, T-SPR-1 | Items appear, gold decreases, illegal squares refused | done (keys 1-6, 8/9 since T-EVT-1; 7 waits for T-ECO-5 and is refused until then) |
 | T-CTL-1 | Pause: `PAUSEK` edge flag in `input.asm`, freeze tic/clock/sprites/AI, mute and restore POKEY, PAUSED on status bar | R-CTL-6 | T-SVC-3, T-SVC-4 | Pausing mid-round and resuming changes nothing in game state; no keys or stick act while paused | done |
 | T-SCR-1 | Setup screen: rounds, round length, mode | R-MODE-3 | T-SVC-4 | Values validated to original ranges | done (D31; CPU from T-AI-1) |
 
@@ -54,7 +54,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 | ID | Task | Reqs | Deps | Acceptance | Status |
 |---|---|---|---|---|---|
 | T-DES-2 | Resolve Q2 (P/M allocation, multiplexing) | R-SCR-4 | T-SPR-1 | Decision recorded | done (D13, D14; colour detail D29) |
-| T-EVT-1 | Boats: buy into harbour, pick up/drop (key 0), move, island collision | R-RULE-6, R-CTL-3 | T-DES-2 | Boats can't cross land | todo |
+| T-EVT-1 | Boats: buy into harbour, pick up/drop (key 0), move, island collision | R-RULE-6, R-CTL-3 | T-DES-2 | Boats can't cross land | done (D32) |
 | T-EVT-2 | Fish schools: spawn, drift, fishing income | R-RULE-4,6 | T-EVT-1 | 1 gold per 50 tic-overlaps | todo |
 | T-EVT-3 | Pirates: spawn, move, sink fishing boats, sunk by PT boats, fort protection | R-RULE-6 | T-EVT-1 | Verify sinking rules against original `$54F8-$5600` first | todo |
 | T-EVT-4 | Weather: rain/storm/hurricane, movement, crop gold, damage, boat sinking | R-RULE-5 | T-EVT-1, T-MAP-2 | Damage rates and thresholds as specified | todo |
