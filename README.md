@@ -57,6 +57,7 @@ Output is an XEX load file for now; an ATR disk image will follow.
 | `src/map.asm` | Map grid: items on squares, fort-adjacency check |
 | `src/economy.asm` | Buying items with the digit keys |
 | `src/sound.asm` | Sound hooks (stubs until the sound driver) |
+| `src/pause.asm` | Pause and resume with P |
 | `src/display.asm` | Display list, DLI, VBI, map drawing (mode 5) |
 | `src/vars.asm` | All RAM variables, one block at `$3900` |
 | `src/tiles.asm` | Tile-number equates (generated) |

@@ -42,6 +42,7 @@ Current files are marked ✓; the rest are planned (see PLAN.md).
 | `src/events.asm` | game | Weather, fish, pirates, boats, collisions, rebels |
 | `src/ai.asm` | game | CPU governor |
 | `src/screens.asm` | game | Setup, round summary, game over |
+| `src/pause.asm` ✓ | game | Pause (D19): `PAUSE_KEY` (P toggles), `PAUSE_ON` (save status line 1, show PAUSED, `PAL_DIM`, silence AUDC1-4), `PAUSE_OFF` (restore, `PAL_NORM`, `TIC_SYNC`); `PAUSED` flag |
 | `src/math.asm` ✓ | services | On 24-bit `M_NUM`: `MUL8` (8×8), `MULN` (×8, C = overflow), `DIVN` (÷8, remainder in A), `DIVNR` (÷8 rounded half up); C set on ÷0 |
 | `src/hw_5200.asm` | platform | 5200 equivalents (later) |
 
@@ -95,7 +96,7 @@ provide the same symbols.
 | `KEY` | Item key 0-9 pressed this poll (edge), else `$FF` |
 | `KEYPL` | Player the key belongs to: 0 or 1 (D17: fire held picks the player; neither → 0); `$FF` if both held, and then `KEY` is `$FF` too |
 | `CONKEY` | (planned) START/SELECT/OPTION held bits, for the D18 info displays |
-| `PAUSEK` | (planned) 1 on the poll where the pause key was pressed (P on the 800, PAUSE on a 5200 keypad), D19 |
+| `PAUSEK` | 1 on the poll where the pause key was pressed (P on the 800, PAUSE on a 5200 keypad), D19 |
 
 5200 mapping (later): analog sticks thresholded into `JOY*`; keypad
 0-9 → `KEY` (per controller); second fire button → mode toggle (key 0)
@@ -110,9 +111,11 @@ the saved pointer `OLDVBD`. No OS routine is ever called.
 
 ```
 VBI (every frame):   FRAME++, ATRACT=0, sound driver step, sprite positions
-Main loop:           wait for FRAME change
+Main loop:           wait for FRAME change, then GAME_FRAME:
                      INPUT_POLL
-                     cursor/boat movement from input
+                     PAUSE_KEY: P toggles pause; while paused skip
+                       everything below except the status echo
+                     cursor/boat movement from input, buying (ECO_KEY)
                      if tic due (20 Hz): run TIC tasks
                        weather, fish, pirates, collisions, timers
                        once per second: clock, AI decision
@@ -122,7 +125,8 @@ Main loop:           wait for FRAME change
 
 Rule: anything that writes screen memory or colour registers mid-frame
 must be safe against the DLI (only the DLI writes hardware colours; game
-code writes RAM copies).
+code writes RAM copies). The map palette is such a copy: `MAPPAL`, set
+by `PAL_NORM` (D16 colours) or `PAL_DIM` (half brightness, pause).
 
 ## 6. CPU budget
 

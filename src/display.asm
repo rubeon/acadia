@@ -56,6 +56,7 @@ DI_STAT LDA STATTPL,X
         JSR MAP_ROWS
         JSR MAP_DRAW
         JSR PM_INIT
+        JSR PAL_NORM
 
         LDA #<DLI_MAP
         STA VDSLST
@@ -100,16 +101,16 @@ DLI_MAP
         PHA
         TYA
         PHA
-        LDA #C_SEA
-        LDX #C_GRASS
-        LDY #C_DARK
+        LDA MAPPAL      ; map palette from RAM (PAL_NORM / PAL_DIM)
+        LDX MAPPAL+1
+        LDY MAPPAL+2
         STA WSYNC
         STA COLBK
         STX COLPF0
         STY COLPF1
-        LDA #C_LIGHT
+        LDA MAPPAL+3
         STA COLPF2
-        LDA #C_WHITE
+        LDA MAPPAL+4
         STA COLPF3
         LDA ROWFONT     ; font for map row 0
         STA CHBASE
@@ -125,6 +126,36 @@ DLI_MAP
         TAX
         PLA
         RTI
+
+; ---------------------------------------------------------------------
+;  PAL_NORM -- map colours to the D16 palette
+;  PAL_DIM  -- map colours at half brightness (pause)
+;  The DLI copies MAPPAL (sea, grass, dark, light, white) to the
+;  colour registers each frame.  Trash A, X.
+; ---------------------------------------------------------------------
+PAL_NORM
+        LDX #4
+PN_LOOP LDA PALTAB,X
+        STA MAPPAL,X
+        DEX
+        BPL PN_LOOP
+        RTS
+PAL_DIM
+        LDX #4
+PD_LOOP LDA PALTAB,X
+        AND #$0F        ; luminance
+        LSR A
+        AND #$0E
+        STA PD_LUM
+        LDA PALTAB,X
+        AND #$F0        ; hue
+        ORA PD_LUM
+        STA MAPPAL,X
+        DEX
+        BPL PD_LOOP
+        RTS
+
+PALTAB  .BYTE C_SEA,C_GRASS,C_DARK,C_LIGHT,C_WHITE
 
 ; ---------------------------------------------------------------------
 ;  DLI_ROW -- end of map row n-1: switch to row n's font
