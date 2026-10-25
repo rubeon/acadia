@@ -231,7 +231,7 @@ is that plus one. Items replace a square's terrain tile on screen;
 
 **Cell kinds** (`ISLKIND`): `K_SEA` 0, `K_LAND` 1 (any land: buildable,
 blocks boats), `K_HARB` 3 (one per island), `K_ROCK` 4 (plays as sea,
-Q8); `K_P1` (bit 7) marks player 1's squares.
+D30); `K_P1` (bit 7) marks player 1's squares.
 
 **Grid ↔ screen** (`display.asm`): `MAP_IDX` (column, row → grid
 index), `MAP_PUT` (draw a tile at column, row), `HPOS_COL` (P/M

@@ -231,7 +231,7 @@ new islands with interesting coastlines and at least the original's
 land area, balanced between the two sides (D21, D22). Two candidate
 pairs are in T-MAP-1; see Q9.
 
-## Q8. Rocks as obstacles
+## Q8. Rocks as obstacles — **Closed (D30): decorative only**
 
 Rock tiles (`T_ROCK`) are decorative for now: they play as open sea and
 sit where boats rarely go (inside bays). Making rocks block boats,
