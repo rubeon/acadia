@@ -107,6 +107,7 @@ VI_CLR  STA (ZPTR),Y
 
         .INCLUDE "input.asm"
         .INCLUDE "math.asm"
+        .INCLUDE "rand.asm"
         .INCLUDE "display.asm"
         .INCLUDE "vars.asm"
 

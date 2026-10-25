@@ -32,7 +32,7 @@ Current files are marked ✓; the rest are planned (see PLAN.md).
 | `src/font_map.asm` ✓ | services | Map fonts at `$3000` (+ `$4800`…), generated |
 | `src/islands.asm` ✓ | game | `TILECH` tile→character code, `ROWFONT` font per row, `ISLKIND` cell kinds, `ISLTILE` terrain tiles; generated |
 | `src/tic.asm` | services | Frame → 20 Hz tic and seconds (NTSC/PAL) |
-| `src/rand.asm` | services | `RAND_N` (0..N−1) on POKEY `RANDOM` |
+| `src/rand.asm` ✓ | services | `RAND_N`: unbiased 0..N−1 (N = 0 → any byte) from POKEY `RANDOM`, mask and reject; keeps X, Y |
 | `src/text.asm` | services | Print strings/numbers into mode 2 lines |
 | `src/sprites.asm` | services | Player/missile objects, movement, multiplexing |
 | `src/sound.asm` | services | POKEY SFX and music driver (VBI) |
