@@ -69,6 +69,12 @@ Per player:
 4. 10 gold flat. This does **not** count toward "gold earned this
    round" (used by the GDP score); items 1-3 do.
 
+Gold earned during the round (fish caught, rain on crops, `INC_GOLD`
+`$54D2`) also counts as earned. Earned gold is added by `AWARD_GOLD`
+(`$5A0E`), kept in one byte per player, and reset after scoring
+(`$5B6C`). Gold itself is a 16-bit total with **no cap** (D26 caps it
+at 9999 in Acadia).
+
 ## Population  [`$5A32`]
 
 Rates are per 1000 (tenths of a percent).

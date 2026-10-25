@@ -1,5 +1,6 @@
 ; =====================================================================
-;  ECONOMY.ASM -- buying items (T-ECO-1); income and scoring follow
+;  ECONOMY.ASM -- buying items (T-ECO-1) and the end of a round
+;  (T-ECO-2: income; population and score follow)
 ;
 ;  A digit key 1-9 buys that item on the square under the buying
 ;  player's cursor (KEYPL, D17).  Prices are the original's
@@ -105,6 +106,120 @@ EB_GOLD LDA #R_GOLD
 EB_NO   JSR SND_REFUSE
         SEC
         RTS
+
+; ---------------------------------------------------------------------
+;  ECO_ROUND -- end of a round, as the original's $59CD: income for both
+;  players, then (T-ECO-3/4) population and score.  Redraws the status
+;  bar.  Trashes A, X, Y.
+; ---------------------------------------------------------------------
+ECO_ROUND
+        LDX #0
+        JSR ECO_INCOME
+        LDX #1
+        JSR ECO_INCOME
+        JMP STAT_DRAW
+
+; ---------------------------------------------------------------------
+;  ECO_INCOME -- player X's income for the round ($59CD-$5A0C)
+;    earned = 4 x factories + fishing boats
+;           + min(30, factories x (schools + hospitals) + hospitals)
+;  "earned" goes to GOLD and RGOLD; then 10 more go to GOLD only.
+;  Trashes A, X, Y.
+; ---------------------------------------------------------------------
+ECO_INCOME
+        STX EC_P
+        TXA             ; Y = player x 10, for COUNT
+        BEQ EI_P0
+        LDA #10
+EI_P0   STA EC_CI
+        TAY
+        LDA COUNT+I_FACT,Y
+        LDX #4
+        JSR MUL8        ; 4 per factory (MUL8 keeps Y)
+        LDA M_NUM       ; + 1 per fishing boat
+        CLC
+        ADC COUNT+I_FSBT,Y
+        STA EG_AMT
+        LDA M_NUM+1
+        ADC #0
+        STA EG_AMT+1
+        LDA COUNT+I_SCHL,Y      ; productivity bonus
+        CLC
+        ADC COUNT+I_HOSP,Y
+        TAX
+        LDA COUNT+I_FACT,Y
+        JSR MUL8        ; factories x (schools + hospitals)
+        LDA M_NUM
+        CLC
+        ADC COUNT+I_HOSP,Y      ; + hospitals
+        STA M_NUM
+        LDA M_NUM+1
+        ADC #0
+        BNE EI_CAP      ; 256 or more
+        LDA M_NUM
+        CMP #30
+        BCC EI_BON
+EI_CAP  LDA #30         ; capped at 30
+EI_BON  CLC
+        ADC EG_AMT
+        STA EG_AMT
+        LDA EG_AMT+1
+        ADC #0
+        STA EG_AMT+1
+        LDX EC_P
+        JSR ECO_EARN
+        LDA #10         ; flat 10, not counted as earned ($5A24)
+        STA EG_AMT
+        LDA #0
+        STA EG_AMT+1
+        LDX EC_P
+        JMP ECO_GIVE
+
+; ---------------------------------------------------------------------
+;  ECO_EARN -- player X earns EG_AMT gold: added to GOLD and to RGOLD
+;  (gold earned this round, used by the GDP score), like the original's
+;  AWARD_GOLD ($5A0E).  RGOLD is 16 bits (D11) and stops at $FFFF.
+;  ECO_GIVE -- add EG_AMT to GOLD only.
+;  GOLD stops at 9999 (D26).  Trash A, Y; X kept.
+; ---------------------------------------------------------------------
+ECO_EARN
+        TXA
+        ASL A
+        TAY
+        CLC
+        LDA RGOLD,Y
+        ADC EG_AMT
+        STA RGOLD,Y
+        LDA RGOLD+1,Y
+        ADC EG_AMT+1
+        STA RGOLD+1,Y
+        BCC ECO_GIVE
+        LDA #$FF
+        STA RGOLD,Y
+        STA RGOLD+1,Y
+ECO_GIVE
+        TXA
+        ASL A
+        TAY
+        CLC
+        LDA GOLD,Y
+        ADC EG_AMT
+        STA GOLD,Y
+        LDA GOLD+1,Y
+        ADC EG_AMT+1
+        STA GOLD+1,Y
+        BCS EG_CAP
+        CMP #>9999      ; over 9999 ($270F)?
+        BCC EG_DONE
+        BNE EG_CAP
+        LDA GOLD,Y
+        CMP #<9999+1
+        BCC EG_DONE
+EG_CAP  LDA #<9999
+        STA GOLD,Y
+        LDA #>9999
+        STA GOLD+1,Y
+EG_DONE RTS
 
 ; Prices in gold bars, by item key (the original's PRICES, $5910)
 PRICES  .BYTE 0         ; 0: unused

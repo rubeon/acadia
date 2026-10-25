@@ -107,10 +107,10 @@ SI_STD  STA STATUS2+ST_STD
 HEXTAB  .SBYTE "0123456789ABCDEF"
 
 ; ---------------------------------------------------------------------
-;  Test-build demo clock: placeholder game state counted down by the
-;  tic so the status bar (R-SCR-1) shows live values.  Replaced by the
-;  real round logic in M3.  10 rounds of 30 s, 100 gold each, +10 gold
-;  at the end of every round.
+;  Test-build demo clock: placeholder round timing counted down by the
+;  tic so the status bar (R-SCR-1) shows live values, until the setup
+;  screen and real round flow (T-SCR-1/2).  10 rounds of 30 s, 100 gold
+;  each; ECO_ROUND runs at the end of every round.
 ; ---------------------------------------------------------------------
 DEMO_INIT
         LDA #10
@@ -138,19 +138,7 @@ DEMO_SEC
         STA CURTRN
 DS_RND  LDA TRNLEN
         STA REMSEC
-        LDX #0          ; +10 gold for each player
-DS_GOLD CLC
-        LDA GOLD,X
-        ADC #10
-        STA GOLD,X
-        LDA GOLD+1,X
-        ADC #0
-        STA GOLD+1,X
-        INX
-        INX
-        CPX #4
-        BNE DS_GOLD
-        ; fall through
+        JMP ECO_ROUND   ; income etc.; redraws the status bar
 
 ; ---------------------------------------------------------------------
 ;  STAT_DRAW -- status line 1: both players' gold, rounds left and the
