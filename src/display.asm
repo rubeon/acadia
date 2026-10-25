@@ -112,11 +112,13 @@ DLI_MAP
         STA COLPF2
         LDA MAPPAL+4
         STA COLPF3
+        LDA HELPON
+        BNE DM_HELP
         LDA ROWFONT     ; font for map row 0
         STA CHBASE
         LDA HP3ROW      ; player 3 (fish) position for row 0
         STA HPOSP3
-        LDA #1
+DM_ROWS         LDA #1
         STA DLIROW
         LDA #<DLI_ROW   ; the rest of this frame's DLIs are map rows
         STA VDSLST
@@ -128,6 +130,11 @@ DLI_MAP
         TAX
         PLA
         RTI
+DM_HELP LDA #>HLPFONT     ; help screen (HELP.ASM): its font, no fish;
+        STA CHBASE      ; HDLIST has no row DLIs
+        LDA #0
+        STA HPOSP3
+        BEQ DM_ROWS     ; always
 
 ; ---------------------------------------------------------------------
 ;  PAL_NORM -- map colours to the D16 palette
@@ -397,3 +404,17 @@ SUDLIST
         .BYTE DL_MODE2,DL_MODE2,DL_MODE2,DL_MODE2,DL_MODE2
         .BYTE DL_JVB
         .WORD SUDLIST
+
+; Help screen (HELP.ASM): status bar, then 11 mode 5 lines in the help
+; font; same page as DLIST, like SUDLIST
+HDLIST
+        .BYTE DL_BLANK8,DL_BLANK8,DL_BLANK8
+        .BYTE DL_LMS+DL_MODE2
+        .WORD STATUS1
+        .BYTE DL_DLI+DL_MODE2           ; DLI_MAP: colours, help font
+        .BYTE DL_LMS+DL_MODE5
+        .WORD HELPSCR
+        .BYTE DL_MODE5,DL_MODE5,DL_MODE5,DL_MODE5,DL_MODE5
+        .BYTE DL_MODE5,DL_MODE5,DL_MODE5,DL_MODE5,DL_MODE5
+        .BYTE DL_JVB
+        .WORD HDLIST

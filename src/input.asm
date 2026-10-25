@@ -11,6 +11,7 @@
 ;    KEY           item key 0-9 pressed this poll, or $FF for none
 ;                  (edge triggered: reported once per key press)
 ;    PAUSEK        1 on the poll the pause key (P) was pressed, else 0
+;    HELPK         1 on the poll H or HELP (XL/XE) was pressed, else 0
 ;    KEYPL         player the key belongs to (D17): the one holding
 ;                  fire; neither holding fire -> 0; both -> the key is
 ;                  dropped (KEY and KEYPL = $FF).  $FF with no key.
@@ -46,6 +47,7 @@ INPUT_POLL
         STA CONKEY
         LDA #0
         STA PAUSEK
+        STA HELPK
         LDA #$FF
         STA KEY
         STA KEYPL
@@ -62,6 +64,10 @@ IP_HELD LDA KEYDOWN
         AND #$3F        ; ignore SHIFT / CONTROL
         CMP #KC_P
         BEQ IP_PAUS
+        CMP #KC_H
+        BEQ IP_HELP
+        CMP #KC_HELP
+        BEQ IP_HELP
         LDX #9
 IP_FIND CMP KEYTAB,X
         BEQ IP_GOT
@@ -69,6 +75,8 @@ IP_FIND CMP KEYTAB,X
         BPL IP_FIND
 IP_DONE RTS
 IP_PAUS INC PAUSEK      ; P: pause key (D19)
+        RTS
+IP_HELP INC HELPK       ; H or HELP: help screen (D34)
         RTS
 IP_GOT  STX KEY
         LDA FIRE1       ; whose key is it? (D17)
@@ -87,9 +95,11 @@ IP_BOTH LDA #$FF        ; both on fire: ambiguous, drop the key
         RTS
 
 KC_P    =  $0A          ; keyboard code of P
+KC_H    =  $39          ; keyboard code of H
+KC_HELP =  $11          ; keyboard code of the XL/XE HELP key
 
 ; Keyboard codes for the digit keys 0-9
 KEYTAB  .BYTE $32,$1F,$1E,$1A,$18,$1D,$1B,$33,$35,$30
 
-; Input variables (JOY0/1, FIRE0/1, KEY, KEYPL, PAUSEK, KEYDOWN) live in
+; Input variables (JOY0/1, FIRE0/1, KEY, KEYPL, PAUSEK, HELPK, KEYDOWN) live in
 ; VARS.ASM.

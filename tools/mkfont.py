@@ -419,6 +419,8 @@ def build_pair(name, desc, left, right, beach):
             sys.exit("row %d needs %d coast tiles; max %d" % (r, len(rowtiles[r]), PER_FONT))
         fonts[-1] += rowtiles[r]
         rowfont.append(len(fonts) - 1)
+    if len(fonts) > len(FONT_ADDR):
+        sys.exit("pair %s needs %d map fonts; only %d fit" % (name, len(fonts), len(FONT_ADDR)))
     code = {}
     for t in range(NFIX):
         code[t] = 2 * t
@@ -477,7 +479,60 @@ def banner(name, what):
             "; " + "=" * 69, ""]
 
 
-FONT_ADDR = [0x3000, 0x4800, 0x4C00, 0x5000]
+FONT_ADDR = [0x3000, 0x4800]   # map fonts; $4C00 holds the help font
+
+# ---------------------------------------------------------------------
+#  Help font (T-SCR-3): the fixed tiles at their usual codes, then 3 x 5
+#  letters and digits for mode 5 text.  A glyph's code is its screen
+#  code + HELP_OFS (digits $30-$39, letters $41-$5A); space is code 0,
+#  the blank sea tile.  Glyph pixels are 11: yellow (PF2), or white
+#  (PF3) when the character is inverse.
+# ---------------------------------------------------------------------
+HELP_ADDR = 0x4C00
+HELP_OFS = 32
+GLYPHS = {
+    "0": ["###", "#.#", "#.#", "#.#", "###"], "1": [".#.", "##.", ".#.", ".#.", "###"],
+    "2": ["##.", "..#", ".#.", "#..", "###"], "3": ["##.", "..#", ".#.", "..#", "##."],
+    "4": ["#.#", "#.#", "###", "..#", "..#"], "5": ["###", "#..", "##.", "..#", "##."],
+    "6": [".##", "#..", "###", "#.#", "###"], "7": ["###", "..#", ".#.", ".#.", ".#."],
+    "8": ["###", "#.#", "###", "#.#", "###"], "9": ["###", "#.#", "###", "..#", "##."],
+    "A": [".#.", "#.#", "###", "#.#", "#.#"], "B": ["##.", "#.#", "##.", "#.#", "##."],
+    "C": [".##", "#..", "#..", "#..", ".##"], "D": ["##.", "#.#", "#.#", "#.#", "##."],
+    "E": ["###", "#..", "##.", "#..", "###"], "F": ["###", "#..", "##.", "#..", "#.."],
+    "G": [".##", "#..", "#.#", "#.#", ".##"], "H": ["#.#", "#.#", "###", "#.#", "#.#"],
+    "I": ["###", ".#.", ".#.", ".#.", "###"], "J": ["..#", "..#", "..#", "#.#", ".#."],
+    "K": ["#.#", "#.#", "##.", "#.#", "#.#"], "L": ["#..", "#..", "#..", "#..", "###"],
+    "M": ["#.#", "###", "###", "#.#", "#.#"], "N": ["##.", "#.#", "#.#", "#.#", "#.#"],
+    "O": [".#.", "#.#", "#.#", "#.#", ".#."], "P": ["##.", "#.#", "##.", "#..", "#.."],
+    "Q": [".#.", "#.#", "#.#", "##.", ".##"], "R": ["##.", "#.#", "##.", "#.#", "#.#"],
+    "S": [".##", "#..", ".#.", "..#", "##."], "T": ["###", ".#.", ".#.", ".#.", ".#."],
+    "U": ["#.#", "#.#", "#.#", "#.#", "###"], "V": ["#.#", "#.#", "#.#", "#.#", ".#."],
+    "W": ["#.#", "#.#", "###", "###", "#.#"], "X": ["#.#", "#.#", ".#.", "#.#", "#.#"],
+    "Y": ["#.#", "#.#", ".#.", ".#.", ".#."], "Z": ["###", "..#", ".#.", "#..", "###"],
+    ":": ["...", ".#.", "...", ".#.", "..."], "-": ["...", "...", "###", "...", "..."],
+    ".": ["...", "...", "...", "...", ".#."],
+}
+
+
+def screen_code(ch):
+    """Atari screen code of an ASCII character (as .SBYTE gives it)."""
+    a = ord(ch)
+    return a - 32 if 32 <= a < 96 else a
+
+
+def help_font():
+    """Return the help font's bytes (128 characters, 1K)."""
+    font = [0] * 1024
+    for t in range(NFIX):
+        l, r = tile_bytes(FIXED[t][3])
+        font[16 * t:16 * t + 8], font[16 * t + 8:16 * t + 16] = l, r
+    for ch, g in GLYPHS.items():
+        code = screen_code(ch) + HELP_OFS
+        assert 2 * NFIX <= code < 128, ch
+        for y, row in enumerate(g):
+            font[8 * code + 2 + y] = sum(3 << (6 - 2 * x) for x, c in enumerate(row) if c == "#")
+    return font
+
 
 
 def write_png(path, rgb, w, h):
@@ -563,6 +618,16 @@ def main():
                 out.append("; tile %d: %s%s" % (t, comment, " (inverse chars)" if inv else ""))
                 out.append("        .BYTE " + hexes(l))
                 out.append("        .BYTE " + hexes(r))
+    out.append("")
+    out.append("; help font (T-SCR-3): fixed tiles, then 3 x 5 letters and digits at")
+    out.append("; screen code + HELP_OFS")
+    out.append("        *= $%04X" % HELP_ADDR)
+    out.append("HLPFONT")
+    hf = help_font()
+    last = max(screen_code(c) for c in GLYPHS) + HELP_OFS
+    for i in range(0, 8 * (last + 1), 8):
+        out.append("        .BYTE " + hexes(hf[i:i + 8]))
+    out.append("HELP_OFS = %d" % HELP_OFS)
     open("src/font_map.asm", "w").write("\n".join(out) + "\n")
 
     # islands.asm

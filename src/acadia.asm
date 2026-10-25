@@ -62,7 +62,9 @@ GAME_FRAME
 GF_OVER CMP #GS_OVER
         BNE GF_RUN
         JMP OVER_FRAME  ; game over: wait for fire or a key
-GF_RUN  JSR PAUSE_KEY   ; P: pause / resume (D19)
+GF_RUN  JSR HELP_KEY    ; H / HELP: price list (D34)
+        BNE GF_SHOW     ; help is up: nothing moves
+        JSR PAUSE_KEY   ; P: pause / resume (D19)
         BNE GF_SHOW     ; paused: nothing moves
         LDA GSTATE
         BNE GF_TICS     ; round summary: nothing moves either
@@ -175,6 +177,7 @@ CODE2   =  $5000
         .INCLUDE "fish.asm"
         .INCLUDE "sound.asm"
         .INCLUDE "pause.asm"
+        .INCLUDE "help.asm"
         .INCLUDE "screens.asm"
         .INCLUDE "setup.asm"
         .INCLUDE "vars.asm"
