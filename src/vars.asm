@@ -25,6 +25,7 @@ FIRE0   *= *+1          ; 1 = trigger held
 FIRE1   *= *+1
 KEY     *= *+1          ; item key 0-9 pressed this poll, else $FF
 KEYPL   *= *+1          ; player the key belongs to (0/1), else $FF
+PAUSEK  *= *+1          ; 1 when P was pressed this poll
 KEYDOWN *= *+1          ; key held flag (edge detection)
 
 ; ---------------------------------------------------------------------
@@ -32,6 +33,8 @@ KEYDOWN *= *+1          ; key held flag (edge detection)
 ; ---------------------------------------------------------------------
 FRAME   *= *+1          ; frame counter, incremented by the VBI
 DLIROW  *= *+1          ; DLI_ROW: map row whose font is set next
+MAPPAL  *= *+5          ; map colours the DLI uses (PAL_NORM / PAL_DIM)
+PD_LUM  *= *+1          ; PAL_DIM: work byte
 ROWLO   *= *+MAPROWS    ; map row addresses, low bytes
 ROWHI   *= *+MAPROWS    ; map row addresses, high bytes
 MROW    *= *+1          ; MAP_DRAW: current square row
@@ -86,6 +89,12 @@ ES_P100 *= *+1          ; ECO_SCORE: pop / 100
 ES_DIV  *= *+1          ; ECO_SCORE: second divisor (3 or 12)
 ES_SUM  *= *+1          ; ECO_SCORE: score so far
 EG_AMT  *= *+2          ; ECO_EARN / ECO_GIVE: amount
+
+; ---------------------------------------------------------------------
+;  Pause (PAUSE.ASM)
+; ---------------------------------------------------------------------
+PAUSED  *= *+1          ; 1 while the game is paused
+PSAVE   *= *+40         ; status line 1 while PAUSED is shown
 
 ; ---------------------------------------------------------------------
 ;  Services (RAND.ASM)

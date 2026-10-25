@@ -48,17 +48,25 @@ START
 MAIN    LDA FRAME       ; wait for the next frame
 MN_WAIT CMP FRAME
         BEQ MN_WAIT
+        JSR GAME_FRAME
+        JMP MAIN
+
+; ---------------------------------------------------------------------
+;  GAME_FRAME -- one frame of the game, called by the main loop
+; ---------------------------------------------------------------------
+GAME_FRAME
         JSR INPUT_POLL
+        JSR PAUSE_KEY   ; P: pause / resume (D19)
+        BNE GF_SHOW     ; paused: nothing moves
         JSR CUR_MOVE
         JSR ECO_KEY     ; buy with digit keys (D17)
         JSR TIC_POLL
-MN_TIC  JSR TIC_NEXT    ; run every due tic
-        BCC MN_SHOW
-        BNE MN_TIC      ; not a new second
+GF_TIC  JSR TIC_NEXT    ; run every due tic
+        BCC GF_SHOW
+        BNE GF_TIC      ; not a new second
         JSR DEMO_SEC
-        JMP MN_TIC
-MN_SHOW JSR SHOW_INPUT
-        JMP MAIN
+        JMP GF_TIC
+GF_SHOW JMP SHOW_INPUT
 
 ; ---------------------------------------------------------------------
 ;  SHOW_INPUT -- echo the input layer state on status line 2
@@ -201,6 +209,7 @@ VI_CLR  STA (ZPTR),Y
         .INCLUDE "map.asm"
         .INCLUDE "economy.asm"
         .INCLUDE "sound.asm"
+        .INCLUDE "pause.asm"
         .INCLUDE "display.asm"
         .INCLUDE "vars.asm"
 
