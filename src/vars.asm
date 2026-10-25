@@ -45,4 +45,19 @@ STATUS2 *= *+40         ; status bar line 2 (screen memory)
 RN_N    *= *+1          ; RAND_N: range
 RN_M    *= *+1          ; RAND_N: bit mask
 
+; ---------------------------------------------------------------------
+;  Game tic (TIC.ASM)
+; ---------------------------------------------------------------------
+LASTFR  *= *+1          ; FRAME at the last TIC_POLL
+TICDUE  *= *+1          ; tics due, not yet taken by TIC_NEXT
+TICPH   *= *+1          ; phase in the frame pattern
+TICOFS  *= *+1          ; pattern start in TICPAT (NTSC or PAL)
+TICLEN  *= *+1          ; pattern length (3 NTSC, 5 PAL)
+TICSEC  *= *+1          ; tic within the second, 0-19
+
+; ---------------------------------------------------------------------
+;  Test-build demo (ACADIA.ASM)
+; ---------------------------------------------------------------------
+DEMOSEC *= *+1          ; seconds since start, shown on status line 2
+
 VAREND
