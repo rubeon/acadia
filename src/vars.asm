@@ -26,6 +26,7 @@ FIRE1   *= *+1
 KEY     *= *+1          ; item key 0-9 pressed this poll, else $FF
 KEYPL   *= *+1          ; player the key belongs to (0/1), else $FF
 PAUSEK  *= *+1          ; 1 when P was pressed this poll
+HELPK   *= *+1          ; 1 when H or HELP was pressed this poll
 CONKEY  *= *+1          ; console keys held: b0 START, b1 SELECT, b2 OPTION
 KEYDOWN *= *+1          ; key held flag (edge detection)
 
@@ -110,6 +111,16 @@ SV1     *= *+2          ; SHOW_PAIR: player 2's number (must follow SV0)
 ; ---------------------------------------------------------------------
 PAUSED  *= *+1          ; 1 while the game is paused
 PSAVE   *= *+40         ; status line 1 while PAUSED is shown
+
+; ---------------------------------------------------------------------
+;  Help screen (HELP.ASM)
+; ---------------------------------------------------------------------
+HELPON  *= *+1          ; 1 while the help screen is up
+HL_K    *= *+1          ; HELP_DRAW: item 1-9
+HL_T    *= *+1          ; HL_AT: column
+HL_C    *= *+1          ; HL_STR: colour bit
+HL_H    *= *+1          ; HL_NUM: hundreds
+HL_D    *= *+1          ; HL_NUM: ones
 
 ; ---------------------------------------------------------------------
 ;  Services (RAND.ASM)

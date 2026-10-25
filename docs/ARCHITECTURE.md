@@ -46,6 +46,7 @@ Current files are marked ✓; the rest are planned (see PLAN.md).
 | `src/screens.asm` ✓ (rounds, summary, game over, info) | game | `GAME_NEW` (defaults: 10 rounds of 30 s; tests) / `GAME_START` (current `NUMTRN`, `TRNLEN`); `GSTATE` play → `GS_SUM1` round scores (3 s) → `GS_SUM2` totals (3 s) → next round or `GS_OVER` (final scores, winner on line 2; fire or a key, once let go, goes back to the setup screen). `GAME_SEC` (clock, `ROUND_END`), `GAME_TIC` (summary timing), `OVER_FRAME`; `INFO_KEYS` / `STAT_SHOW` (D18 info pages while a console key is held); `STAT_LINE` / `STAT_DRAW`, `SHOW_PAIR` |
 | `src/setup.asm` ✓ | game | Setup screen (R-MODE-3, D31), `GSTATE` = `GS_SETUP`: `SETUP_INIT` (defaults, once), `SETUP_ENTER` (own display list `SUDLIST`, text in the map's screen memory, cursors hidden; waits until everything is let go), `SETUP_FRAME` (stick/SELECT pick a line, stick left/right or digits change it, START/fire calls `GAME_START`). Values in `SU_VAL`: rounds 1-50, seconds 30-120, players 1-2, CPU level 1-3 |
 | `src/pause.asm` ✓ | game | Pause (D19): `PAUSE_KEY` (P toggles), `PAUSE_ON` (save status line 1, show PAUSED, `PAL_DIM`, silence AUDC1-4), `PAUSE_OFF` (restore, `PAL_NORM`, `TIC_SYNC`); `PAUSED` flag |
+| `src/help.asm` ✓ | game | Purchase help screen (T-SCR-3, D34): `HELP_KEY` (H / HELP toggles it during a round, not while paused), `HELP_ON` (`HELP_DRAW` fills `HELPSCR`: key, map tile, name, price per item; cursors hidden; `HDLIST`), `HELP_OFF` (`DLIST`, `TIC_SYNC`, cursors back); `HELPON` flag, read by `DLI_MAP` to load `HLPFONT` |
 | `src/math.asm` ✓ | services | On 24-bit `M_NUM`: `MUL8` (8×8), `MULN` (×8, C = overflow), `DIVN` (÷8, remainder in A), `DIVNR` (÷8 rounded half up); C set on ÷0 |
 | `src/hw_5200.asm` | platform | 5200 equivalents (later) |
 
@@ -60,11 +61,12 @@ Current files are marked ✓; the rest are planned (see PLAN.md).
 | `$00CB-$00CE` | `ZPTR` (2), `OLDVBD` (2) — in use |
 | `$2000-$2FFF` | Code: start-up, services, map and display (`acadia.asm` up to `display.asm`) |
 | `$3000-$33FF` | Map font 0 (1K aligned): fixed tiles + coast tiles of the first rows |
-| `$3400-$37FF` | Map screen memory (`$3400-$35B7` used: 11 rows × 40); the setup screen uses `$3400-$36E3` while it is up (`GAME_START` redraws the map) |
-| `$3800-$38FF` | Display lists: `DLIST` (map) and `SUDLIST` (setup), same page so one store to `SDLSTL` switches |
+| `$3400-$37FF` | Map screen memory (`$3400-$35B7` used: 11 rows × 40); the setup screen uses `$3400-$36E3` while it is up (`GAME_START` redraws the map); the help screen `HELPSCR` is `$35C0-$3777` |
+| `$3800-$38FF` | Display lists: `DLIST` (map), `SUDLIST` (setup) and `HDLIST` (help), same page so one store to `SDLSTL` switches |
 | `$3900-$3FFF` | RAM variables (`src/vars.asm`), cleared by `VARS_INIT` at start-up |
 | `$4000-$43FF` | P/M graphics, double-line resolution, 1K aligned (`PMAREA`); `$4400-$47FF` spare |
-| `$4800-$4FFF` | Map fonts 1-2 if needed (1K each; the current islands use font 1 at `$4800`) |
+| `$4800-$4BFF` | Map font 1 (the islands need 2 fonts; `mkfont.py` stops if they need more) |
+| `$4C00-$4FFF` | Help font `HLPFONT` (generated): fixed tiles at their map codes, 3 × 5 letters and digits at screen code + `HELP_OFS` |
 | `$5000-$6FFF` | Code block 2 (`CODE2`): game logic (`economy.asm`, `boats.asm`, `fish.asm`, `sound.asm`, `pause.asm`, `screens.asm`, `setup.asm`, …); about `$608C` used so far |
 | `$7000-$BFFF` | Free: more code, fonts, music, screens |
 
@@ -101,6 +103,7 @@ provide the same symbols.
 | `KEYPL` | Player the key belongs to: 0 or 1 (D17: fire held picks the player; neither → 0); `$FF` if both held, and then `KEY` is `$FF` too |
 | `CONKEY` | START/SELECT/OPTION held bits (b0/b1/b2), for the D18 info displays |
 | `PAUSEK` | 1 on the poll where the pause key was pressed (P on the 800, PAUSE on a 5200 keypad), D19 |
+| `HELPK` | 1 on the poll where H or the XL/XE HELP key was pressed (help screen, D34) |
 
 5200 mapping (later): analog sticks thresholded into `JOY*`; keypad
 0-9 → `KEY` (per controller); second fire button → mode toggle (key 0)
@@ -119,6 +122,8 @@ Main loop:           wait for FRAME change, then GAME_FRAME:
                      INPUT_POLL
                      setup screen (GS_SETUP): SETUP_FRAME only
                      game over (GS_OVER): OVER_FRAME only
+                     HELP_KEY: H / HELP toggles the price list; while
+                       it is up skip everything below
                      PAUSE_KEY: P toggles pause; while paused skip
                        everything below except the status echo
                      cursor/boat movement from input, buying (ECO_KEY)

@@ -86,6 +86,21 @@ class Machine:
         self.cycles_last = steps
         return self.mpu.a, self.mpu.x, self.mpu.y, bool(self.mpu.p & self.mpu.CARRY)
 
+    def interrupt(self, name, limit=200000):
+        """Run an interrupt handler (DLI, VBI) up to its RTI."""
+        sentinel = 0xFFF0
+        self.mem[0x01FF] = sentinel >> 8       # RTI pulls P, then the address
+        self.mem[0x01FE] = sentinel & 0xFF
+        self.mem[0x01FD] = self.mpu.p
+        self.mpu.sp = 0xFC
+        self.mpu.pc = self.addr(name)
+        steps = 0
+        while self.mpu.pc != sentinel:
+            self.mpu.step()
+            steps += 1
+            if steps > limit:
+                raise RuntimeError("%s did not return" % name)
+
     def byte(self, name, offset=0):
         return self.mem[self.addr(name) + offset]
 
