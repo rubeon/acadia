@@ -215,8 +215,8 @@ MD_COL  LDX GIDX
 ;  Status bar template (screen codes), 2 lines of 40.  Copied into the
 ;  RAM status lines STATUS1/STATUS2 (VARS.ASM) by DISP_INIT.
 ; ---------------------------------------------------------------------
-STATTPL .SBYTE " ACADIA - UTOPIA FOR THE ATARI 800XL    "
-        .SBYTE "J0:0 F0:0 J1:0 F1:0 KEY:- FRM:00 S:00 N "
+STATTPL .SBYTE "GOLD       TURNS     TIME      GOLD     "
+        .SBYTE "J0:0 F0:0 J1:0 F1:0 KEY:- FRM:00      N "
 STATLEN =  80
 
 ; Offsets of the live fields in STATUS2
@@ -226,8 +226,13 @@ ST_J1   =  13
 ST_F1   =  18
 ST_KEY  =  24
 ST_FRM  =  30
-ST_SEC  =  35           ; seconds since start (hex, until text.asm)
 ST_STD  =  38           ; N or P: TV standard found by TIC_INIT
+
+; Offsets of the number fields in STATUS1 (R-SCR-1)
+ST_G0   =  5            ; player 1 gold, 4 digits
+ST_TRN  =  17           ; rounds left, 2 digits
+ST_TIME =  26           ; seconds left in the round, 3 digits
+ST_G1   =  36           ; player 2 gold, 4 digits
 
 ; ---------------------------------------------------------------------
 ;  MAP_IDX -- grid index of a square

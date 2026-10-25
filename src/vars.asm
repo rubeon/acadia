@@ -56,8 +56,21 @@ TICLEN  *= *+1          ; pattern length (3 NTSC, 5 PAL)
 TICSEC  *= *+1          ; tic within the second, 0-19
 
 ; ---------------------------------------------------------------------
-;  Test-build demo (ACADIA.ASM)
+;  Text (TEXT.ASM)
 ; ---------------------------------------------------------------------
-DEMOSEC *= *+1          ; seconds since start, shown on status line 2
+TCNT    *= *+1          ; TXT_DEC: field width
+TOFS    *= *+1          ; TXT_DEC: field start
+TPOS    *= *+1          ; TXT_DEC: current digit position
+TLAST   *= *+1          ; TXT_DEC: last character of the field
+
+; ---------------------------------------------------------------------
+;  Game state (ARCHITECTURE section 7 names).  For now only the test
+;  build's demo clock in ACADIA.ASM drives these.
+; ---------------------------------------------------------------------
+GOLD    *= *+4          ; gold, 16 bits per player: P0 at GOLD, P1 at GOLD+2
+NUMTRN  *= *+1          ; number of rounds in the game
+CURTRN  *= *+1          ; rounds played so far
+TRNLEN  *= *+1          ; round length in seconds
+REMSEC  *= *+1          ; seconds left in this round
 
 VAREND

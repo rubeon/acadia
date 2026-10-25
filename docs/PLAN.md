@@ -24,7 +24,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 | T-SVC-1 | `math.asm`: 8×8→16 multiply, 16÷8 divide with rounding | R-RULE-2 | — | Unit check against table of known results | done |
 | T-SVC-2 | `rand.asm`: `RAND_N` uniform 0..N−1 | R-RULE-4 | — | Histogram over 10,000 calls within ±5% | done |
 | T-SVC-3 | `tic.asm`: 20 Hz tic + seconds, NTSC and PAL | R-TIME-1..3 | — | 60 s of game clock = 60 s real on both (`-ntsc`/`-pal`) | done |
-| T-SVC-4 | `text.asm`: print string / 1-4 digit decimal into status lines | R-SCR-1 | — | Status bar shows rounds, seconds, gold | todo |
+| T-SVC-4 | `text.asm`: print string / 1-4 digit decimal into status lines | R-SCR-1 | — | Status bar shows rounds, seconds, gold | done |
 | T-DES-1 | Switch the map to mode 5 (D12) and draw the final tile set with the D16 palette; start from the art in branch `mockup/q3-palette` (`tools/mkmock.py`) | R-SCR-2, R-SCR-5 | — | Font with all terrain and 9 items in main; Q3 closed (D16) | done |
 
 ## M2 — Map and building (playable sandbox)
