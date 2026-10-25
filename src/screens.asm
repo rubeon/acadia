@@ -7,8 +7,8 @@
 ;    GS_SUM1   round over: each player's score for the round (3 s)
 ;    GS_SUM2   then each player's total score (3 s); then the next
 ;              round, or game over after the last one
-;    GS_OVER   final scores and the winner; fire or any key starts a
-;              new game
+;    GS_OVER   final scores and the winner; fire or any key goes back
+;              to the setup screen (SETUP.ASM, GS_SETUP)
 ;  as the original does at $53EA-$549E ("SCORES", then "TOTALS", then
 ;  the next round or "FINAL SCORE").  The original holds each summary
 ;  in a busy loop of 12,500 RAND calls; 3 s here is an estimate of it.
@@ -18,8 +18,8 @@
 ;  (D18): START both total scores, SELECT both populations, OPTION
 ;  both scores for the last round.
 ;
-;  The setup screen (T-SCR-1) will set NUMTRN and TRNLEN; until then
-;  GAME_NEW uses DEF_NUMTRN rounds of DEF_TRNLEN seconds.
+;  The setup screen (SETUP.ASM) sets NUMTRN and TRNLEN and calls
+;  GAME_START; GAME_NEW starts a game with the defaults (tests).
 ; =====================================================================
 
 GS_PLAY =  0
@@ -27,8 +27,8 @@ GS_SUM1 =  1
 GS_SUM2 =  2
 GS_OVER =  3
 
-DEF_NUMTRN = 10         ; rounds per game until T-SCR-1
-DEF_TRNLEN = 30         ; seconds per round until T-SCR-1
+DEF_NUMTRN = 10         ; default rounds per game (setup screen)
+DEF_TRNLEN = 30         ; default seconds per round (setup screen)
 SUM_TICS =  60          ; each summary page: 60 tics = 3 s
 
 ; Status line 1 layout of the two-number pages (offsets)
@@ -229,7 +229,8 @@ GO_LINE LDX #40         ; status line 2
 
 ; ---------------------------------------------------------------------
 ;  OVER_FRAME -- each frame of the game-over screen: once everything is
-;  let go, fire or any key starts a new game.  Trashes A, X, Y.
+;  let go, fire or any key goes back to the setup screen.
+;  Trashes A, X, Y.
 ; ---------------------------------------------------------------------
 OVER_FRAME
         LDA FIRE0
@@ -244,7 +245,7 @@ OF_DONE RTS
 OF_ARMED
         CMP #0
         BEQ OF_DONE
-        JMP GAME_NEW
+        JMP SETUP_ENTER ; back to the setup screen (R-MODE-4)
 
 ; ---------------------------------------------------------------------
 ;  INFO_KEYS -- during a round: show the info page for a held console
