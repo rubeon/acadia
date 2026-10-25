@@ -114,6 +114,8 @@ DLI_MAP
         STA COLPF3
         LDA ROWFONT     ; font for map row 0
         STA CHBASE
+        LDA HP3ROW      ; player 3 (fish) position for row 0
+        STA HPOSP3
         LDA #1
         STA DLIROW
         LDA #<DLI_ROW   ; the rest of this frame's DLIs are map rows
@@ -158,7 +160,8 @@ PD_LOOP LDA PALTAB,X
 PALTAB  .BYTE C_SEA,C_GRASS,C_DARK,C_LIGHT,C_WHITE
 
 ; ---------------------------------------------------------------------
-;  DLI_ROW -- end of map row n-1: switch to row n's font
+;  DLI_ROW -- end of map row n-1: switch to row n's font and set
+;  player 3's horizontal position for row n (HP3ROW, FISH.ASM)
 ; ---------------------------------------------------------------------
 DLI_ROW
         PHA
@@ -168,6 +171,8 @@ DLI_ROW
         LDA ROWFONT,X
         STA WSYNC
         STA CHBASE
+        LDA HP3ROW,X    ; player 3 (fish) position for row n
+        STA HPOSP3
         INC DLIROW
         PLA
         TAX
@@ -180,6 +185,8 @@ DLI_ROW
 VBI_D
         INC FRAME
         JSR SPR_VBI
+        LDA #0          ; player 3 hidden above the map (DLIs set it)
+        STA HPOSP3
         LDA #0
         STA ATRACT
         LDA #<DLI_MAP   ; first DLI of the next frame

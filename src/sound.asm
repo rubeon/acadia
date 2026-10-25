@@ -17,3 +17,8 @@ SND_ROUND
 ; SND_REFUSE -- a purchase was refused (the original's "razz")
 SND_REFUSE
         RTS
+
+; SND_FISH -- a fishing boat caught 1 gold (the original's "pling",
+; $5FD4)
+SND_FISH
+        RTS

@@ -162,6 +162,37 @@ BM_R0   *= *+1
 BM_R1   *= *+1
 
 ; ---------------------------------------------------------------------
+;  Fish (FISH.ASM, T-EVT-2)
+; ---------------------------------------------------------------------
+FACT    *= *+2          ; per school: 1 while it is out
+FXL     *= *+2          ; per school: position, 8.8 (FXH = column + 8)
+FXH     *= *+2
+FYL     *= *+2          ; per school: FYH = line + 8
+FYH     *= *+2
+FVX     *= *+2          ; per school: signed speed, 1/5 pixel per tic
+FVY     *= *+2
+FDRAWN  *= *+2          ; per school: P3 line drawn at, $FF = none
+FCNT    *= *+2          ; per player: touches towards the next gold
+FANIM   *= *+1          ; animation frame 0-3
+FATIC   *= *+1          ; tics in this frame
+HP3ROW  *= *+MAPROWS    ; player 3 horizontal position per map row (DLI)
+FT_I    *= *+1          ; FISH_TIC: school
+FN_T    *= *+1          ; FISH_NEW: band
+FM_L    *= *+1          ; FISH_MOVE: new position
+FM_H    *= *+1
+FB_X    *= *+1          ; FISH_BLK: saved X
+FB_C    *= *+1          ; FISH_BLK: column
+FC_I    *= *+1          ; FISH_CATCH: school
+FC_P    *= *+1          ; FISH_CATCH: player
+FC_T    *= *+1          ; FISH_CATCH: work
+FS_V    *= *+2          ; FISH_SHOW: show school 0 / 1 this frame
+FS_I    *= *+1          ; FISH_SHOW: school
+FS_A0   *= *+1          ; FISH_SHOW: school 0's rows
+FS_A1   *= *+1
+FS_N    *= *+1          ; FISH_SHOW: bytes left
+FW_R0   *= *+1          ; FW_ROWS: first row
+
+; ---------------------------------------------------------------------
 ;  Setup screen (SETUP.ASM)
 ; ---------------------------------------------------------------------
 SU_VAL  *= *+4          ; rounds, seconds per round, players, CPU level

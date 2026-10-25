@@ -56,6 +56,10 @@ PI_CLR  STA PMAREA+$100,X       ; $4100-$43FF: missiles and players
         STA PCOLR0
         LDA #C_CUR1
         STA PCOLR1
+        LDA #0          ; player 3: schools of fish (FISH.ASM)
+        STA SIZEP3
+        LDA #C_FISH
+        STA PCOLR3
         LDA #PRI_MAP
         STA GPRIOR
         LDA #GR_PM

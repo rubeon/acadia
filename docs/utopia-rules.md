@@ -163,7 +163,13 @@ Checked per player after scoring:
 - Weather: `rand(100) == 0` starts weather (rain, tropical storm or
   hurricane) if a weather sprite is free. Existing weather has a 1-in-10
   chance per tic to change velocity by one step N/S/E/W.
-- Fish: `rand(20) == 0` spawns a school of fish.
+- Fish: `rand(20) == 0` spawns a school of fish into one of 2 slots
+  (`$520D`): band top or bottom 50/50, X = 0 heading east at 3 or
+  X = 167 heading west at -3. Each tic, 1 in 10 a ±1 kick to vx or
+  vy, with no limit. Blocked like pirates (land, buildings and parked
+  PT boats; parked fishing boats are passed). A school that leaves the
+  screen is removed. Green dot sprite, 4 animation frames, behind the
+  playfield.
 - Pirates: `rand(100) == 0` spawns a pirate ship.
 
 ## Weather effects  [`$5691`, `$573E`]
@@ -181,6 +187,9 @@ Checked per player after scoring:
 
 - A fishing boat over a school of fish earns 1 gold per 50
   tic-overlaps (with the "pling" sound). This works parked or moving.
+  Parked: the boat on the card under the school's centre; moving: the
+  boat sprite touching the school (`$549F-$54D2`). The count is per
+  player and is not reset at round end; schools are never used up.
 - PT boats sink pirates.
 - Pirates sink fishing boats unless a fort is adjacent.
 - A fishing boat can be sunk by the other player's boat (routine at `$55BF`; exact rule not yet verified).

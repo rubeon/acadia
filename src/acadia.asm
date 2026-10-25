@@ -75,8 +75,12 @@ GF_TIC  JSR TIC_NEXT    ; run every due tic
         BNE GF_T1       ; not a new second
         JSR GAME_SEC
 GF_T1   JSR GAME_TIC
+        LDA GSTATE
+        BNE GF_TIC      ; fish only during a round
+        JSR FISH_TIC
         JMP GF_TIC
-GF_SHOW LDA GSTATE
+GF_SHOW JSR FISH_SHOW
+        LDA GSTATE
         CMP #GS_OVER
         BEQ GF_DONE     ; line 2 holds the winner now
         JMP SHOW_INPUT
@@ -168,6 +172,7 @@ CODE2   =  $5000
         *= CODE2
         .INCLUDE "economy.asm"
         .INCLUDE "boats.asm"
+        .INCLUDE "fish.asm"
         .INCLUDE "sound.asm"
         .INCLUDE "pause.asm"
         .INCLUDE "screens.asm"
