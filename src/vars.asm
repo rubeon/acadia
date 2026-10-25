@@ -51,6 +51,18 @@ CURROW  *= *+2          ;   and row 0-10
 CUJOY   *= *+1          ; CUR_MOVE: joystick bits being handled
 
 ; ---------------------------------------------------------------------
+;  Map grid (MAP.ASM)
+; ---------------------------------------------------------------------
+MAPITEM *= *+220        ; item on each square, 0 = none (20 x 11)
+MKIND   *= *+1          ; MAP_GET: kind of the square
+MG_X    *= *+1          ; MAP_GET / MAP_SET: saved column
+MS_ITEM *= *+1          ; MAP_SET: item being placed
+FN_COL  *= *+1          ; FORT_NEAR: square asked about
+FN_ROW  *= *+1
+FN_I    *= *+1          ; FORT_NEAR: neighbour 0-7
+FN_C    *= *+1          ; FORT_NEAR: neighbour column
+
+; ---------------------------------------------------------------------
 ;  Services (RAND.ASM)
 ; ---------------------------------------------------------------------
 RN_N    *= *+1          ; RAND_N: range

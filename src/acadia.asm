@@ -39,6 +39,7 @@ OLDVBD  =  $CD          ; 2-byte saved deferred VBI vector
 START
         CLD
         JSR VARS_INIT
+        JSR MAP_INIT
         JSR DISP_INIT
         JSR CUR_INIT
         JSR TIC_INIT
@@ -212,6 +213,7 @@ VI_CLR  STA (ZPTR),Y
         .INCLUDE "text.asm"
         .INCLUDE "sprites.asm"
         .INCLUDE "cursor.asm"
+        .INCLUDE "map.asm"
         .INCLUDE "display.asm"
         .INCLUDE "vars.asm"
 

@@ -2,7 +2,7 @@
 """Run routines from build/acadia.xex on a 6502 core (py65), for tests.
 
 Loads every XEX segment into a flat 64K memory, reads label addresses
-from the ATasm label file and literal equates (NAME = $xx) from src/,
+from the ATasm label file and literal equates (NAME = $xx or NAME = 123) from src/,
 and calls a routine by name with A/X/Y set, returning when it RTSes.
 No Atari hardware is emulated: use it for pure routines (math, tables,
 map logic), not for display or interrupt code.
@@ -36,12 +36,14 @@ class Machine:
             parts = line.split()
             if len(parts) == 2:
                 self.sym[parts[1].upper()] = int(parts[0], 16)
-        equ = re.compile(r"^([A-Z_][A-Z0-9_]*)\s*=\s*\$([0-9A-F]+)\s*(;|$)", re.I)
+        equ = re.compile(r"^([A-Z_][A-Z0-9_]*)\s*=\s*(\$[0-9A-F]+|[0-9]+)\s*(;|$)", re.I)
         for path in glob.glob(os.path.join(ROOT, "src", "*.asm")):
             for line in open(path):
                 m = equ.match(line)
                 if m:
-                    self.sym.setdefault(m.group(1).upper(), int(m.group(2), 16))
+                    v = m.group(2)
+                    v = int(v[1:], 16) if v.startswith("$") else int(v)
+                    self.sym.setdefault(m.group(1).upper(), v)
 
     def _load_xex(self, data):
         i = 0

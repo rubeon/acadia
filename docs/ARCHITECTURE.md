@@ -37,7 +37,7 @@ Current files are marked ✓; the rest are planned (see PLAN.md).
 | `src/sprites.asm` ✓ | services | P/M graphics (double-line, `$4000`): `PM_INIT`, `SPR_PUT` (player X at map pixel A, Y; redraws the shape when the line changes), `SPR_VBI` (HPOS from the deferred VBI). P0/P1 only so far; P2/P3, fifth player and multiplexing in M4 |
 | `src/cursor.asm` ✓ | game | The two cursors (R-CTL-1): `CUR_INIT`, `CUR_MOVE` (per frame: `JOY0`/`JOY1`, 1 map pixel per frame, snap to the nearest square on release, clamped to the map); `CURCOL`/`CURROW` = square under each cursor |
 | `src/sound.asm` | services | POKEY SFX and music driver (VBI) |
-| `src/map.asm` | game | Island layout, ownership, tile get/set, adjacency (fort) checks |
+| `src/map.asm` ✓ | game | Map grid: `MAP_INIT`, `MAP_GET` (column, row → item, `MKIND`; C = off map), `MAP_SET` (item 0-9 on a square, redrawn: item tile or the terrain), `FORT_NEAR` (fort on one of the 8 neighbours → C, owner) |
 | `src/economy.asm` | game | Purchases, end-of-round income, population, score |
 | `src/events.asm` | game | Weather, fish, pirates, boats, collisions, rebels |
 | `src/ai.asm` | game | CPU governor |
@@ -147,7 +147,7 @@ original's layout so the formulas port directly:
 | `RSCORE[P]`, `PRSCORE[P]` | 8-bit | this / previous round score |
 | `RGOLD[P]` | 16-bit | gold earned this round (8-bit in original; widened, R-RULE-8) |
 | `COUNT[P][1..9]` | 8-bit | number of each item |
-| `TILE[y][x]` | 8-bit | map grid: terrain + item + owner |
+| `MAPITEM` | 8-bit × 220 | item on each square, 0 = none, 1-9 (RAM); kind + owner in `ISLKIND` and terrain in `ISLTILE` (constant), all 20 × 11, index = row × 20 + column |
 | timers | 8-bit | `REMSEC`, `TICSEC`, `CURTRN`, `NUMTRN`, `TRNLEN` |
 | event counters | 8-bit | fishing, rain-on-crop, weather damage per player |
 

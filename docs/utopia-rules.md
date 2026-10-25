@@ -136,7 +136,9 @@ Checked per player after scoring:
 - Damage rate: hurricane 5, tropical storm 1, rain 0.
 - Storm damage accumulates per player; once over 125 an item under the
   storm can be destroyed and 0-101 population killed. Forts protect
-  adjacent squares.
+  adjacent squares: "adjacent" is the 8 squares around a square, not
+  the square itself, and a fort of either player counts
+  (`FORT_NEAR_MOB` `$564A`, `NBR_TBL` `$5689`; see D25).
 - Storms can sink boats, parked or moving (`$5591`, `$55BF`); fort protection here not yet verified.
 - Rain over crops: every 12 tic-overlaps award 1 gold (with sound).
 
