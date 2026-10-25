@@ -176,14 +176,14 @@ fifth player. Things to decide with it:
   storm differ by shape or animation only, or should a DLI recolour
   `COLPF3` to keep the original's two colours?
 
-## Q7. Rain and tropical storm colours
+## Q7. Rain and tropical storm colours — **Closed (D29): shape and animation only**
 
 From Q2. With weather on the single-colour fifth player (D13), rain
 and tropical storm can't keep the original's two colours for free; the
 hurricane already differs by size. Options: tell rain and storm apart
 by shape or animation only, or have a DLI recolour `COLPF3` on the
 storm's rows, which also recolours inverse-character tiles there
-(see Q3). Undecided.
+(see Q3). Decided 2026-10-25: shape and animation only, for now (D29).
 
 ## Q3. Item visuals and colours — **Closed (D16)**
 
