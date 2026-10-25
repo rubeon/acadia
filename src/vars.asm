@@ -73,6 +73,12 @@ EB_LO   *= *+1          ; ECO_BUY: gold after paying, low byte
 RGOLD   *= *+4          ; gold earned this round, 16 bits per player
 EC_P    *= *+1          ; ECO_INCOME etc.: player
 EC_CI   *= *+1          ; ECO_INCOME etc.: player x 10, for COUNT
+EC_P2   *= *+1          ; ECO_POP etc.: player x 2, for 16-bit values
+POP     *= *+4          ; population, 16 bits per player
+EP_P10  *= *+2          ; ECO_POP: round(pop / 10)
+EP_POS  *= *+2          ; ECO_POP: work value
+EP_FERT *= *+1          ; ECO_POP: fertility per 1000
+EP_MORT *= *+1          ; ECO_POP: mortality per 1000
 EG_AMT  *= *+2          ; ECO_EARN / ECO_GIVE: amount
 
 ; ---------------------------------------------------------------------

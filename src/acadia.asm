@@ -120,11 +120,7 @@ DEMO_INIT
         STA REMSEC
         LDA #0
         STA CURTRN
-        STA GOLD+1
-        STA GOLD+3
-        LDA #100
-        STA GOLD
-        STA GOLD+2
+        JSR ECO_INIT    ; 1000 people and 100 gold each
         JMP STAT_DRAW
 
 DEMO_SEC
