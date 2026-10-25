@@ -42,6 +42,23 @@ Boats are bought into the player's harbour and moved with the disc.
 - Side buttons: top shows total score, lower left island population,
   lower right previous round score.
 
+## Islands and harbours  [`$512F-$51A2`, `$5924`]
+
+Numbers only; the shapes are not reproduced here (D4, D21).
+
+- Each island is a list of 29 card positions (left `$512F`, right
+  `$514C`), so each island has **29 land squares**. Of these, 6 (left)
+  and 7 (right) are full-land cards; the rest are coastline-shaped
+  cards. Islands occupy card rows 2-8 of 12; rows 0-1 and 9-11 are sea.
+- Each player has **one harbour**, a single sea square next to the
+  island on its **outer** side, where bought boats appear
+  (`$5924`): player 0 at BACKTAB offset `$7A` (row 6, column 2, west of
+  the left island), player 1 at `$62` (row 4, column 18, east of the
+  right island). A purchase is refused if the harbour is occupied.
+- Fish and pirates enter in the top band (card row 1) or bottom band
+  (card row 10), so the islands keep a sea row between them and each
+  band.
+
 ## End-of-round income  [`$59CD`]
 
 Per player:

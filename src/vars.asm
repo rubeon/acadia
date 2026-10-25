@@ -30,10 +30,12 @@ KEYDOWN *= *+1          ; key held flag (edge detection)
 ;  Display (DISPLAY.ASM)
 ; ---------------------------------------------------------------------
 FRAME   *= *+1          ; frame counter, incremented by the VBI
+DLIROW  *= *+1          ; DLI_ROW: map row whose font is set next
 ROWLO   *= *+MAPROWS    ; map row addresses, low bytes
 ROWHI   *= *+MAPROWS    ; map row addresses, high bytes
 MROW    *= *+1          ; MAP_DRAW: current square row
 GIDX    *= *+1          ; MAP_DRAW: index into the tile grid
+MTILE   *= *+1          ; MAP_PUT: tile being drawn
 STATUS1 *= *+40         ; status bar line 1 (screen memory)
 STATUS2 *= *+40         ; status bar line 2 (screen memory)
 

@@ -218,14 +218,46 @@ Also: which keys show score / population / last round (original: side
 buttons) — console keys START/SELECT/OPTION are a natural fit.
 For the 5200: each controller has its own keypad, so this goes away.
 
-## Q5. PAL timing
+## Q5. PAL timing — **Closed (D20)**
 
 20 Hz from 50 Hz needs a 2-3 frame pattern; random-event rates per tic
-stay the same. Confirm that's acceptable vs. scaling to 25 Hz tics on
-PAL.
+stay the same. Decided 2026-10-24: 20 Hz on both, PAL via a 2-3 frame
+pattern, so everything matches in real time (D20).
 
-## Q6. Island shapes
+## Q6. Island shapes — **Closed (D21, D22)**
 
-The originals' exact shapes would be copied data. Plan: draw new
-islands of similar size and harbour placement so gameplay balance
-holds. Confirm the owner is happy with that.
+The originals' exact shapes would be copied data. Decided 2026-10-24:
+new islands with interesting coastlines and at least the original's
+land area, balanced between the two sides (D21, D22). Two candidate
+pairs are in T-MAP-1; see Q9.
+
+## Q8. Rocks as obstacles
+
+Rock tiles (`T_ROCK`) are decorative for now: they play as open sea and
+sit where boats rarely go (inside bays). Making rocks block boats,
+pirates and fish would add tactics (sheltered harbours, choke points)
+but changes how the original plays, and moving objects would need to
+steer around them. Undecided; no rocks block anything until decided.
+
+## Q9. Which island pair — **Closed (D24): pair B**
+
+T-MAP-1 offered two candidate pairs; the owner chose B on 2026-10-25
+(D24), and pair A was removed. Coasts are ragged at pixel level (D23).
+
+- **A: mirror pair.** The right island is the left one mirrored.
+  Perfectly fair by construction.
+- **B: different shapes, equal square count.** Same left island; the
+  right island has its own shape (arms to the west, a body to the
+  east, a southern tip).
+
+Numbers from the generator (land squares are all buildable):
+
+| Island | Land squares | Full / coast squares | Land pixels (share) | Coastline (px) |
+|---|---|---|---|---|
+| Left (A and B) | 35 | 6 / 29 | 1995 (89 %) | 398 |
+| Right A (mirror) | 35 | 6 / 29 | 1995 (89 %) | 398 |
+| Right B | 35 | 6 / 29 | 1977 (88 %) | 402 |
+
+All islands: land in rows 2-8 (one sea row clear of each band),
+columns 2-8 / 11-17 (channel columns 9-10 open), harbour on the outer
+side at row 4, one square in from the screen edge.
