@@ -50,6 +50,7 @@ Output is an XEX load file for now; an ATR disk image will follow.
 | `src/input.asm` | Input layer: joysticks, triggers, digit keys 0-9 |
 | `src/math.asm` | 24 × 8 multiply, 24 ÷ 8 divide (truncating and rounded) |
 | `src/rand.asm` | `RAND_N`: random number 0..N−1 |
+| `src/tic.asm` | 20 Hz game tic and seconds, NTSC and PAL |
 | `src/display.asm` | Display list, DLI, VBI, map drawing (mode 5) |
 | `src/vars.asm` | All RAM variables, one block at `$3900` |
 | `src/tiles.asm` | Tile-number equates (generated) |

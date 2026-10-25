@@ -35,12 +35,19 @@ START
         CLD
         JSR VARS_INIT
         JSR DISP_INIT
+        JSR TIC_INIT
 
 MAIN    LDA FRAME       ; wait for the next frame
 MN_WAIT CMP FRAME
         BEQ MN_WAIT
         JSR INPUT_POLL
-        JSR SHOW_INPUT
+        JSR TIC_POLL
+MN_TIC  JSR TIC_NEXT    ; run every due tic
+        BCC MN_SHOW
+        BNE MN_TIC      ; not a new second
+        INC DEMOSEC
+        JMP MN_TIC
+MN_SHOW JSR SHOW_INPUT
         JMP MAIN
 
 ; ---------------------------------------------------------------------
@@ -78,6 +85,26 @@ SI_FRM  LDA FRAME
         TAX
         LDA HEXTAB,X
         STA STATUS2+ST_FRM+1
+
+        LDA DEMOSEC     ; seconds since start
+        LSR A
+        LSR A
+        LSR A
+        LSR A
+        TAX
+        LDA HEXTAB,X
+        STA STATUS2+ST_SEC
+        LDA DEMOSEC
+        AND #$0F
+        TAX
+        LDA HEXTAB,X
+        STA STATUS2+ST_SEC+1
+        LDA #$2E        ; screen code "N"
+        LDX TICLEN
+        CPX #5
+        BNE SI_STD
+        LDA #$30        ; screen code "P"
+SI_STD  STA STATUS2+ST_STD
         RTS
 
 HEXTAB  .SBYTE "0123456789ABCDEF"
@@ -108,6 +135,7 @@ VI_CLR  STA (ZPTR),Y
         .INCLUDE "input.asm"
         .INCLUDE "math.asm"
         .INCLUDE "rand.asm"
+        .INCLUDE "tic.asm"
         .INCLUDE "display.asm"
         .INCLUDE "vars.asm"
 
