@@ -38,7 +38,7 @@ Current files are marked ✓; the rest are planned (see PLAN.md).
 | `src/cursor.asm` ✓ | game | The two cursors (R-CTL-1): `CUR_INIT`, `CUR_MOVE` (per frame: `JOY0`/`JOY1`, 1 map pixel per frame, snap to the nearest square on release, clamped to the map); `CURCOL`/`CURROW` = square under each cursor |
 | `src/sound.asm` ✓ (stubs) | services | Sound hooks `SND_BUY`, `SND_REFUSE` (RTS for now); the POKEY SFX and music driver (VBI) comes in M5 |
 | `src/map.asm` ✓ | game | Map grid: `MAP_INIT`, `MAP_GET` (column, row → item, `MKIND`; C = off map), `MAP_SET` (item 0-9 on a square, redrawn: item tile or the terrain), `FORT_NEAR` (fort on one of the 8 neighbours → C, owner) |
-| `src/economy.asm` ✓ (buying) | game | `ECO_KEY` (this frame's `KEY` → `ECO_BUY` for `KEYPL`), `ECO_BUY` (item at the cursor square: own free land, enough gold; C + `R_` reason on refusal), `PRICES`; `ECO_INIT` (1000 people, 100 gold each); `ECO_ROUND` (end of round, `$59CD`): `ECO_INCOME` and `ECO_POP` per player, then the score (T-ECO-4); `ECO_EARN` / `ECO_GIVE` add gold (earned or not; `GOLD` capped at 9999, D26) |
+| `src/economy.asm` ✓ (buying) | game | `ECO_KEY` (this frame's `KEY` → `ECO_BUY` for `KEYPL`), `ECO_BUY` (item at the cursor square: own free land, enough gold; C + `R_` reason on refusal), `PRICES`; `ECO_INIT` (1000 people, 100 gold each); `ECO_ROUND` (end of round, `$59CD`): `ECO_INCOME`, `ECO_POP`, `ECO_SCORE` per player (`RSCORE` → `PRSCORE`, new `RSCORE`, added to `SCORE`), then `RGOLD` reset; `ECO_EARN` / `ECO_GIVE` add gold (earned or not; `GOLD` capped at 9999, D26) |
 | `src/events.asm` | game | Weather, fish, pirates, boats, collisions, rebels |
 | `src/ai.asm` | game | CPU governor |
 | `src/screens.asm` | game | Setup, round summary, game over |

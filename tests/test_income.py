@@ -35,6 +35,13 @@ def setup(counts0, counts1=None, gold=(100, 100)):
         set_word("GOLD", p, gold[p])
 
 
+def income_both():
+    """ECO_INCOME for both players (ECO_ROUND also scores and then
+    resets the earned gold, which these checks read)."""
+    m.call("ECO_INCOME", x=0)
+    m.call("ECO_INCOME", x=1)
+
+
 def py_income(c):
     f, s, h, b = (c.get(k, 0) for k in (FACT, SCHL, HOSP, FSBT))
     return 4 * f + b + min(30, f * (s + h) + h)
@@ -42,7 +49,7 @@ def py_income(c):
 
 def check(what, counts0, counts1=None, gold=(100, 100)):
     setup(counts0, counts1, gold)
-    m.call("ECO_ROUND")
+    income_both()
     for p, c in enumerate((counts0, counts1 or {})):
         earned = py_income(c)
         want_gold = min(9999, gold[p] + earned + 10)
@@ -54,7 +61,7 @@ def check(what, counts0, counts1=None, gold=(100, 100)):
 # worked example (utopia-rules.md): earned 14, gold +24
 ex = {FACT: 2, CROP: 4, SCHL: 1, HOSP: 1, HOUS: 1, FSBT: 1}
 setup(ex)
-m.call("ECO_ROUND")
+income_both()
 if (word("GOLD", 0), word("RGOLD", 0)) != (124, 14):
     fail("worked example: gold %d, earned %d (want 124, 14)" % (word("GOLD", 0), word("RGOLD", 0)))
 else:
@@ -74,7 +81,7 @@ check("RGOLD over 255", {FACT: 60, FSBT: 30, SCHL: 1})            # 240+30+30 = 
 # earned gold accumulates over the round until scoring resets it
 setup({FACT: 1})
 set_word("RGOLD", 0, 7)                                          # e.g. fish caught
-m.call("ECO_ROUND")
+income_both()
 if word("RGOLD", 0) != 7 + 4:                                     # 1 factory earns 4
     fail("RGOLD did not add to gold earned during the round: %d" % word("RGOLD", 0))
 

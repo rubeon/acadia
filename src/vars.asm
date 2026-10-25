@@ -79,6 +79,12 @@ EP_P10  *= *+2          ; ECO_POP: round(pop / 10)
 EP_POS  *= *+2          ; ECO_POP: work value
 EP_FERT *= *+1          ; ECO_POP: fertility per 1000
 EP_MORT *= *+1          ; ECO_POP: mortality per 1000
+SCORE   *= *+4          ; total score, 16 bits per player
+RSCORE  *= *+2          ; this round's score, per player
+PRSCORE *= *+2          ; the round before's score, per player
+ES_P100 *= *+1          ; ECO_SCORE: pop / 100
+ES_DIV  *= *+1          ; ECO_SCORE: second divisor (3 or 12)
+ES_SUM  *= *+1          ; ECO_SCORE: score so far
 EG_AMT  *= *+2          ; ECO_EARN / ECO_GIVE: amount
 
 ; ---------------------------------------------------------------------

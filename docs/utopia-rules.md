@@ -104,7 +104,9 @@ Trust the code.
 
 ## Round score  [`$5ABD`]
 
-`p100 = pop / 100`, **truncated** (the plain divide `X_DIV`, `$5AC6`).
+`p100 = pop / 100`, **truncated** (the plain divide `X_DIV`, `$5AC6`),
+from the population after this round's update. A population under 100
+gives `p100 = 0`, which the original divides by; Acadia uses 1 (D28).
 Every other division here **rounds** (`X_DIVR`):
 
 - Housing: `min(30, round(round(houses * 500 / p100) / 3))` [`$5AD8`, `$5ADE`]
@@ -195,8 +197,7 @@ One player, start of round: population 1000, 2 factories, 4 crops,
 (An earlier version of this example truncated every division and got
 housing 16, GDP 11 and score 59; the original rounds them.)
 
-Not yet verified: whether the score routine `[$5ABD]` uses the
-population before or after this round's update. With the old
-population (`p100` = 10 here as well) this example gives the same
-result; a test case with a population near a multiple of 100 will
-tell them apart.
+The score uses the population **after** this round's update: the
+population routine (`$5A32`) runs for both players and stores the new
+values before the score routine (`$5ABA`) reads them back (`$5ABD`,
+commented "updated" in the disassembly).
