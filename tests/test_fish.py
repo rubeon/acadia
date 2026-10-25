@@ -15,7 +15,8 @@ from run6502 import Machine  # noqa: E402
 
 I_PTBT, I_FSBT, I_P1 = 8, 9, 0x80
 K_LAND, K_KIND = 1, 0x7F
-F_TOP, F_BOT = 12, 84
+F_TOP, F_BOT = 8, 80
+TOPY, BOTY = 12, 84             # schools on rows 0-1 and 9-10
 PM_MAP, HP_MAP = 24, 48
 ALWAYS, NEVER = 0, 5
 m = Machine()
@@ -57,6 +58,12 @@ def land(col, row):
     return m.byte("ISLKIND", row * 20 + col) & K_KIND == K_LAND
 
 
+def box_hit(fx, fy):
+    """Is any corner of a school at FXH fx, FYH fy on land?"""
+    return any(land((fx + dx) // 8, (fy + dy) // 8) for dx in (-8, -1) for dy in (-8, -1)
+               if fx + dx >= 0 and fy + dy >= 0)
+
+
 def gold(p):
     return m.byte("GOLD", 2 * p) | m.byte("GOLD", 2 * p + 1) << 8
 
@@ -88,7 +95,7 @@ print("spawned: %r / %r" % (school(0), school(1)))
 m.call("FISH_INIT")
 put(0, 20, F_TOP, vx=3)
 tic(10)
-want = 20 + 3 * 51 * 10 / 256
+want = 20 + 3 * 34 * 10 / 256
 if abs(school(0)["x"] - want) > 0.01 or school(0)["y"] != F_TOP:
     fail("drift: x %.3f, want %.3f" % (school(0)["x"], want))
 
@@ -108,21 +115,38 @@ col0 = next(c for c in range(20) if land(c, row))
 put(0, 8, row * 8 + 8, vx=15)
 tic(40)
 s = school(0)
-cc = (int(s["x"]) - 4) // 8
-if s["vx"] != 0 or not s["act"] or land(cc, row) or not land(cc + 1, row):
-    fail("east into the island: %r, centre column %d, coast at %d" % (s, cc, col0))
+fx = int(s["x"])
+if s["vx"] != 0 or not s["act"] or box_hit(fx, int(s["y"])) or not box_hit(fx + 2, int(s["y"])):
+    fail("east into the island: %r, coast at column %d" % (s, col0))
 print("stopped at the coast: %r" % s)
+
+# heading south from row 1 into the island: stops above the coast
+col = next(c for c in range(20) if land(c, 2))
+put(0, col * 8 + 8, TOPY, vy=15)
+tic(30)
+s = school(0)
+if s["vy"] != 0 or box_hit(int(s["x"]), int(s["y"])) or int(s["y"]) < 14:
+    fail("south into the island at column %d: %r" % (col, s))
+print("stopped above the coast: %r" % s)
+
+# a boat parked on top of a school doesn't trap it
+m.call("MAP_SET", a=I_PTBT, x=5, y=0)
+put(0, 5 * 8 + 8, 8, vx=15)
+tic(10)
+if school(0)["x"] < 5 * 8 + 8 + 5:
+    fail("school trapped under a parked PT boat: %r" % school(0))
+m.call("MAP_SET", a=0, x=5, y=0)
 
 # a parked PT boat stops a school, a parked fishing boat does not
 put(0, 8 + 9 * 8 - 12, 8, vx=15)              # row 0, heading for column 9
 m.call("MAP_SET", a=I_PTBT, x=9, y=0)
 tic(20)
-if school(0)["vx"] != 0 or (int(school(0)["x"]) - 4) // 8 != 8:
+if school(0)["vx"] != 0 or (int(school(0)["x"]) - 1) // 8 != 8:
     fail("parked PT boat did not stop the school: %r" % school(0))
 m.call("MAP_SET", a=I_FSBT | I_P1, x=9, y=0)
 put(0, 8 + 9 * 8 - 12, 8, vx=15)
 tic(6)
-if (int(school(0)["x"]) - 4) // 8 < 9:
+if (int(school(0)["x"]) - 1) // 8 < 9:
     fail("parked fishing boat stopped the school: %r" % school(0))
 
 # fishing, parked: P2's boat at (9, 0), school sitting on it
@@ -161,20 +185,20 @@ m.poke("BOATK", 0, 0)
 
 # FISH_SHOW: two schools in different rows, both drawn
 m.call("FISH_INIT")
-put(0, 8 + 20, F_TOP)          # rows 0-1
-put(1, 8 + 100, F_BOT)         # rows 9-10
+put(0, 8 + 20, TOPY)           # rows 0-1
+put(1, 8 + 100, BOTY)          # rows 9-10
 m.call("FISH_SHOW")
 pm = m.addr("PMAREA") + 0x380
 hp = [m.byte("HP3ROW", r) for r in range(11)]
 want = [20 + HP_MAP] * 2 + [0] * 7 + [100 + HP_MAP] * 2
 if hp != want:
     fail("HP3ROW %r, want %r" % (hp, want))
-for i, fy in ((0, F_TOP), (1, F_BOT)):
+for i, fy in ((0, TOPY), (1, BOTY)):
     line = fy - 8 + PM_MAP
     if not any(m.mem[pm + line:pm + line + 8]) or m.byte("FDRAWN", i) != line:
         fail("school %d not drawn at P3 line %d" % (i, line))
 # sharing a row: they take turns, frame by frame
-put(1, 8 + 100, F_TOP + 4)
+put(1, 8 + 100, TOPY + 4)
 shown = []
 for f in range(2):
     m.poke("FRAME", f)
@@ -183,10 +207,10 @@ for f in range(2):
 if sorted(shown) != [(False, True), (True, False)]:
     fail("schools sharing rows: shown %r" % shown)
 # moving: the old lines are cleared
-put(0, 8 + 20, F_BOT)
+put(0, 8 + 20, BOTY)
 m.poke("FACT", 1, 0)
 m.call("FISH_SHOW")
-old = F_TOP - 8 + PM_MAP
+old = TOPY - 8 + PM_MAP
 if any(m.mem[pm + old:pm + old + 8]):
     fail("old school lines not erased")
 
