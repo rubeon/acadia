@@ -70,6 +70,10 @@ COUNT   *= *+20         ; items owned: COUNT+k player 1, COUNT+10+k player 2
 EB_ITEM *= *+1          ; ECO_BUY: item being bought
 EB_P    *= *+1          ; ECO_BUY: buying player
 EB_LO   *= *+1          ; ECO_BUY: gold after paying, low byte
+RGOLD   *= *+4          ; gold earned this round, 16 bits per player
+EC_P    *= *+1          ; ECO_INCOME etc.: player
+EC_CI   *= *+1          ; ECO_INCOME etc.: player x 10, for COUNT
+EG_AMT  *= *+2          ; ECO_EARN / ECO_GIVE: amount
 
 ; ---------------------------------------------------------------------
 ;  Services (RAND.ASM)
