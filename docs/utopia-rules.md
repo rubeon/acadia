@@ -160,7 +160,19 @@ Checked per player after scoring:
 - PT boats sink pirates.
 - Pirates sink fishing boats unless a fort is adjacent.
 - A fishing boat can be sunk by the other player's boat (routine at `$55BF`; exact rule not yet verified).
-- Boats cannot run aground; the island edge blocks them.
+- Boats cannot run aground; the island edge blocks them. Blocking test
+  `$5320-$53CD`: the card one step ahead on each axis (X, then Y) is
+  checked; a blank GROM card is open sea, any GRAM card (island, coast,
+  building, parked boat) blocks, and the mover is nudged back 1 pixel
+  with that axis's velocity zeroed (`$538A-$53B4`). The status bar is
+  also kept out.
+  - Player boats pass parked PT and fishing boats (`$5382`, `$5386`);
+    pirates treat parked PT boats as land and pass only fishing boats
+    (`$537A-$5388`).
+  - It runs for player boats (not cursors), both pirates and both fish
+    schools (`$52FC-$531C`); weather passes over land.
+  - There are no rocks or other sea obstacles: only the islands and
+    what is on them block movement (see D30).
 
 ## Sprite allocation in the original
 
