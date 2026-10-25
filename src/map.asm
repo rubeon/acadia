@@ -7,7 +7,9 @@
 ;    terrain ISLTILE (constant, generated): the tile drawn when the
 ;            square is empty
 ;    item    MAPITEM (RAM): 0 = nothing, 1-9 = the item with that key
-;            number (1 fort ... 9 fishing boat)
+;            number (1 fort ... 9 fishing boat); a parked boat has
+;            I_P1 (bit 7) set if it is player 2's, since boats can
+;            park anywhere at sea (D32)
 ;  so removing an item just redraws the terrain.  All three are
 ;  20 x 11 grids, row-major, index = row x 20 + column (MAP_IDX).
 ;
@@ -24,6 +26,8 @@ I_HOUS  =  6
 I_REBL  =  7
 I_PTBT  =  8
 I_FSBT  =  9
+I_ITEM  =  $7F          ; mask: item number
+I_P1    =  $80          ; on a boat: it belongs to player 2 (D32)
 
 MAPSIZE =  220          ; 20 x 11 squares
 
@@ -86,15 +90,48 @@ MAP_SET
         LDA MS_ITEM
         STA MAPITEM,X
         BEQ MS_TERR
+        AND #I_ITEM
         CLC             ; item k is tile T_ITEM+k-1
         ADC #T_ITEM-1
         BNE MS_DRAW     ; always taken (T_ITEM > 0)
 MS_TERR LDA ISLTILE,X   ; empty: the square's own terrain
 MS_DRAW LDX MG_X
         JSR MAP_PUT     ; A = tile, X = column, Y = row
-        CLC
+        LDA MS_ITEM     ; player 2's boat: inverse, light parts white
+        BPL MS_DONE
+        LDA (ZPTR),Y    ; MAP_PUT left ZPTR/Y on the right character
+        ORA #$80
+        STA (ZPTR),Y
+        DEY
+        LDA (ZPTR),Y
+        ORA #$80
+        STA (ZPTR),Y
+MS_DONE CLC
         RTS
 MS_OFF  SEC
+        RTS
+
+; ---------------------------------------------------------------------
+;  MAP_HARB -- the square of player A's harbour (where boats launch)
+;  In: A = player 0/1.  Out: X = column, Y = row.  Trashes A.
+; ---------------------------------------------------------------------
+MAP_HARB
+        LSR A           ; player 1 -> K_P1 (bit 7)
+        ROR A
+        ORA #K_HARB
+        LDX #MAPSIZE-1
+MH_FIND CMP ISLKIND,X
+        BEQ MH_ROW
+        DEX
+        BNE MH_FIND     ; (square 0 is open sea, never a harbour)
+MH_ROW  TXA             ; index -> row, column
+        LDY #0
+MH_DIV  CMP #MAPSQ
+        BCC MH_DONE
+        SBC #MAPSQ      ; carry set
+        INY
+        BNE MH_DIV
+MH_DONE TAX
         RTS
 
 ; ---------------------------------------------------------------------

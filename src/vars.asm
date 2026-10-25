@@ -49,6 +49,8 @@ STATUS2 *= *+40         ; status bar line 2 (screen memory)
 ; ---------------------------------------------------------------------
 SPRY    *= *+2          ; map line each player is drawn at ($FF = none)
 SPRHP   *= *+2          ; horizontal position for SPR_VBI
+SPRSHP  *= *+2          ; shape each player shows (SH_CUR, SH_PT, SH_FISH)
+SP_P    *= *+1          ; SP_PAINT: player
 CURX    *= *+2          ; cursor map pixel column, 0-152
 CURY    *= *+2          ; cursor map pixel line, 0-80
 CURCOL  *= *+2          ; square under each cursor: column 0-19
@@ -74,6 +76,8 @@ COUNT   *= *+20         ; items owned: COUNT+k player 1, COUNT+10+k player 2
 EB_ITEM *= *+1          ; ECO_BUY: item being bought
 EB_P    *= *+1          ; ECO_BUY: buying player
 EB_LO   *= *+1          ; ECO_BUY: gold after paying, low byte
+EB_C    *= *+1          ; ECO_BUY: column of the square bought
+EB_R    *= *+1          ; ECO_BUY: row of the square bought
 RGOLD   *= *+4          ; gold earned this round, 16 bits per player
 EC_P    *= *+1          ; ECO_INCOME etc.: player
 EC_CI   *= *+1          ; ECO_INCOME etc.: player x 10, for COUNT
@@ -140,6 +144,22 @@ NUMTRN  *= *+1          ; number of rounds in the game
 CURTRN  *= *+1          ; rounds played so far
 TRNLEN  *= *+1          ; round length in seconds
 REMSEC  *= *+1          ; seconds left in this round
+
+; ---------------------------------------------------------------------
+;  Boats (BOATS.ASM, T-EVT-1)
+; ---------------------------------------------------------------------
+BOATK   *= *+2          ; per player: boat being steered (8, 9), 0 = cursor
+BOATPH  *= *+2          ; per player: speed phase, 0-2
+BK_P    *= *+1          ; BOAT_KEY: player
+BK_ITEM *= *+1          ; BOAT_KEY: item on the square
+BM_P    *= *+1          ; BOAT_MOVE: player
+BM_X    *= *+1          ; BOAT_MOVE: column pixel being tried
+BM_Y    *= *+1          ; BOAT_MOVE: line being tried
+BM_T    *= *+1          ; BM_FREE: work
+BM_C0   *= *+1          ; BM_FREE: first, last column and row covered
+BM_C1   *= *+1
+BM_R0   *= *+1
+BM_R1   *= *+1
 
 ; ---------------------------------------------------------------------
 ;  Setup screen (SETUP.ASM)

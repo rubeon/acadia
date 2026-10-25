@@ -6,7 +6,8 @@
 ;  stick lets go of an axis, the cursor glides on to the nearest
 ;  square on that axis.  The cursor stays on the map (columns 0-19,
 ;  rows 0-10).  CURCOL / CURROW give the square under each cursor,
-;  for buying (T-ECO-1).
+;  for buying (T-ECO-1).  While a player steers a boat (BOATS.ASM),
+;  the boat takes the cursor's place and position.
 ;
 ;  Positions are map pixels: CURX 0-152 (8 per column), CURY 0-80
 ;  (8 P/M lines per row, i.e. 16 scan lines).
@@ -32,6 +33,14 @@ J_RIGHT =  8
 ;  Trashes A, X, Y.
 ; ---------------------------------------------------------------------
 CUR_INIT
+        LDA #0          ; cursors again, no boat in hand
+        STA BOATK
+        STA BOATK+1
+        LDX #0
+        JSR SPR_SHAPE   ; A = SH_CUR = 0
+        LDX #1
+        LDA #SH_CUR
+        JSR SPR_SHAPE
         LDA #CUR0COL*8
         STA CURX
         LDA #CUR0ROW*8
@@ -52,10 +61,12 @@ CUR_INIT
 CUR_MOVE
         LDA JOY0
         LDX #0
-        JSR CU_ONE
+        JSR CU_PL
         LDA JOY1
         LDX #1
-        ; fall through
+CU_PL   LDY BOATK,X     ; steering a boat? (T-EVT-1)
+        BEQ CU_ONE
+        JMP BOAT_MOVE
 
 ; CU_ONE -- move cursor X by joystick bits A, then show it
 CU_ONE  STA CUJOY

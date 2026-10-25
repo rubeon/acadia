@@ -25,6 +25,30 @@ Item numbers match the keypad keys and are used throughout the game.
 Key 0 toggles the cursor between "place item" and "move boat" modes.
 Boats are bought into the player's harbour and moved with the disc.
 
+Buying in the original takes two keys (`$57B4-$57D0`): a digit only
+selects the item, ENTER buys it, CLEAR cancels (Acadia buys on the
+digit, D17).
+
+- **Buying a boat** (`$587F`, `$5924`, `$58CA-$58FC`): the cursor
+  position doesn't matter; the player's harbour must be empty, then
+  gold is checked and paid. The harbour card becomes the boat in the
+  owner's colour. There is no limit on the number of boats, but the
+  harbour must be cleared before the next one.
+- **Key 0, cursor mode** (`UNPARK_BOAT`, `$57D8-$580E`): the player's
+  own boat on the card under the cursor's centre is lifted off the
+  background and the cursor sprite becomes that boat. Anything else
+  is refused. Any of the player's parked boats can be picked up.
+- **Key 0, boat mode** (`PARK_BOAT`, `$5821-$5875`): the card under
+  the boat's centre must be empty sea (not land, coast, a building or
+  a boat, and not the status bar); the boat is drawn there and the
+  sprite is the cursor again. Refused while the boat is sinking.
+- **Steering** (`$5774-$579F`): the disc sets the velocity (boat speed
+  10, cursor 15); releasing it stops the boat dead. Boats stay on
+  screen. While steering, items 1-6 are refused (the square under the
+  boat is sea), boats can still be bought.
+- Nothing parks a steered boat at the end of a round.
+
+
 ## Game setup  [`$504C`, `$50F3`]
 
 - "TERM OF OFFICE": number of rounds, 1-50.
