@@ -17,7 +17,8 @@
 ; ---------------------------------------------------------------------
 ;  RAND_N -- uniform random number 0..N-1
 ;  In: A = N (1-255; 0 means 256, i.e. any byte).
-;  Out: A = random number.  Trashes RN_N, RN_M; X and Y kept.
+;  Out: A = random number, Z and N set from it.  Trashes RN_N, RN_M;
+;  X and Y kept.
 ; ---------------------------------------------------------------------
 RAND_N
         CMP #2
@@ -43,6 +44,7 @@ RN_TRY  LDA RANDOM
         AND RN_M
         CMP RN_N
         BCS RN_TRY      ; out of range: try again
+        ORA #0          ; Z and N from A, not from the CMP
         RTS
 RN_SMALL
         CMP #1          ; N = 1: always 0

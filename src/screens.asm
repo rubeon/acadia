@@ -70,6 +70,7 @@ GN_SC   STA SCORE,X
         JSR MAP_DRAW
         JSR ECO_INIT    ; 1000 people, 100 gold each
         JSR CUR_INIT
+        JSR FISH_INIT   ; no schools yet
         JSR TIC_INIT    ; the clock starts now, not when the last game ended
         LDA TRNLEN
         STA REMSEC

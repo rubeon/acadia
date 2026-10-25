@@ -34,13 +34,14 @@ Current files are marked ✓; the rest are planned (see PLAN.md).
 | `src/tic.asm` ✓ | services | 20 Hz tic from `FRAME` (D20): `TIC_INIT` (GTIA `PAL` → NTSC 0,0,1 / PAL 0,1,0,0,1 pattern), `TIC_POLL` (main loop: frames → `TICDUE`), `TIC_NEXT` (C = tic taken, A = `TICSEC` 0-19, Z = new second), `TIC_SYNC` (drop frames after a pause) |
 | `src/rand.asm` ✓ | services | `RAND_N`: unbiased 0..N−1 (N = 0 → any byte) from POKEY `RANDOM`, mask and reject; keeps X, Y |
 | `src/text.asm` ✓ | services | Status bar printing at offsets 0-79 (line 1, line 2): `TXT_STR` (screen codes ending in `$FF`), `TXT_DEC` (`M_NUM` in decimal, width 1-5, leading spaces, `*` if too wide) |
-| `src/sprites.asm` ✓ | services | P/M graphics (double-line, `$4000`): `PM_INIT`, `SPR_PUT` (player X at map pixel A, Y; redraws the shape when the line changes), `SPR_SHAPE` (player X shows `SH_CUR`, `SH_PT` or `SH_FISH` from `SHAPES`), `SPR_VBI` (HPOS from the deferred VBI). P0/P1 only so far; P2/P3, fifth player and multiplexing in M4 |
+| `src/sprites.asm` ✓ | services | P/M graphics (double-line, `$4000`): `PM_INIT`, `SPR_PUT` (player X at map pixel A, Y; redraws the shape when the line changes), `SPR_SHAPE` (player X shows `SH_CUR`, `SH_PT` or `SH_FISH` from `SHAPES`), `SPR_VBI` (HPOS from the deferred VBI). P0/P1 here; P3 (fish) is drawn by `fish.asm` and moved per map row by the DLIs; P2, the fifth player and their multiplexing come with pirates and weather |
 | `src/cursor.asm` ✓ | game | The two cursors (R-CTL-1): `CUR_INIT`, `CUR_MOVE` (per frame: `JOY0`/`JOY1`, 1 map pixel per frame, snap to the nearest square on release, clamped to the map); `CURCOL`/`CURROW` = square under each cursor |
 | `src/sound.asm` ✓ (stubs) | services | Sound hooks `SND_BUY`, `SND_REFUSE` (RTS for now); the POKEY SFX and music driver (VBI) comes in M5 |
 | `src/map.asm` ✓ | game | Map grid: `MAP_INIT`, `MAP_GET` (column, row → item, `MKIND`; C = off map), `MAP_SET` (item 0-9 on a square, redrawn: item tile or the terrain; a boat with `I_P1` is player 2's and is drawn inverse, D32), `MAP_HARB` (player → harbour square), `FORT_NEAR` (fort on one of the 8 neighbours → C, owner) |
 | `src/economy.asm` ✓ (buying) | game | `ECO_KEY` (this frame's `KEY` → `ECO_BUY` for `KEYPL`), `ECO_BUY` (item at the cursor square: own free land, enough gold; boats 8/9 into the player's empty harbour; C + `R_` reason on refusal); key 0 goes to `BOAT_KEY`, `PRICES`; `ECO_INIT` (1000 people, 100 gold each); `ECO_ROUND` (end of round, `$59CD`): `ECO_INCOME`, `ECO_POP`, `ECO_SCORE` per player (`RSCORE` → `PRSCORE`, new `RSCORE`, added to `SCORE`), then `RGOLD` reset; `ECO_EARN` / `ECO_GIVE` add gold (earned or not; `GOLD` capped at 9999, D26) |
 | `src/boats.asm` ✓ | game | Boats (T-EVT-1, D32): `BOAT_KEY` (key 0: lift the player's own boat under the cursor, or park the steered boat on the free sea square under its centre), `BOAT_MOVE` (called by `CUR_MOVE` while `BOATK` ≠ 0: 2 px per 3 frames, 8 directions, stops on release, never onto land: `BM_FREE` checks the 8 × 8 box). The boat uses the player's `CURX`/`CURY` |
-| `src/events.asm` | game | Weather, fish, pirates, boats, collisions, rebels |
+| `src/fish.asm` ✓ | game | Schools of fish (T-EVT-2, D33): `FISH_INIT` (start of a game), `FISH_TIC` (each tic of a round: 1 in 20 a school appears in a free slot, 1 in 10 a speed kick, move with land and parked PT boats stopping an axis, gone off the map, fishing touches: 50 earn 1 gold), `FISH_SHOW` (every frame: draws both schools in P3 and fills `HP3ROW`, the P3 position per map row that the DLIs load) |
+| `src/events.asm` | game | Weather, pirates, collisions, rebels |
 | `src/ai.asm` | game | CPU governor |
 | `src/screens.asm` ✓ (rounds, summary, game over, info) | game | `GAME_NEW` (defaults: 10 rounds of 30 s; tests) / `GAME_START` (current `NUMTRN`, `TRNLEN`); `GSTATE` play → `GS_SUM1` round scores (3 s) → `GS_SUM2` totals (3 s) → next round or `GS_OVER` (final scores, winner on line 2; fire or a key, once let go, goes back to the setup screen). `GAME_SEC` (clock, `ROUND_END`), `GAME_TIC` (summary timing), `OVER_FRAME`; `INFO_KEYS` / `STAT_SHOW` (D18 info pages while a console key is held); `STAT_LINE` / `STAT_DRAW`, `SHOW_PAIR` |
 | `src/setup.asm` ✓ | game | Setup screen (R-MODE-3, D31), `GSTATE` = `GS_SETUP`: `SETUP_INIT` (defaults, once), `SETUP_ENTER` (own display list `SUDLIST`, text in the map's screen memory, cursors hidden; waits until everything is let go), `SETUP_FRAME` (stick/SELECT pick a line, stick left/right or digits change it, START/fire calls `GAME_START`). Values in `SU_VAL`: rounds 1-50, seconds 30-120, players 1-2, CPU level 1-3 |
@@ -64,8 +65,8 @@ Current files are marked ✓; the rest are planned (see PLAN.md).
 | `$3900-$3FFF` | RAM variables (`src/vars.asm`), cleared by `VARS_INIT` at start-up |
 | `$4000-$43FF` | P/M graphics, double-line resolution, 1K aligned (`PMAREA`); `$4400-$47FF` spare |
 | `$4800-$4FFF` | Map fonts 1-2 if needed (1K each; the current islands use font 1 at `$4800`) |
-| `$5000-$5FFF` | Code block 2 (`CODE2`): game logic (`economy.asm`, `sound.asm`, `pause.asm`, `screens.asm`, `setup.asm`, …) |
-| `$6000-$BFFF` | Free: more code, fonts, music, screens |
+| `$5000-$6FFF` | Code block 2 (`CODE2`): game logic (`economy.asm`, `boats.asm`, `fish.asm`, `sound.asm`, `pause.asm`, `screens.asm`, `setup.asm`, …); about `$608C` used so far |
+| `$7000-$BFFF` | Free: more code, fonts, music, screens |
 
 Variables: all RAM variables live in one block, `src/vars.asm` at
 `$3900`, never inline after code, so the same source can run from a
@@ -122,7 +123,9 @@ Main loop:           wait for FRAME change, then GAME_FRAME:
                        everything below except the status echo
                      cursor/boat movement from input, buying (ECO_KEY)
                      if tic due (20 Hz): run TIC tasks
-                       weather, fish, pirates, collisions, timers
+                       weather, fish (FISH_TIC, rounds only), pirates,
+                       collisions, timers
+                     FISH_SHOW: draw the schools in P3, fill HP3ROW
                        once per second: clock, AI decision
                        end of round: economy, population, score, rebels
                      redraw changed tiles / status fields
@@ -227,7 +230,9 @@ Coast tiles go into the font of the map row they are on. Consecutive
 rows share a font while it fits (64 tiles per font, `N_FIXED` of them
 fixed). `ROWFONT` gives each row's font page; the status-bar DLI sets
 row 0's font and the map colours, and a DLI at the end of each map row
-0-9 (`DLI_ROW`) sets the next row's font. The deferred VBI resets
+0-9 (`DLI_ROW`) sets the next row's font. Both also load `HPOSP3` from
+`HP3ROW` (the fish player's position for that row, 0 = off screen);
+the deferred VBI parks P3 at 0 for the status bar. The deferred VBI resets
 `VDSLST` to `DLI_MAP` each frame. `TILECH[t]` is tile `t`'s left
 character code in its font (inverse bit included); the right character
 is that plus one. Items replace a square's terrain tile on screen;
