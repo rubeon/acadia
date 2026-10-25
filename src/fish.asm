@@ -9,9 +9,9 @@
 ;      out, the new one takes the other band (D14);
 ;    - each school gets, 1 in 10, a kick of 1 to its speed: east,
 ;      west, north or south;
-;    - it moves; an axis that would take its centre onto land or a
-;      parked PT boat stops (speed 0 on that axis); a school that
-;      leaves the map is gone;
+;    - it moves; an axis that would put any part of it on land or a
+;      parked PT boat stops (speed 0 on that axis), so it never
+;      swims behind an island; a school that leaves the map is gone;
 ;    - a fishing boat over a school counts a touch for its owner:
 ;      a steered one whose 8 x 8 box overlaps the school's, or a
 ;      parked one on the square under the school's centre.  Every
@@ -20,8 +20,8 @@
 ;
 ;  Positions are 8.8 fixed point, offset by 8 so a school can sit
 ;  just off the map: FXH = map pixel column + 8 (0-168), FYH = map
-;  line + 8 (0-96).  Speeds are signed, in steps of 1/5 pixel per tic
-;  (the original's units: boat 10, cursor 15, fish 3).
+;  line + 8 (0-96).  Speeds are signed, in steps of 2/15 pixel per tic
+;  (2/3 of the original's units, D33).
 ;
 ;  Player 3 shows both schools: FISH_SHOW (every frame) draws them in
 ;  P3 memory and fills HP3ROW, the horizontal position for each map
@@ -35,8 +35,8 @@ F_V0    =  3            ; starting speed
 F_VMAX  =  15           ; speed limit either way (table size)
 F_XMAX  =  168          ; FXH range 0-168: map column -8..160
 F_YMAX  =  96           ; FYH range 0-96: map line -8..88
-F_TOP   =  12           ; FYH of the top band: lines 4-11 (centre row 1)
-F_BOT   =  84           ; FYH of the bottom band: lines 76-83 (row 10)
+F_TOP   =  8            ; FYH of the top band, + 0-7: lines 0-14 (rows 0-1)
+F_BOT   =  80           ; FYH of the bottom band, + 0-7: lines 72-86 (rows 9-10)
 F_CATCH =  50           ; touches for 1 gold
 F_ANIM  =  4            ; tics per animation frame
 C_FISH  =  $C6          ; school colour (PCOLR3): green
@@ -192,8 +192,16 @@ FS_DONE RTS
 
 ; ---------------------------------------------------------------------
 ;  FISH_MOVE -- move school X one tic, axis by axis.  Trashes A, Y.
+;  A school already touching land or a PT boat (a boat parked on it)
+;  moves freely until it is clear.
 ; ---------------------------------------------------------------------
 FISH_MOVE
+        LDA FXH,X       ; stuck where it is?  then nothing blocks
+        LDY FYH,X
+        JSR FISH_BLK2
+        LDA #0
+        ROL A
+        STA FM_S        ; 1: already blocked
         LDA FVX,X       ; horizontal
         CLC
         ADC #F_VMAX
@@ -208,7 +216,7 @@ FISH_MOVE
         BCS FM_GONE     ; off the map (or below 0)
         STA FM_H
         LDY FYH,X
-        JSR FISH_BLK
+        JSR FM_BLK
         BCC FM_XOK
         LDA #0          ; stopped on this axis
         STA FVX,X
@@ -232,7 +240,7 @@ FM_VERT LDA FVY,X       ; vertical
         STA FM_H
         TAY
         LDA FXH,X
-        JSR FISH_BLK2
+        JSR FM_BLK2
         BCC FM_YOK
         LDA #0
         STA FVY,X
@@ -245,33 +253,44 @@ FM_YOK  LDA FM_L
 FM_GONE LDA #0
         STA FACT,X
         RTS
+; FM_BLK  -- FISH_BLK2 at FXH = FM_H; FM_BLK2 -- FISH_BLK2.  Never
+; blocked if FM_S is set.  X kept; trashes A, Y.
+FM_BLK  LDA FM_H
+FM_BLK2 PHA
+        LDA FM_S
+        BEQ FM_TEST
+        PLA
+        CLC
+        RTS
+FM_TEST PLA
+        JMP FISH_BLK2
 
 ; ---------------------------------------------------------------------
-;  FISH_BLK  -- would a school at FXH = FM_H, FYH = Y be stopped?
-;  FISH_BLK2 -- the same for FXH = A, FYH = Y.
-;  Looks at the square under the school's centre: land or a parked PT
-;  boat stops it; off the map is open sea.
+;  FISH_BLK2 -- would a school at FXH = A, FYH = Y be stopped?
+;  Looks at the squares under the four corners of its 8 x 8 box: land
+;  or a parked PT boat stops it; off the map is open sea.
 ;  Out: C set if stopped.  X kept; trashes A, Y.
 ; ---------------------------------------------------------------------
-FISH_BLK
-        LDA FM_H
 FISH_BLK2
         STX FB_X
-        SEC
-        SBC #4          ; centre column: FXH - 8 + 4
-        BCC FB_FREE
+        STA FB_H
+        STY FB_V
+        LDX #3
+FB_CORN STX FB_K
+        LDA FB_H        ; corner column: FXH - 8 or FXH - 1
+        CLC
+        ADC FB_DX,X
         CMP #MAPSQ*8
-        BCS FB_FREE
+        BCS FB_NEXT     ; off the map (below 0 wraps high)
         LSR A
         LSR A
         LSR A
         STA FB_C
-        TYA
-        SEC
-        SBC #4          ; centre line: FYH - 8 + 4
-        BCC FB_FREE
+        LDA FB_V        ; corner line: FYH - 8 or FYH - 1
+        CLC
+        ADC FB_DX+4,X
         CMP #MAPROWS*8
-        BCS FB_FREE
+        BCS FB_NEXT
         LSR A
         LSR A
         LSR A
@@ -285,13 +304,18 @@ FISH_BLK2
         AND #K_KIND
         CMP #K_LAND
         BEQ FB_STOP
-FB_FREE LDX FB_X
+FB_NEXT LDX FB_K
+        DEX
+        BPL FB_CORN
+        LDX FB_X
         CLC
         RTS
 FB_STOP LDX FB_X
         SEC
         RTS
-
+; corner offsets: columns (4), then lines (4)
+FB_DX   .BYTE 256-8,256-1,256-8,256-1
+        .BYTE 256-8,256-8,256-1,256-1
 ; ---------------------------------------------------------------------
 ;  FISH_CATCH -- touches between school X and the fishing boats.
 ;  Trashes A, X, Y.
@@ -502,11 +526,11 @@ FR_LO   CMP #MAPROWS
         LDA #MAPROWS-1
 FR_DONE RTS
 
-; Speed steps: 51/256 pixel per tic for each unit, speeds -15..+15
-FV_LO   .BYTE $03,$36,$69,$9C,$CF,$02,$35,$68,$9B,$CE,$01,$34,$67,$9A,$CD,$00
-        .BYTE $33,$66,$99,$CC,$FF,$32,$65,$98,$CB,$FE,$31,$64,$97,$CA,$FD
-FV_HI   .BYTE $FD,$FD,$FD,$FD,$FD,$FE,$FE,$FE,$FE,$FE,$FF,$FF,$FF,$FF,$FF,$00
-        .BYTE $00,$00,$00,$00,$00,$01,$01,$01,$01,$01,$02,$02,$02,$02,$02
+; Speed steps: 34/256 pixel per tic for each unit, speeds -15..+15
+FV_LO   .BYTE $02,$24,$46,$68,$8A,$AC,$CE,$F0,$12,$34,$56,$78,$9A,$BC,$DE,$00
+        .BYTE $22,$44,$66,$88,$AA,$CC,$EE,$10,$32,$54,$76,$98,$BA,$DC,$FE
+FV_HI   .BYTE $FE,$FE,$FE,$FE,$FE,$FE,$FE,$FE,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$00
+        .BYTE $00,$00,$00,$00,$00,$00,$00,$01,$01,$01,$01,$01,$01,$01,$01
 
 ; School shapes: 4 frames of a shimmering scatter of small fish
 FISHSHP .BYTE $22,$08,$41,$14,$22,$88,$14,$41
