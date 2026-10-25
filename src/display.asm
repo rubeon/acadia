@@ -216,7 +216,7 @@ MD_COL  LDX GIDX
 ;  RAM status lines STATUS1/STATUS2 (VARS.ASM) by DISP_INIT.
 ; ---------------------------------------------------------------------
 STATTPL .SBYTE "GOLD       TURNS     TIME      GOLD     "
-        .SBYTE "J0:0 F0:0 J1:0 F1:0 KEY:- FRM:00     N "
+        .SBYTE "J0:0 F0:0 J1:0 F1:0 KEY:- FRM:00      N "
 STATLEN =  80
 
 ; Offsets of the live fields in STATUS2

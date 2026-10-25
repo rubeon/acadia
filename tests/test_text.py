@@ -52,6 +52,10 @@ if screen_text(50, 5) != "GOLD " or x != 55:
 m.call("VARS_INIT")
 for i in range(80):
     m.mem[m.addr("STATUS1") + i] = m.mem[tpl + i]
+line = screen_text(40, 40)                       # template is exactly 2 x 40
+want = "J0:0 F0:0 J1:0 F1:0 KEY:- FRM:00      N "
+if line != want:
+    fail("status line 2 template %r, want %r" % (line, want))
 m.call("DEMO_INIT")
 line = screen_text(0, 40)
 want = "GOLD  100  TURNS 10  TIME  30  GOLD  100"
