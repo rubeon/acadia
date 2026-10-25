@@ -1,6 +1,6 @@
 ; =====================================================================
 ;  ECONOMY.ASM -- buying items (T-ECO-1) and the end of a round
-;  (T-ECO-2: income, T-ECO-3: population; the score follows)
+;  (T-ECO-2 income, T-ECO-3 population, T-ECO-4 round score)
 ;
 ;  A digit key 1-9 buys that item on the square under the buying
 ;  player's cursor (KEYPL, D17).  Prices are the original's
@@ -121,6 +121,15 @@ ECO_ROUND
         JSR ECO_POP
         LDX #1
         JSR ECO_POP
+        LDX #0
+        JSR ECO_SCORE
+        LDX #1
+        JSR ECO_SCORE
+        LDA #0          ; earned gold starts again ($5B6C)
+        LDX #3
+ER_RG   STA RGOLD,X
+        DEX
+        BPL ER_RG
         JMP STAT_DRAW
 
 ; ---------------------------------------------------------------------
@@ -379,6 +388,124 @@ EG_CAP  LDA #<9999
         LDA #>9999
         STA GOLD+1,Y
 EG_DONE RTS
+
+; ---------------------------------------------------------------------
+;  ECO_SCORE -- player X's round score ($5ABD-$5B5F), using the
+;  population after this round's update (as the original):
+;    p100     = pop / 100, truncated ($5AC6); at least 1 (D28)
+;    housing  = min(30, round(round(houses x 500 / p100) / 3))
+;    GDP      = min(30, round(round(earned gold x 100 / p100) / 12))
+;    food     = min(30, round(round((crops + fishing boats) x 500
+;                                    / p100) / 3))
+;    welfare  = schools + hospitals
+;    score    = min(100, sum)
+;  The products are 24 bits, so the original's overflows (earned gold
+;  over 255, crops + boats over 65) can't happen (D11).
+;  RSCORE moves to PRSCORE, the new score goes to RSCORE and is added
+;  to SCORE.  Trashes A, X, Y.
+; ---------------------------------------------------------------------
+ECO_SCORE
+        STX EC_P
+        TXA
+        ASL A
+        STA EC_P2
+        LDA EC_P
+        BEQ ES_P0
+        LDA #10
+ES_P0   STA EC_CI
+        LDY EC_P2       ; p100 = pop / 100, truncated
+        LDA POP,Y
+        LDX POP+1,Y
+        JSR NUM16
+        LDA #100
+        JSR DIVN
+        LDA M_NUM
+        BNE ES_PS
+        LDA #1          ; under 100 people: count as 100 (D28)
+ES_PS   STA ES_P100
+
+        LDY EC_CI       ; housing: houses x 500
+        LDA COUNT+I_HOUS,Y
+        LDX #250
+        JSR MUL8
+        LDA #2
+        JSR MULN
+        LDA #3
+        JSR ES_PART
+        STA ES_SUM
+
+        LDY EC_P2       ; GDP: earned gold x 100
+        LDA RGOLD,Y
+        LDX RGOLD+1,Y
+        JSR NUM16
+        LDA #100
+        JSR MULN
+        LDA #12
+        JSR ES_PART
+        CLC
+        ADC ES_SUM
+        STA ES_SUM
+
+        LDY EC_CI       ; food: (crops + fishing boats) x 500
+        LDA COUNT+I_CROP,Y
+        CLC
+        ADC COUNT+I_FSBT,Y
+        PHA             ; low byte
+        LDA #0
+        ROL A           ; high byte: the carry
+        TAX
+        PLA
+        JSR NUM16
+        LDA #250
+        JSR MULN
+        LDA #2
+        JSR MULN
+        LDA #3
+        JSR ES_PART
+        CLC
+        ADC ES_SUM
+        STA ES_SUM
+
+        LDY EC_CI       ; welfare: schools + hospitals
+        LDA COUNT+I_SCHL,Y
+        CLC
+        ADC COUNT+I_HOSP,Y
+        BCS ES_100
+        CLC
+        ADC ES_SUM
+        BCS ES_100
+        CMP #100+1
+        BCC ES_TOT
+ES_100  LDA #100        ; at most 100 ($5B3E)
+ES_TOT  STA ES_SUM
+        LDX EC_P
+        LDA RSCORE,X    ; last round's score becomes the previous one
+        STA PRSCORE,X
+        LDA ES_SUM
+        STA RSCORE,X
+        LDY EC_P2       ; add to the total
+        CLC
+        ADC SCORE,Y
+        STA SCORE,Y
+        LDA SCORE+1,Y
+        ADC #0
+        STA SCORE+1,Y
+        RTS
+
+; ES_PART -- one score part: min(30, round(round(M_NUM / p100) / A))
+ES_PART STA ES_DIV
+        LDA ES_P100
+        JSR DIVNR
+        LDA ES_DIV
+        JSR DIVNR
+        LDA M_NUM+2
+        ORA M_NUM+1
+        BNE EP_30
+        LDA M_NUM
+        CMP #30+1
+        BCC EP_OK
+EP_30   LDA #30
+EP_OK   RTS
 
 ; Prices in gold bars, by item key (the original's PRICES, $5910)
 PRICES  .BYTE 0         ; 0: unused
