@@ -41,7 +41,8 @@ START
         JSR VARS_INIT
         JSR DISP_INIT
         JSR TIC_INIT
-        JSR GAME_NEW    ; round 1 of a new game
+        JSR SETUP_INIT  ; default rounds and round length
+        JSR SETUP_ENTER ; the setup screen first (T-SCR-1)
 
 MAIN    LDA FRAME       ; wait for the next frame
 MN_WAIT CMP FRAME
@@ -55,7 +56,10 @@ MN_WAIT CMP FRAME
 GAME_FRAME
         JSR INPUT_POLL
         LDA GSTATE
-        CMP #GS_OVER
+        CMP #GS_SETUP
+        BNE GF_OVER
+        JMP SETUP_FRAME ; setup screen
+GF_OVER CMP #GS_OVER
         BNE GF_RUN
         JMP OVER_FRAME  ; game over: wait for fire or a key
 GF_RUN  JSR PAUSE_KEY   ; P: pause / resume (D19)
@@ -166,6 +170,7 @@ CODE2   =  $5000
         .INCLUDE "sound.asm"
         .INCLUDE "pause.asm"
         .INCLUDE "screens.asm"
+        .INCLUDE "setup.asm"
         .INCLUDE "vars.asm"
 
 ; ---------------------------------------------------------------------

@@ -141,4 +141,23 @@ CURTRN  *= *+1          ; rounds played so far
 TRNLEN  *= *+1          ; round length in seconds
 REMSEC  *= *+1          ; seconds left in this round
 
+; ---------------------------------------------------------------------
+;  Setup screen (SETUP.ASM)
+; ---------------------------------------------------------------------
+SU_VAL  *= *+4          ; rounds, seconds per round, players, CPU level
+SU_FLD  *= *+1          ; current line, 0-3
+SU_TYPD *= *+1          ; 1 while digits are being typed on this line
+SU_RPT  *= *+1          ; frames until a held left/right repeats
+SU_ARM  *= *+1          ; 1 once everything has been let go
+SU_J    *= *+1          ; this frame: both sticks
+SU_F    *= *+1          ; this frame: either fire button
+SU_NEW  *= *+1          ; directions newly pressed this frame
+SU_OLDJ *= *+1          ; last frame's SU_J
+SU_OLDF *= *+1          ; last frame's SU_F
+SU_OLDC *= *+1          ; last frame's CONKEY
+SU_I    *= *+1          ; work: line index
+SU_T    *= *+1          ; work
+SU_D    *= *+1          ; SU_DIGIT: the digit
+
+; ---------------------------------------------------------------------
 VAREND

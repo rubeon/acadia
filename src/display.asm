@@ -375,3 +375,18 @@ DLIST
         .BYTE DL_MODE5                  ; row 10
         .BYTE DL_JVB
         .WORD DLIST
+
+; Setup screen (SETUP.ASM): must stay in DLIST's page, since setup
+; switches between the two by storing only the low byte of SDLSTL
+SUDLIST
+        .BYTE DL_BLANK8,DL_BLANK8,DL_BLANK8
+        .BYTE DL_LMS+DL_MODE7           ; title, 16 lines
+        .WORD SU_SCR
+        .BYTE DL_BLANK8
+        .BYTE DL_LMS+DL_MODE2           ; 18 text lines (SU_LINES)
+        .WORD SU_TXT
+        .BYTE DL_MODE2,DL_MODE2,DL_MODE2,DL_MODE2,DL_MODE2,DL_MODE2
+        .BYTE DL_MODE2,DL_MODE2,DL_MODE2,DL_MODE2,DL_MODE2,DL_MODE2
+        .BYTE DL_MODE2,DL_MODE2,DL_MODE2,DL_MODE2,DL_MODE2
+        .BYTE DL_JVB
+        .WORD SUDLIST

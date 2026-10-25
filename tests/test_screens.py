@@ -14,7 +14,7 @@ from run6502 import Machine  # noqa: E402
 
 KC_6 = 0x1B                               # 6: house
 START, SELECT, OPTION = 1, 2, 4
-GS_PLAY, GS_SUM1, GS_SUM2, GS_OVER = 0, 1, 2, 3
+GS_PLAY, GS_SUM1, GS_SUM2, GS_OVER, GS_SETUP = 0, 1, 2, 3, 4
 m = Machine()
 fails = 0
 
@@ -53,7 +53,7 @@ def frames_until(cond, limit):
 
 
 m.poke("PAL", 0x0F)                       # NTSC: 60 frames a second
-for r in ("VARS_INIT", "DISP_INIT", "TIC_INIT", "GAME_NEW"):
+for r in ("VARS_INIT", "DISP_INIT", "TIC_INIT", "SETUP_INIT", "GAME_NEW"):
     m.call(r)
 if (m.byte("NUMTRN"), m.byte("TRNLEN"), m.byte("GSTATE")) != (10, 30, GS_PLAY):
     fail("GAME_NEW defaults %r" % [m.byte("NUMTRN"), m.byte("TRNLEN"), m.byte("GSTATE")])
@@ -125,6 +125,12 @@ if m.byte("GSTATE") != GS_OVER:
     fail("fire held over from the round restarted the game")
 frame()
 frame(fire0=True)
+if m.byte("GSTATE") != GS_SETUP:
+    fail("fire did not go back to the setup screen (state %d)" % m.byte("GSTATE"))
+for _ in range(10):                       # fire still held: setup waits
+    frame(fire0=True)
+frame()
+frame(fire0=True)                         # fire on the setup screen
 if m.byte("GSTATE") != GS_PLAY or m.word("GOLD") != 100 or m.word("SCORE") != 0:
     fail("fire did not start a new game (state %d gold %d)" % (m.byte("GSTATE"), m.word("GOLD")))
 if m.byte("NUMTRN") != 10 or "TURNS 10  TIME  30" not in line(1):
