@@ -10,6 +10,10 @@
 SND_BUY
         RTS
 
+; SND_ROUND -- end of a round (the original's tone, $5FEF)
+SND_ROUND
+        RTS
+
 ; SND_REFUSE -- a purchase was refused (the original's "razz")
 SND_REFUSE
         RTS

@@ -26,6 +26,7 @@ FIRE1   *= *+1
 KEY     *= *+1          ; item key 0-9 pressed this poll, else $FF
 KEYPL   *= *+1          ; player the key belongs to (0/1), else $FF
 PAUSEK  *= *+1          ; 1 when P was pressed this poll
+CONKEY  *= *+1          ; console keys held: b0 START, b1 SELECT, b2 OPTION
 KEYDOWN *= *+1          ; key held flag (edge detection)
 
 ; ---------------------------------------------------------------------
@@ -89,6 +90,16 @@ ES_P100 *= *+1          ; ECO_SCORE: pop / 100
 ES_DIV  *= *+1          ; ECO_SCORE: second divisor (3 or 12)
 ES_SUM  *= *+1          ; ECO_SCORE: score so far
 EG_AMT  *= *+2          ; ECO_EARN / ECO_GIVE: amount
+
+; ---------------------------------------------------------------------
+;  Round loop and screens (SCREENS.ASM)
+; ---------------------------------------------------------------------
+GSTATE  *= *+1          ; GS_PLAY, GS_SUM1, GS_SUM2, GS_OVER
+GTIMER  *= *+1          ; tics left on a summary page
+INFOK   *= *+1          ; info page shown: 0 none, 1-3 START/SELECT/OPTION
+GO_ARM  *= *+1          ; game over: 1 once fire and keys are let go
+SV0     *= *+2          ; SHOW_PAIR: player 1's number
+SV1     *= *+2          ; SHOW_PAIR: player 2's number (must follow SV0)
 
 ; ---------------------------------------------------------------------
 ;  Pause (PAUSE.ASM)

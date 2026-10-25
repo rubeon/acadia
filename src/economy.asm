@@ -92,7 +92,7 @@ EB_CNT  CLC
         TAX
         LDA EB_ITEM
         JSR MAP_SET
-        JSR STAT_DRAW
+        JSR STAT_SHOW     ; gold, unless an info page is up
         JSR SND_BUY
         CLC
         RTS

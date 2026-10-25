@@ -56,15 +56,21 @@ line = screen_text(40, 40)                       # template is exactly 2 x 40
 want = "J0:0 F0:0 J1:0 F1:0 KEY:- FRM:00      N "
 if line != want:
     fail("status line 2 template %r, want %r" % (line, want))
-m.call("DEMO_INIT")
+m.call("GAME_NEW")
 line = screen_text(0, 40)
 want = "GOLD  100  TURNS 10  TIME  30  GOLD  100"
 if line != want:
     fail("status line 1 %r, want %r" % (line, want))
 else:
     print("status line 1: %r" % line)
-for _ in range(30):                              # one full demo round
-    m.call("DEMO_SEC")
+for _ in range(30):                              # one full round
+    m.call("GAME_SEC")
+line = screen_text(0, 40)
+want = "P1    0       ROUND SCORES       P2    0"
+if line != want:
+    fail("round summary %r, want %r" % (line, want))
+for _ in range(120):                             # both summary pages
+    m.call("GAME_TIC")
 line = screen_text(0, 40)
 want = "GOLD  110  TURNS  9  TIME  30  GOLD  110"
 if line != want:

@@ -24,7 +24,7 @@ def fail(msg):
 
 
 m.poke("PAL", 0x0F)                       # NTSC
-for r in ("VARS_INIT", "MAP_INIT", "DISP_INIT", "CUR_INIT", "TIC_INIT", "DEMO_INIT"):
+for r in ("VARS_INIT", "MAP_INIT", "DISP_INIT", "CUR_INIT", "TIC_INIT", "GAME_NEW"):
     m.call(r)
 
 
@@ -33,6 +33,7 @@ def frame(stick=0, kb=None, fire0=False):
     m.poke("PORTA", 0xFF ^ stick)         # active low; player 1 in the low nibble
     m.poke("TRIG0", 0 if fire0 else 1)
     m.poke("TRIG1", 1)
+    m.poke("CONSOL", 0x07)                # no console key held
     if kb is None:
         m.poke("SKSTAT", 0xFF)            # no key held
     else:
