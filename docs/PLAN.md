@@ -47,7 +47,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 | T-ECO-4 | Round score (housing, GDP, food, welfare, caps) | R-RULE-2,8 | T-ECO-3 | Same, incl. overflow cases fixed | done |
 | T-ECO-5 | Rebels: create/remove/placement, bought rebels | R-RULE-3 | T-ECO-4, T-MAP-2 | Thresholds behave as specified | todo |
 | T-ECO-6 | Random crop destruction | R-RULE-2 | T-ECO-4 | Verify against original routine `$5B6B` first | todo |
-| T-SCR-2 | Round summary and game-over screens; info displays | R-SCR-6, R-MODE-4, R-CTL-4 | T-ECO-4 | Full game of N rounds completes | todo |
+| T-SCR-2 | Round summary and game-over screens; info displays | R-SCR-6, R-MODE-4, R-CTL-4 | T-ECO-4 | Full game of N rounds completes | in progress (claude) |
 
 ## M4 — Moving things
 
