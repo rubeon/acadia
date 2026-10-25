@@ -72,7 +72,11 @@ GF_TIC  JSR TIC_NEXT    ; run every due tic
         JSR GAME_SEC
 GF_T1   JSR GAME_TIC
         JMP GF_TIC
-GF_SHOW JMP SHOW_INPUT
+GF_SHOW LDA GSTATE
+        CMP #GS_OVER
+        BEQ GF_DONE     ; line 2 holds the winner now
+        JMP SHOW_INPUT
+GF_DONE RTS
 
 ; ---------------------------------------------------------------------
 ;  SHOW_INPUT -- echo the input layer state on status line 2
@@ -151,11 +155,17 @@ VI_CLR  STA (ZPTR),Y
         .INCLUDE "sprites.asm"
         .INCLUDE "cursor.asm"
         .INCLUDE "map.asm"
+        .INCLUDE "display.asm"
+
+; ---------------------------------------------------------------------
+;  Game logic: second code block above the fonts ($2000-$2FFF is full)
+; ---------------------------------------------------------------------
+CODE2   =  $5000
+        *= CODE2
         .INCLUDE "economy.asm"
         .INCLUDE "sound.asm"
         .INCLUDE "pause.asm"
         .INCLUDE "screens.asm"
-        .INCLUDE "display.asm"
         .INCLUDE "vars.asm"
 
 ; ---------------------------------------------------------------------

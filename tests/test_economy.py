@@ -19,7 +19,7 @@ m.call("MAP_DRAW")
 m.call("MAP_INIT")
 m.call("PM_INIT")
 m.call("CUR_INIT")
-m.call("DEMO_INIT")                   # 100 gold each
+m.call("GAME_NEW")                    # 100 gold each
 fails = 0
 
 

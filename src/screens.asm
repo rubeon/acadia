@@ -70,6 +70,7 @@ GN_SC   STA SCORE,X
         JSR MAP_DRAW
         JSR ECO_INIT    ; 1000 people, 100 gold each
         JSR CUR_INIT
+        JSR TIC_INIT    ; the clock starts now, not when the last game ended
         LDA TRNLEN
         STA REMSEC
         LDX #39         ; status line 2 back to its template
@@ -183,8 +184,9 @@ GT_TOT  LDA SCORE,X
         JMP SHOW_PAIR
 GT_NEXT LDA CURTRN      ; totals done: next round or game over
         CMP NUMTRN
-        BCS GAME_OVER
-        LDA TRNLEN
+        BCC GT_RND
+        JMP GAME_OVER
+GT_RND  LDA TRNLEN
         STA REMSEC
         LDA #GS_PLAY
         STA GSTATE
@@ -265,15 +267,15 @@ IK_SET  CPX INFOK
         BEQ IK_DONE     ; no change
         STX INFOK
         TXA
-        BEQ STAT_LINE   ; key let go: normal status line
-        JMP INFO_DRAW
+        BNE INFO_DRAW
+        JMP STAT_LINE   ; key let go: normal status line
 IK_DONE RTS
 
 ; STAT_SHOW -- redraw line 1 each second: the info page if one is up
 STAT_SHOW
         LDA INFOK
-        BEQ STAT_DRAW
-        ; fall through
+        BNE INFO_DRAW
+        JMP STAT_DRAW
 
 ; INFO_DRAW -- the info page INFOK: 1 total, 2 population, 3 last round
 INFO_DRAW

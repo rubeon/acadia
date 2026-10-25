@@ -41,7 +41,7 @@ Current files are marked ✓; the rest are planned (see PLAN.md).
 | `src/economy.asm` ✓ (buying) | game | `ECO_KEY` (this frame's `KEY` → `ECO_BUY` for `KEYPL`), `ECO_BUY` (item at the cursor square: own free land, enough gold; C + `R_` reason on refusal), `PRICES`; `ECO_INIT` (1000 people, 100 gold each); `ECO_ROUND` (end of round, `$59CD`): `ECO_INCOME`, `ECO_POP`, `ECO_SCORE` per player (`RSCORE` → `PRSCORE`, new `RSCORE`, added to `SCORE`), then `RGOLD` reset; `ECO_EARN` / `ECO_GIVE` add gold (earned or not; `GOLD` capped at 9999, D26) |
 | `src/events.asm` | game | Weather, fish, pirates, boats, collisions, rebels |
 | `src/ai.asm` | game | CPU governor |
-| `src/screens.asm` | game | Setup, round summary, game over |
+| `src/screens.asm` ✓ (rounds, summary, game over, info) | game | `GAME_NEW` (defaults: 10 rounds of 30 s until T-SCR-1) / `GAME_START` (current `NUMTRN`, `TRNLEN`); `GSTATE` play → `GS_SUM1` round scores (3 s) → `GS_SUM2` totals (3 s) → next round or `GS_OVER` (final scores, winner on line 2; fire or a key, once let go, starts a new game). `GAME_SEC` (clock, `ROUND_END`), `GAME_TIC` (summary timing), `OVER_FRAME`; `INFO_KEYS` / `STAT_SHOW` (D18 info pages while a console key is held); `STAT_LINE` / `STAT_DRAW`, `SHOW_PAIR`. Setup screen still to come (T-SCR-1) |
 | `src/pause.asm` ✓ | game | Pause (D19): `PAUSE_KEY` (P toggles), `PAUSE_ON` (save status line 1, show PAUSED, `PAL_DIM`, silence AUDC1-4), `PAUSE_OFF` (restore, `PAL_NORM`, `TIC_SYNC`); `PAUSED` flag |
 | `src/math.asm` ✓ | services | On 24-bit `M_NUM`: `MUL8` (8×8), `MULN` (×8, C = overflow), `DIVN` (÷8, remainder in A), `DIVNR` (÷8 rounded half up); C set on ÷0 |
 | `src/hw_5200.asm` | platform | 5200 equivalents (later) |
@@ -55,14 +55,15 @@ Current files are marked ✓; the rest are planned (see PLAN.md).
 | `$008A-$008B` | ZP: `SPTR` P/M pointer (`sprites.asm`) |
 | `$008C-$00CA` | Free while BASIC is off; reserved for game ZP (allocate in `acadia.asm`) |
 | `$00CB-$00CE` | `ZPTR` (2), `OLDVBD` (2) — in use |
-| `$2000-$2FFF` | Code and variables |
+| `$2000-$2FFF` | Code: start-up, services, map and display (`acadia.asm` up to `display.asm`) |
 | `$3000-$33FF` | Map font 0 (1K aligned): fixed tiles + coast tiles of the first rows |
 | `$3400-$37FF` | Map screen memory (`$3400-$35B7` used: 11 rows × 40) |
 | `$3800-$38FF` | Display list(s) |
 | `$3900-$3FFF` | RAM variables (`src/vars.asm`), cleared by `VARS_INIT` at start-up |
 | `$4000-$43FF` | P/M graphics, double-line resolution, 1K aligned (`PMAREA`); `$4400-$47FF` spare |
 | `$4800-$4FFF` | Map fonts 1-2 if needed (1K each; the current islands use font 1 at `$4800`) |
-| `$5000-$BFFF` | Free: more code, fonts, music, screens |
+| `$5000-$5FFF` | Code block 2 (`CODE2`): game logic (`economy.asm`, `sound.asm`, `pause.asm`, `screens.asm`, …) |
+| `$6000-$BFFF` | Free: more code, fonts, music, screens |
 
 Variables: all RAM variables live in one block, `src/vars.asm` at
 `$3900`, never inline after code, so the same source can run from a
@@ -95,7 +96,7 @@ provide the same symbols.
 | `FIRE0`, `FIRE1` | 1 = fire held |
 | `KEY` | Item key 0-9 pressed this poll (edge), else `$FF` |
 | `KEYPL` | Player the key belongs to: 0 or 1 (D17: fire held picks the player; neither → 0); `$FF` if both held, and then `KEY` is `$FF` too |
-| `CONKEY` | (planned) START/SELECT/OPTION held bits, for the D18 info displays |
+| `CONKEY` | START/SELECT/OPTION held bits (b0/b1/b2), for the D18 info displays |
 | `PAUSEK` | 1 on the poll where the pause key was pressed (P on the 800, PAUSE on a 5200 keypad), D19 |
 
 5200 mapping (later): analog sticks thresholded into `JOY*`; keypad
