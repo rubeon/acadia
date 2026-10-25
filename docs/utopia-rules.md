@@ -89,6 +89,9 @@ Rates are per 1000 (tenths of a percent).
 - `births = round(p10 * fertility / 100)` [`$5A83`]
 - `deaths = round(p10 * mortality / 100)` [`$5A8A`]
 - `pop = min(9999, pop + births - deaths)`
+- Fertility has no lower limit in the original: with many schools it
+  goes below 0, and the multiply at `$5A75` would then work on a
+  negative number. Acadia stops it at 0 (no births; D27).
 
 `round()` is the EXEC's divide-with-rounding (`X_DIVR`), which is not
 in the cartridge, so its exact rule is assumed to be the usual round

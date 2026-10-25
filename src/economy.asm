@@ -1,6 +1,6 @@
 ; =====================================================================
 ;  ECONOMY.ASM -- buying items (T-ECO-1) and the end of a round
-;  (T-ECO-2: income; population and score follow)
+;  (T-ECO-2: income, T-ECO-3: population; the score follows)
 ;
 ;  A digit key 1-9 buys that item on the square under the buying
 ;  player's cursor (KEYPL, D17).  Prices are the original's
@@ -117,7 +117,166 @@ ECO_ROUND
         JSR ECO_INCOME
         LDX #1
         JSR ECO_INCOME
+        LDX #0
+        JSR ECO_POP
+        LDX #1
+        JSR ECO_POP
         JMP STAT_DRAW
+
+; ---------------------------------------------------------------------
+;  ECO_INIT -- start of a game: 1000 people and 100 gold each ($50F9,
+;  $510D).  Trashes A, X.
+; ---------------------------------------------------------------------
+ECO_INIT
+        LDX #2
+EN_LOOP LDA #<1000
+        STA POP,X
+        LDA #>1000
+        STA POP+1,X
+        LDA #100
+        STA GOLD,X
+        LDA #0
+        STA GOLD+1,X
+        DEX
+        DEX
+        BPL EN_LOOP
+        RTS
+
+; ---------------------------------------------------------------------
+;  ECO_POP -- player X's population for the round ($5A32-$5AAD)
+;    p10       = round(pop / 10)
+;    fertility = 40 + 3 x crops + 3 x hospitals + houses - 3 x schools,
+;                at most 64 (and at least 0, D27)
+;    mortality = 11 - 3 x hospitals, at least 2; then + factories
+;    pop       = min(9999, pop + round(p10 x fertility / 100)
+;                              - round(p10 x mortality / 100))
+;  Rates are per 1000 people.  Trashes A, X, Y.
+; ---------------------------------------------------------------------
+ECO_POP
+        STX EC_P
+        TXA
+        ASL A
+        STA EC_P2       ; player x 2, for 16-bit values
+        LDA EC_P        ; player x 10, for COUNT
+        BEQ EP_P0
+        LDA #10
+EP_P0   STA EC_CI
+        LDY EC_P2       ; p10 = round(pop / 10)
+        LDA POP,Y
+        LDX POP+1,Y
+        JSR NUM16
+        LDA #10
+        JSR DIVNR
+        LDA M_NUM
+        STA EP_P10
+        LDA M_NUM+1
+        STA EP_P10+1
+
+        LDY EC_CI       ; fertility
+        LDA COUNT+I_CROP,Y
+        CLC
+        ADC COUNT+I_HOSP,Y
+        LDX #3
+        JSR MUL8        ; 3 x (crops + hospitals); keeps Y
+        LDA M_NUM
+        CLC
+        ADC #40
+        STA EP_POS
+        LDA M_NUM+1
+        ADC #0
+        STA EP_POS+1
+        LDA EP_POS      ; + houses
+        CLC
+        ADC COUNT+I_HOUS,Y
+        STA EP_POS
+        BCC EP_F1
+        INC EP_POS+1
+EP_F1   LDA COUNT+I_SCHL,Y
+        LDX #3
+        JSR MUL8        ; 3 x schools
+        LDA EP_POS      ; fertility = EP_POS - 3 x schools
+        SEC
+        SBC M_NUM
+        STA EP_FERT
+        LDA EP_POS+1
+        SBC M_NUM+1
+        BCC EP_F0       ; below 0: no births (D27)
+        BNE EP_F64      ; 256 or more
+        LDA EP_FERT
+        CMP #64+1
+        BCC EP_MRT
+EP_F64  LDA #64         ; at most 64 ($5A6C)
+        BNE EP_FS
+EP_F0   LDA #0
+EP_FS   STA EP_FERT
+
+EP_MRT  LDY EC_CI       ; mortality
+        LDA COUNT+I_HOSP,Y
+        LDX #3
+        JSR MUL8        ; 3 x hospitals
+        LDA M_NUM+1
+        BNE EP_M2
+        LDA M_NUM
+        CMP #9+1        ; 11 - 3h < 2 when 3h > 9
+        BCS EP_M2
+        LDA #11
+        SEC
+        SBC M_NUM
+        BNE EP_MS       ; always taken (11 - 3h >= 2)
+EP_M2   LDA #2          ; at least 2 ($5A4F)
+EP_MS   CLC             ; + 1 per factory, after the minimum
+        ADC COUNT+I_FACT,Y
+        BCC EP_MOK
+        LDA #255
+EP_MOK  STA EP_MORT
+
+        LDA EP_P10      ; births = round(p10 x fertility / 100)
+        LDX EP_P10+1
+        JSR NUM16
+        LDA EP_FERT
+        JSR MULN
+        LDA #100
+        JSR DIVNR
+        LDY EC_P2       ; pop + births
+        CLC
+        LDA POP,Y
+        ADC M_NUM
+        STA EP_POS
+        LDA POP+1,Y
+        ADC M_NUM+1
+        STA EP_POS+1
+
+        LDA EP_P10      ; deaths = round(p10 x mortality / 100)
+        LDX EP_P10+1
+        JSR NUM16
+        LDA EP_MORT
+        JSR MULN
+        LDA #100
+        JSR DIVNR
+        LDY EC_P2
+        LDA EP_POS      ; - deaths, not below 0
+        SEC
+        SBC M_NUM
+        STA POP,Y
+        LDA EP_POS+1
+        SBC M_NUM+1
+        STA POP+1,Y
+        BCS EP_CAP
+        LDA #0
+        STA POP,Y
+        STA POP+1,Y
+        RTS
+EP_CAP  CMP #>9999      ; at most 9999 ($5A97)
+        BCC EP_DONE
+        BNE EP_MAX
+        LDA POP,Y
+        CMP #<9999+1
+        BCC EP_DONE
+EP_MAX  LDA #<9999
+        STA POP,Y
+        LDA #>9999
+        STA POP+1,Y
+EP_DONE RTS
 
 ; ---------------------------------------------------------------------
 ;  ECO_INCOME -- player X's income for the round ($59CD-$5A0C)
