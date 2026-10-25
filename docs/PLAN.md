@@ -42,7 +42,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 
 | ID | Task | Reqs | Deps | Acceptance | Status |
 |---|---|---|---|---|---|
-| T-ECO-2 | End-of-round income | R-RULE-2 | T-SVC-1, T-ECO-1 | Matches hand-calculated cases from utopia-rules.md | todo |
+| T-ECO-2 | End-of-round income | R-RULE-2 | T-SVC-1, T-ECO-1 | Matches hand-calculated cases from utopia-rules.md | in progress (claude) |
 | T-ECO-3 | Population update | R-RULE-2 | T-ECO-2 | Same | todo |
 | T-ECO-4 | Round score (housing, GDP, food, welfare, caps) | R-RULE-2,8 | T-ECO-3 | Same, incl. overflow cases fixed | todo |
 | T-ECO-5 | Rebels: create/remove/placement, bought rebels | R-RULE-3 | T-ECO-4, T-MAP-2 | Thresholds behave as specified | todo |
