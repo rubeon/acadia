@@ -81,10 +81,27 @@ check("pop/10", m.long("M_NUM"), 100)
 m.call("MULN", a=53)                        # x fertility 53
 m.call("DIVNR", a=100)                      # / 100 rounded
 check("births", m.long("M_NUM"), 53)
-m.set_long("M_NUM", 1 * 500)                # housing: (1 x 500 / 10) / 3
-m.call("DIVN", a=10)
-m.call("DIVN", a=3)
-check("housing", m.long("M_NUM"), 16)
+
+
+def score_part(n, p100, div):
+    """round(round(n / p100) / div), as the original's score parts."""
+    m.set_long("M_NUM", n)
+    m.call("DIVNR", a=p100)
+    m.call("DIVNR", a=div)
+    return min(30, m.long("M_NUM"))
+
+
+m.set_long("M_NUM", 1043)                   # p100 is truncated
+m.call("DIVN", a=100)
+p100 = m.long("M_NUM")
+check("p100", p100, 10)
+housing = score_part(1 * 500, p100, 3)
+gdp = score_part(14 * 100, p100, 12)
+food = score_part((4 + 1) * 500, p100, 3)
+check("housing", housing, 17)
+check("GDP", gdp, 12)
+check("food", food, 30)
+check("round score", housing + gdp + food + 2, 61)
 
 print("math: %d checks, %d failed" % (checks, fails))
 sys.exit(1 if fails else 0)

@@ -8,6 +8,12 @@
 ;    houses x 500         <= 36 x 500    = 18000
 ;    gold earned x 100    may pass 65535 once D11 widens it (24 bits)
 ;
+;  Rounding: the original divides with the EXEC's X_DIVR wherever
+;  utopia-rules.md says round() (calls at $5A3B, $5A83, $5A8A, $5AD8,
+;  $5ADE, $5AF6, $5AFC, $5B1A, $5B20) and with the plain X_DIV only for
+;  pop/100 ($5AC6).  The EXEC routine itself is not in the cartridge
+;  dump, so DIVNR's round-half-up is an assumption, not a copy.
+;
 ;  ROM-safe: no self-modifying code; work bytes are in zero page.
 ; =====================================================================
 
@@ -115,8 +121,8 @@ DV_ZERO LDA #$FF
         RTS
 
 ; ---------------------------------------------------------------------
-;  DIVNR -- 24 / 8 divide, rounding half up (as the original's
-;  divide-with-rounding: 1043 / 10 = 104, 1045 / 10 = 105)
+;  DIVNR -- 24 / 8 divide, rounding half up (1044 / 10 = 104,
+;  1045 / 10 = 105); stands in for the original's X_DIVR
 ;  In: M_NUM = dividend, A = divisor.
 ;  Out: M_NUM = rounded quotient, C clear; divisor 0 as DIVN (C set).
 ;  Trashes A, X.

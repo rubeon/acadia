@@ -79,9 +79,15 @@ Rates are per 1000 (tenths of a percent).
 - Mortality starts at 11.
   - -3 per hospital, with a minimum of 2.
   - Then +1 per factory (applied after the hospital minimum).
-- `births = round(pop/10 * fertility / 100)`
-- `deaths = round(pop/10 * mortality / 100)`
+- `p10 = round(pop / 10)` [`$5A3B`]
+- `births = round(p10 * fertility / 100)` [`$5A83`]
+- `deaths = round(p10 * mortality / 100)` [`$5A8A`]
 - `pop = min(9999, pop + births - deaths)`
+
+`round()` is the EXEC's divide-with-rounding (`X_DIVR`), which is not
+in the cartridge, so its exact rule is assumed to be the usual round
+half up (`MATH.ASM` `DIVNR`). A test against the real game would
+confirm it.
 
 The disassembly comments say the fertility baseline is 50 and call the
 clamp a "min of 40"; the code says baseline 40 and a maximum of 64.
@@ -89,11 +95,12 @@ Trust the code.
 
 ## Round score  [`$5ABD`]
 
-All divisions are integer. `p100 = pop / 100`.
+`p100 = pop / 100`, **truncated** (the plain divide `X_DIV`, `$5AC6`).
+Every other division here **rounds** (`X_DIVR`):
 
-- Housing: `min(30, (houses * 500 / p100) / 3)`
-- GDP: `min(30, (gold earned this round * 100 / p100) / 12)`
-- Food: `min(30, ((crops + fishing boats) * 500 / p100) / 3)`
+- Housing: `min(30, round(round(houses * 500 / p100) / 3))` [`$5AD8`, `$5ADE`]
+- GDP: `min(30, round(round(gold earned this round * 100 / p100) / 12))` [`$5AF6`, `$5AFC`]
+- Food: `min(30, round(round((crops + fishing boats) * 500 / p100) / 3))` [`$5B1A`, `$5B20`]
 - General welfare: +1 per school, +1 per hospital.
 - Round score = sum, capped at 100. It is added to the running total;
   the previous round score is kept for the rebel check.
@@ -165,13 +172,17 @@ One player, start of round: population 1000, 2 factories, 4 crops,
   earned = **14**; gold rises by 14 + 10 = **24**.
 - Fertility: 40 + 4x3 + 3 + 1 - 3 = **53** (under the 64 cap).
 - Mortality: 11 - 3 = 8 (not below 2), + 2 factories = **10**.
-- Births `round(100 * 53 / 100)` = 53; deaths `round(100 * 10 / 100)` = 10;
-  population **1043**.
-- Score, using the updated population (`p100` = 10):
-  housing `min(30, (1 * 500 / 10) / 3)` = 16;
-  GDP `min(30, (14 * 100 / 10) / 12)` = 11;
-  food `min(30, ((4 + 1) * 500 / 10) / 3)` = 30;
-  welfare 2; round score **59**.
+- `p10` = round(1000 / 10) = 100. Births round(100 * 53 / 100) = 53;
+  deaths round(100 * 10 / 100) = 10; population **1043**.
+- Score, using the updated population (`p100` = 1043 / 100 = 10,
+  truncated):
+  housing round(round(1 * 500 / 10) / 3) = round(50 / 3) = **17**;
+  GDP round(round(14 * 100 / 10) / 12) = round(140 / 12) = **12**;
+  food round(round((4 + 1) * 500 / 10) / 3) = 83, capped at **30**;
+  welfare **2**; round score **61**.
+
+(An earlier version of this example truncated every division and got
+housing 16, GDP 11 and score 59; the original rounds them.)
 
 Not yet verified: whether the score routine `[$5ABD]` uses the
 population before or after this round's update. With the old
