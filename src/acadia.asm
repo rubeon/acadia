@@ -5,6 +5,7 @@
 ;
 ;  Memory map
 ;    $0080-$0087  zero page: math work area (MATH.ASM)
+;    $0088-$0089  zero page: TPTR (TEXT.ASM)
 ;    $00CB-$00CE  zero page: ZPTR, OLDVBD
 ;    $2000-       code and constant tables
 ;    $3000-$33FF  map font 0 (1K aligned)
@@ -24,6 +25,7 @@ M_NUM   =  $80          ; 3-byte math operand / result (MATH.ASM)
 M_TMP   =  $83          ; 3-byte math work copy
 M_OP    =  $86          ; math multiplier / divisor
 M_OVF   =  $87          ; math overflow count
+TPTR    =  $88          ; 2-byte string pointer (TEXT.ASM)
 ZPTR    =  $CB          ; 2-byte general pointer
 OLDVBD  =  $CD          ; 2-byte saved deferred VBI vector
 
@@ -36,6 +38,7 @@ START
         JSR VARS_INIT
         JSR DISP_INIT
         JSR TIC_INIT
+        JSR DEMO_INIT
 
 MAIN    LDA FRAME       ; wait for the next frame
 MN_WAIT CMP FRAME
@@ -45,7 +48,7 @@ MN_WAIT CMP FRAME
 MN_TIC  JSR TIC_NEXT    ; run every due tic
         BCC MN_SHOW
         BNE MN_TIC      ; not a new second
-        INC DEMOSEC
+        JSR DEMO_SEC
         JMP MN_TIC
 MN_SHOW JSR SHOW_INPUT
         JMP MAIN
@@ -86,19 +89,6 @@ SI_FRM  LDA FRAME
         LDA HEXTAB,X
         STA STATUS2+ST_FRM+1
 
-        LDA DEMOSEC     ; seconds since start
-        LSR A
-        LSR A
-        LSR A
-        LSR A
-        TAX
-        LDA HEXTAB,X
-        STA STATUS2+ST_SEC
-        LDA DEMOSEC
-        AND #$0F
-        TAX
-        LDA HEXTAB,X
-        STA STATUS2+ST_SEC+1
         LDA #$2E        ; screen code "N"
         LDX TICLEN
         CPX #5
@@ -108,6 +98,84 @@ SI_STD  STA STATUS2+ST_STD
         RTS
 
 HEXTAB  .SBYTE "0123456789ABCDEF"
+
+; ---------------------------------------------------------------------
+;  Test-build demo clock: placeholder game state counted down by the
+;  tic so the status bar (R-SCR-1) shows live values.  Replaced by the
+;  real round logic in M3.  10 rounds of 30 s, 100 gold each, +10 gold
+;  at the end of every round.
+; ---------------------------------------------------------------------
+DEMO_INIT
+        LDA #10
+        STA NUMTRN
+        LDA #30
+        STA TRNLEN
+        STA REMSEC
+        LDA #0
+        STA CURTRN
+        STA GOLD+1
+        STA GOLD+3
+        LDA #100
+        STA GOLD
+        STA GOLD+2
+        JMP STAT_DRAW
+
+DEMO_SEC
+        DEC REMSEC
+        BNE STAT_DRAW
+        INC CURTRN      ; end of round
+        LDA CURTRN
+        CMP NUMTRN
+        BCC DS_RND
+        LDA #0          ; demo: start over after the last round
+        STA CURTRN
+DS_RND  LDA TRNLEN
+        STA REMSEC
+        LDX #0          ; +10 gold for each player
+DS_GOLD CLC
+        LDA GOLD,X
+        ADC #10
+        STA GOLD,X
+        LDA GOLD+1,X
+        ADC #0
+        STA GOLD+1,X
+        INX
+        INX
+        CPX #4
+        BNE DS_GOLD
+        ; fall through
+
+; ---------------------------------------------------------------------
+;  STAT_DRAW -- status line 1: both players' gold, rounds left and the
+;  seconds left in the round (R-SCR-1)
+; ---------------------------------------------------------------------
+STAT_DRAW
+        LDA GOLD
+        LDX GOLD+1
+        JSR NUM16
+        LDA #4
+        LDX #ST_G0
+        JSR TXT_DEC
+        LDA NUMTRN      ; rounds left
+        SEC
+        SBC CURTRN
+        LDX #0
+        JSR NUM16
+        LDA #2
+        LDX #ST_TRN
+        JSR TXT_DEC
+        LDA REMSEC
+        LDX #0
+        JSR NUM16
+        LDA #3
+        LDX #ST_TIME
+        JSR TXT_DEC
+        LDA GOLD+2
+        LDX GOLD+3
+        JSR NUM16
+        LDA #4
+        LDX #ST_G1
+        JMP TXT_DEC
 
 ; ---------------------------------------------------------------------
 ;  VARS_INIT -- clear the RAM variable block, then set the variables
@@ -136,6 +204,7 @@ VI_CLR  STA (ZPTR),Y
         .INCLUDE "math.asm"
         .INCLUDE "rand.asm"
         .INCLUDE "tic.asm"
+        .INCLUDE "text.asm"
         .INCLUDE "display.asm"
         .INCLUDE "vars.asm"
 
