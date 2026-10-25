@@ -40,6 +40,10 @@ INPUT_POLL
         EOR #$01
         STA FIRE1
 
+        LDA CONSOL      ; console keys, 1 = held (D18)
+        EOR #$FF
+        AND #$07        ; b0 START, b1 SELECT, b2 OPTION
+        STA CONKEY
         LDA #0
         STA PAUSEK
         LDA #$FF

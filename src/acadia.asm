@@ -39,11 +39,9 @@ OLDVBD  =  $CD          ; 2-byte saved deferred VBI vector
 START
         CLD
         JSR VARS_INIT
-        JSR MAP_INIT
         JSR DISP_INIT
-        JSR CUR_INIT
         JSR TIC_INIT
-        JSR DEMO_INIT
+        JSR GAME_NEW    ; round 1 of a new game
 
 MAIN    LDA FRAME       ; wait for the next frame
 MN_WAIT CMP FRAME
@@ -56,15 +54,23 @@ MN_WAIT CMP FRAME
 ; ---------------------------------------------------------------------
 GAME_FRAME
         JSR INPUT_POLL
-        JSR PAUSE_KEY   ; P: pause / resume (D19)
+        LDA GSTATE
+        CMP #GS_OVER
+        BNE GF_RUN
+        JMP OVER_FRAME  ; game over: wait for fire or a key
+GF_RUN  JSR PAUSE_KEY   ; P: pause / resume (D19)
         BNE GF_SHOW     ; paused: nothing moves
+        LDA GSTATE
+        BNE GF_TICS     ; round summary: nothing moves either
         JSR CUR_MOVE
         JSR ECO_KEY     ; buy with digit keys (D17)
-        JSR TIC_POLL
+        JSR INFO_KEYS   ; console keys: info pages (D18)
+GF_TICS JSR TIC_POLL
 GF_TIC  JSR TIC_NEXT    ; run every due tic
         BCC GF_SHOW
-        BNE GF_TIC      ; not a new second
-        JSR DEMO_SEC
+        BNE GF_T1       ; not a new second
+        JSR GAME_SEC
+GF_T1   JSR GAME_TIC
         JMP GF_TIC
 GF_SHOW JMP SHOW_INPUT
 
@@ -115,68 +121,6 @@ SI_STD  STA STATUS2+ST_STD
 HEXTAB  .SBYTE "0123456789ABCDEF"
 
 ; ---------------------------------------------------------------------
-;  Test-build demo clock: placeholder round timing counted down by the
-;  tic so the status bar (R-SCR-1) shows live values, until the setup
-;  screen and real round flow (T-SCR-1/2).  10 rounds of 30 s, 100 gold
-;  each; ECO_ROUND runs at the end of every round.
-; ---------------------------------------------------------------------
-DEMO_INIT
-        LDA #10
-        STA NUMTRN
-        LDA #30
-        STA TRNLEN
-        STA REMSEC
-        LDA #0
-        STA CURTRN
-        JSR ECO_INIT    ; 1000 people and 100 gold each
-        JMP STAT_DRAW
-
-DEMO_SEC
-        DEC REMSEC
-        BNE STAT_DRAW
-        INC CURTRN      ; end of round
-        LDA CURTRN
-        CMP NUMTRN
-        BCC DS_RND
-        LDA #0          ; demo: start over after the last round
-        STA CURTRN
-DS_RND  LDA TRNLEN
-        STA REMSEC
-        JMP ECO_ROUND   ; income etc.; redraws the status bar
-
-; ---------------------------------------------------------------------
-;  STAT_DRAW -- status line 1: both players' gold, rounds left and the
-;  seconds left in the round (R-SCR-1)
-; ---------------------------------------------------------------------
-STAT_DRAW
-        LDA GOLD
-        LDX GOLD+1
-        JSR NUM16
-        LDA #4
-        LDX #ST_G0
-        JSR TXT_DEC
-        LDA NUMTRN      ; rounds left
-        SEC
-        SBC CURTRN
-        LDX #0
-        JSR NUM16
-        LDA #2
-        LDX #ST_TRN
-        JSR TXT_DEC
-        LDA REMSEC
-        LDX #0
-        JSR NUM16
-        LDA #3
-        LDX #ST_TIME
-        JSR TXT_DEC
-        LDA GOLD+2
-        LDX GOLD+3
-        JSR NUM16
-        LDA #4
-        LDX #ST_G1
-        JMP TXT_DEC
-
-; ---------------------------------------------------------------------
 ;  VARS_INIT -- clear the RAM variable block, then set the variables
 ;  that do not start at zero.  Trashes A, X, Y, ZPTR.
 ; ---------------------------------------------------------------------
@@ -210,6 +154,7 @@ VI_CLR  STA (ZPTR),Y
         .INCLUDE "economy.asm"
         .INCLUDE "sound.asm"
         .INCLUDE "pause.asm"
+        .INCLUDE "screens.asm"
         .INCLUDE "display.asm"
         .INCLUDE "vars.asm"
 
