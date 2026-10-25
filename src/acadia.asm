@@ -4,12 +4,14 @@
 ;  Main file.  Assemble with ATasm:  atasm -Isrc -obuild/acadia.xex
 ;
 ;  Memory map
-;    $00CB-$00CF  zero page work area (free with or without BASIC)
-;    $2000-       code and variables
-;    $3000-$33FF  map font (1K aligned)
+;    $0080-$0087  zero page: math work area (MATH.ASM)
+;    $00CB-$00CE  zero page: ZPTR, OLDVBD
+;    $2000-       code and constant tables
+;    $3000-$33FF  map font 0 (1K aligned)
 ;    $3400-$35B7  map screen (11 x 40, mode 5)
 ;    $3800-       display list
 ;    $3900-$3FFF  RAM variables (VARS.ASM)
+;    $4800-$4BFF  map font 1
 ; =====================================================================
 
         .INCLUDE "hw_a800.asm"
@@ -18,6 +20,10 @@
 ; ---------------------------------------------------------------------
 ;  Zero page
 ; ---------------------------------------------------------------------
+M_NUM   =  $80          ; 3-byte math operand / result (MATH.ASM)
+M_TMP   =  $83          ; 3-byte math work copy
+M_OP    =  $86          ; math multiplier / divisor
+M_OVF   =  $87          ; math overflow count
 ZPTR    =  $CB          ; 2-byte general pointer
 OLDVBD  =  $CD          ; 2-byte saved deferred VBI vector
 
@@ -100,6 +106,7 @@ VI_CLR  STA (ZPTR),Y
         RTS
 
         .INCLUDE "input.asm"
+        .INCLUDE "math.asm"
         .INCLUDE "display.asm"
         .INCLUDE "vars.asm"
 

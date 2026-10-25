@@ -1,0 +1,97 @@
+#!/usr/bin/env python3
+"""Run routines from build/acadia.xex on a 6502 core (py65), for tests.
+
+Loads every XEX segment into a flat 64K memory, reads label addresses
+from the ATasm label file and literal equates (NAME = $xx) from src/,
+and calls a routine by name with A/X/Y set, returning when it RTSes.
+No Atari hardware is emulated: use it for pure routines (math, tables,
+map logic), not for display or interrupt code.
+
+    from run6502 import Machine
+    m = Machine()                       # build/acadia.xex + .lab
+    m.call("MUL8", a=12, x=34)
+    m.word("M_NUM")                     # read 16 bits
+"""
+
+import glob
+import os
+import re
+
+from py65.devices.mpu6502 import MPU
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+
+class Machine:
+    def __init__(self, xex=None, labels=None):
+        xex = xex or os.path.join(ROOT, "build", "acadia.xex")
+        labels = labels or os.path.join(ROOT, "build", "acadia.lab")
+        self.mpu = MPU()
+        self.mem = self.mpu.memory
+        self.sym = {}
+        self._load_xex(open(xex, "rb").read())
+        for line in open(labels):
+            parts = line.split()
+            if len(parts) == 2:
+                self.sym[parts[1].upper()] = int(parts[0], 16)
+        equ = re.compile(r"^([A-Z_][A-Z0-9_]*)\s*=\s*\$([0-9A-F]+)\s*(;|$)", re.I)
+        for path in glob.glob(os.path.join(ROOT, "src", "*.asm")):
+            for line in open(path):
+                m = equ.match(line)
+                if m:
+                    self.sym.setdefault(m.group(1).upper(), int(m.group(2), 16))
+
+    def _load_xex(self, data):
+        i = 0
+        while i < len(data):
+            start = data[i] | data[i + 1] << 8
+            if start == 0xFFFF:
+                i += 2
+                continue
+            end = data[i + 2] | data[i + 3] << 8
+            i += 4
+            n = end - start + 1
+            self.mem[start:start + n] = list(data[i:i + n])
+            i += n
+
+    def addr(self, name):
+        return self.sym[name.upper()] if isinstance(name, str) else name
+
+    def call(self, name, a=0, x=0, y=0, carry=False, limit=200000):
+        """JSR to a routine; return (A, X, Y, carry) after its RTS."""
+        sentinel = 0xFFF0
+        self.mpu.sp = 0xFF
+        ret = sentinel - 1                     # RTS adds one
+        self.mem[0x01FF] = ret >> 8
+        self.mem[0x01FE] = ret & 0xFF
+        self.mpu.sp = 0xFD
+        self.mpu.a, self.mpu.x, self.mpu.y = a & 0xFF, x & 0xFF, y & 0xFF
+        self.mpu.p = (self.mpu.p & ~self.mpu.CARRY) | (self.mpu.CARRY if carry else 0)
+        self.mpu.pc = self.addr(name)
+        steps = 0
+        while self.mpu.pc != sentinel:
+            self.mpu.step()
+            steps += 1
+            if steps > limit:
+                raise RuntimeError("%s did not return" % name)
+        self.cycles_last = steps
+        return self.mpu.a, self.mpu.x, self.mpu.y, bool(self.mpu.p & self.mpu.CARRY)
+
+    def byte(self, name, offset=0):
+        return self.mem[self.addr(name) + offset]
+
+    def word(self, name):
+        a = self.addr(name)
+        return self.mem[a] | self.mem[a + 1] << 8
+
+    def long(self, name):
+        a = self.addr(name)
+        return self.mem[a] | self.mem[a + 1] << 8 | self.mem[a + 2] << 16
+
+    def poke(self, name, *values):
+        a = self.addr(name)
+        for i, v in enumerate(values):
+            self.mem[a + i] = v & 0xFF
+
+    def set_long(self, name, value):
+        self.poke(name, value, value >> 8, value >> 16)

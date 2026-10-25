@@ -41,14 +41,15 @@ Current files are marked ✓; the rest are planned (see PLAN.md).
 | `src/events.asm` | game | Weather, fish, pirates, boats, collisions, rebels |
 | `src/ai.asm` | game | CPU governor |
 | `src/screens.asm` | game | Setup, round summary, game over |
-| `src/math.asm` | services | 8×8 and 16×8 multiply, 16÷8 divide with rounding |
+| `src/math.asm` ✓ | services | On 24-bit `M_NUM`: `MUL8` (8×8), `MULN` (×8, C = overflow), `DIVN` (÷8, remainder in A), `DIVNR` (÷8 rounded half up); C set on ÷0 |
 | `src/hw_5200.asm` | platform | 5200 equivalents (later) |
 
 ## 3. Memory map (800XL, XEX)
 
 | Range | Use |
 |---|---|
-| `$0080-$00CA` | Free while BASIC is off; reserved for game ZP (allocate in `acadia.asm`) |
+| `$0080-$0087` | ZP: math work area `M_NUM` (3), `M_TMP` (3), `M_OP`, `M_OVF` |
+| `$0088-$00CA` | Free while BASIC is off; reserved for game ZP (allocate in `acadia.asm`) |
 | `$00CB-$00CE` | `ZPTR` (2), `OLDVBD` (2) — in use |
 | `$2000-$2FFF` | Code and variables |
 | `$3000-$33FF` | Map font 0 (1K aligned): fixed tiles + coast tiles of the first rows |

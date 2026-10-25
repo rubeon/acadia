@@ -73,8 +73,10 @@ A change is not done until `make` succeeds with **0 warnings**.
 
 ## Testing
 
-There is no automated test harness yet (see task T-INFRA-3).
-Until then, every PR states:
+`make test` runs the unit tests in `tests/` on a 6502 core
+(`tools/run6502.py`, needs py65): use it for pure routines such as math
+and map logic. There is no display/emulator test harness yet (task
+T-INFRA-3), so every PR also states:
 - `make` output (0 warnings),
 - what was run in atari800 and what was seen,
 - for display work, a screenshot (`atari800 -screenshots "shot###.png"`,
