@@ -45,4 +45,32 @@ STATUS2 *= *+40         ; status bar line 2 (screen memory)
 RN_N    *= *+1          ; RAND_N: range
 RN_M    *= *+1          ; RAND_N: bit mask
 
+; ---------------------------------------------------------------------
+;  Game tic (TIC.ASM)
+; ---------------------------------------------------------------------
+LASTFR  *= *+1          ; FRAME at the last TIC_POLL
+TICDUE  *= *+1          ; tics due, not yet taken by TIC_NEXT
+TICPH   *= *+1          ; phase in the frame pattern
+TICOFS  *= *+1          ; pattern start in TICPAT (NTSC or PAL)
+TICLEN  *= *+1          ; pattern length (3 NTSC, 5 PAL)
+TICSEC  *= *+1          ; tic within the second, 0-19
+
+; ---------------------------------------------------------------------
+;  Text (TEXT.ASM)
+; ---------------------------------------------------------------------
+TCNT    *= *+1          ; TXT_DEC: field width
+TOFS    *= *+1          ; TXT_DEC: field start
+TPOS    *= *+1          ; TXT_DEC: current digit position
+TLAST   *= *+1          ; TXT_DEC: last character of the field
+
+; ---------------------------------------------------------------------
+;  Game state (ARCHITECTURE section 7 names).  For now only the test
+;  build's demo clock in ACADIA.ASM drives these.
+; ---------------------------------------------------------------------
+GOLD    *= *+4          ; gold, 16 bits per player: P0 at GOLD, P1 at GOLD+2
+NUMTRN  *= *+1          ; number of rounds in the game
+CURTRN  *= *+1          ; rounds played so far
+TRNLEN  *= *+1          ; round length in seconds
+REMSEC  *= *+1          ; seconds left in this round
+
 VAREND

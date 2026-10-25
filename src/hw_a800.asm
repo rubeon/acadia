@@ -35,6 +35,7 @@ TRIG3   =  $D013        ; R  (400/800 only; XL: cart sense)
 COLPM0  =  $D012        ; W  player/missile colours
 COLPM1  =  $D013
 COLPM2  =  $D014
+PAL     =  $D014        ; R  bits 1-3 = 0 on a PAL machine
 COLPM3  =  $D015
 COLPF0  =  $D016        ; W  playfield colours
 COLPF1  =  $D017
