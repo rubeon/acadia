@@ -24,8 +24,8 @@
 ;  never asks).
 ;
 ;  Positions as FISH.ASM: 8.8 fixed point, WXH = map column + 8
-;  (0-168), WYH = map line + 8 (0-96), speeds in the original's units
-;  (51/256 pixel per tic each).  Rain and storms are 16 x 8 pixels
+;  (0-168), WYH = map line + 8 (0-96), speeds in 38/256 pixel per tic
+;  each, 3/4 of the original's 51/256 (D43).  Rain and storms are 16 x 8 pixels
 ;  (2 squares by 1), hurricanes 16 x 32.
 ;
 ;  Player 2 is double width (16 pixels), over the playfield, light
@@ -608,10 +608,12 @@ WCOL    .BYTE 0,C_RAIN,C_STRM,C_HURR ; colour (COLPM2)
 WSH_LO  .BYTE 0,<WSH_RAIN,<WSH_STRM,<WSH_HURR
 WSH_HI  .BYTE 0,>WSH_RAIN,>WSH_STRM,>WSH_HURR
 
-; Speed steps: 51/256 pixel per tic for each unit, speeds -15..+15,
-; shared with the pirates (FISH.ASM)
-WV_LO   =  FV_LO+F_VTAB
-WV_HI   =  FV_HI+F_VTAB
+; Speed steps, speeds -15..+15: 38/256 pixel per tic for each unit,
+; 3/4 of the original's 51/256 (D43), as 8.8 fixed point
+WV_LO   .BYTE $C6,$EC,$12,$38,$5E,$84,$AA,$D0,$F6,$1C,$42,$68,$8E,$B4,$DA,$00
+        .BYTE $26,$4C,$72,$98,$BE,$E4,$0A,$30,$56,$7C,$A2,$C8,$EE,$14,$3A
+WV_HI   .BYTE $FD,$FD,$FE,$FE,$FE,$FE,$FE,$FE,$FE,$FF,$FF,$FF,$FF,$FF,$FF,$00
+        .BYTE $00,$00,$00,$00,$00,$00,$01,$01,$01,$01,$01,$01,$01,$02,$02
 
 ; Shapes, 4 frames each; a byte is one line, 8 pixels of 2 colour
 ; clocks (player 2 is double width), bit 7 on the left.

@@ -116,13 +116,13 @@ m.call("WTH_NEW", x=1)
 if m.byte("WACT", 1) != WT_RAIN:
     fail("second weather not started once the first is a row clear")
 
-# moving: drift at 51/256 per unit, gone off the map
+# moving: drift at 38/256 per unit (3/4 of the original, D43), gone off the map
 clear()
 put(0, WT_RAIN, 40, 20, vx=4, vy=5)
 tic(10)
 x = m.byte("WXH") + m.byte("WXL") / 256
 y = m.byte("WYH") + m.byte("WYL") / 256
-if abs(x - (40 + 4 * 51 * 10 / 256)) > 0.01 or abs(y - (20 + 5 * 51 * 10 / 256)) > 0.01:
+if abs(x - (40 + 4 * 38 * 10 / 256)) > 0.01 or abs(y - (20 + 5 * 38 * 10 / 256)) > 0.01:
     fail("drift to %.2f, %.2f" % (x, y))
 put(0, WT_STRM, 80, 95, vy=15)
 tic(2)
