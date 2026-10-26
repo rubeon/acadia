@@ -7,7 +7,9 @@ Writes three files (do not edit them by hand):
   src/font_map.asm  the map fonts (1K each, fixed addresses)
   src/islands.asm   TILECH (tile -> character code),
                     ROWFONT (font page per map row), ISLKIND (cell
-                    kinds) and ISLTILE (terrain tile per square)
+                    kinds), ISLTILE (terrain tile per square) and
+                    AI_HD / AI_UP / AI_DN (steps by sea for the CPU's
+                    boat: to its harbour, above, below the islands)
 
 Islands are drawn at pixel level.  Each island starts as a square
 outline (LEFT and RIGHT below); a seeded, deterministic erosion pass makes the
@@ -468,6 +470,25 @@ def tile_bytes(a):
     return left, right
 
 
+def sea_steps(kinds, goal):
+    """Steps by sea from each square to the nearest square where
+    goal(row, column) is true: 4 ways, never over land; 255 for land
+    and squares that can't reach one."""
+    rows, cols = len(kinds), len(kinds[0])
+    steps = [[255] * cols for _ in range(rows)]
+    todo = [(r, c) for r in range(rows) for c in range(cols)
+            if goal(r, c) and kinds[r][c] & 0x7F != K_LAND]
+    for r, c in todo:
+        steps[r][c] = 0
+    for r, c in todo:                    # breadth first: todo grows
+        for nr, nc in ((r, c - 1), (r, c + 1), (r - 1, c), (r + 1, c)):
+            if (0 <= nr < rows and 0 <= nc < cols and steps[nr][nc] == 255
+                    and kinds[nr][nc] & 0x7F != K_LAND):
+                steps[nr][nc] = steps[r][c] + 1
+                todo.append((nr, nc))
+    return steps
+
+
 def hexes(bs):
     return ",".join("$%02X" % b for b in bs)
 
@@ -649,6 +670,19 @@ def main():
         out.append("ISLTILE")
         for r in range(ROWS):
             out.append("        .BYTE " + hexes(p["tgrid"][r]))
+        out.append("; AI_HD: steps by sea (4 ways, not over land) from each square to")
+        out.append("; player 2's harbour, the CPU's way home (AI.ASM); $FF: land or none")
+        out.append("AI_HD")
+        steps = sea_steps(p["kinds"], lambda r, c: p["kinds"][r][c] == K_HARB | K_P1)
+        for r in range(ROWS):
+            out.append("        .BYTE " + hexes(steps[r]))
+        out.append("; AI_UP, AI_DN: steps by sea to the open sea above the islands")
+        out.append("; (rows 0-1) and below them (rows 9-10), the CPU's way round them")
+        for name, goal in (("AI_UP", lambda r, c: r < 2), ("AI_DN", lambda r, c: r > ROWS - 3)):
+            out.append(name)
+            steps = sea_steps(p["kinds"], goal)
+            for r in range(ROWS):
+                out.append("        .BYTE " + hexes(steps[r]))
         out.append("N_TILES = %d" % len(p["tiles"]))
         out.append("N_FONTS = %d" % len(p["fonts"]))
     open("src/islands.asm", "w").write("\n".join(out) + "\n")
