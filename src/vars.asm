@@ -280,6 +280,24 @@ RB_T    *= *+1          ; REB_ADD: tries left; REB_DEL: list index
 RB_I    *= *+1          ; REB_ADD: item on the square
 
 ; ---------------------------------------------------------------------
+;  CPU governor (AI.ASM, T-AI-1)
+; ---------------------------------------------------------------------
+AIST    *= *+1          ; 1 while the cursor heads for a square
+AITMR   *= *+1          ; tics to the next decision
+AI_IT   *= *+1          ; item being bought
+AI_C    *= *+1          ; its square
+AI_R    *= *+1
+AI_N    *= *+1          ; AI_PICK: crops and houses wanted
+AI_I    *= *+1          ; AI_SPOT: list index
+AI_V    *= *+1          ; AI_SPOT: this square's value
+AI_BV   *= *+1          ; AI_SPOT: best value + 1 so far
+AN_C    *= *+1          ; AI_NBR: square
+AN_R    *= *+1
+AN_N    *= *+1          ; AI_NBR: count
+AN_I    *= *+1          ; AI_NBR: neighbour 7-0
+AN_T    *= *+1          ; AI_NBR: neighbour column
+
+; ---------------------------------------------------------------------
 ;  Setup screen (SETUP.ASM)
 ; ---------------------------------------------------------------------
 SU_VAL  *= *+4          ; rounds, seconds per round, players, CPU level

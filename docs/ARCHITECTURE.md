@@ -44,7 +44,7 @@ Current files are marked ✓; the rest are planned (see PLAN.md).
 | `src/weather.asm` ✓ | game | Weather (T-EVT-4, D35): `WTH_INIT`, `WTH_TIC` (each tic of a round: 1 in 100 rain / storm / hurricane in a free slot, 1 in 10 a speed kick, move, gone off the map; `WTH_HIT` on the square under the centre: damage to its owner, at 125 `WTH_SMITE` destroys the item (boat: wreck for 3 s; else 0-100 people die), rain over crops 1 gold per 12; `WTH_BOAT`: a hurricane sinks steered boats it touches), `WTH_SHOW` (every frame: both objects in P2, `HP2ROW` / `WCROW` per map row for the DLIs) |
 | `src/pirates.asm` ✓ | game | Pirates and boat collisions (T-EVT-3, D36): `PIR_INIT`, `PIR_TIC` (each tic of a round: 1 in 100 a pirate in slot 2 or 3 of the fish arrays, kicked and moved by `FISH_KICK` / `FISH_MOVE` at the original's speed; `PIR_HIT`: a parked fishing boat under its centre is attacked (`PIR_ATK`: its owner's fort next to it protects, else 20 attacks sink it), a steered fishing boat touching it sinks unless any fort is next to it, a steered PT boat stops it; `PT_TIC`: a steered PT boat attacks the other player's parked fishing boats as a pirate does, and sinks the other player's steered fishing boat it touches unless that boat's own fort is near), `PIR_SHOW` (every frame: both pirates in missile memory, `HMROW` per map row for the DLIs) |
 | `src/rebels.asm` ✓ | game | Rebels (T-ECO-5, D38): `REB_ROUND` (after `ECO_ROUND` in `ROUND_END`: `REB_TURN` per player adds or removes one by the score change), `REB_ADD` (random land square of the player's island, up to 251 tries, not on a rebel / fort or next to a fort; destroys the item there), `REB_DEL` (first rebel row by row), `RB_LAND` (the island's land squares into `RBCOL` / `RBROW`); key 7 in `ECO_BUY` calls `REB_ADD` for the other player |
-| `src/ai.asm` | game | CPU governor |
+| `src/ai.asm` ✓ | game | CPU governor (T-AI-1, T-AI-3, D39), 1-player games only: `AI_INIT`; `AI_FRAME` (each frame before `CUR_MOVE`: digit keys go to player 1, `JOY1` is the CPU's virtual stick towards its square, `ECO_BUY` once the cursor settles there); `AI_TIC` (every 60 / 40 / 20 tics by level: `AI_PICK` the first item of `AIPLAN` short of its number, crops and houses scaled to p100, if it can pay; `AI_SPOT` the square: forts where they cover most buildings, the rest next to a fort if possible); level 1 buys at random 1 time in 3, level 3 keeps one crop and house ahead and sends rebels with 150+ gold |
 | `src/screens.asm` ✓ (rounds, summary, game over, info) | game | `GAME_NEW` (defaults: 10 rounds of 30 s; tests) / `GAME_START` (current `NUMTRN`, `TRNLEN`); `GSTATE` play → `GS_SUM1` round scores (3 s) → `GS_SUM2` totals (3 s) → next round or `GS_OVER` (final scores, winner on line 2; fire or a key, once let go, goes back to the setup screen). `GAME_SEC` (clock, `ROUND_END`), `GAME_TIC` (summary timing), `OVER_FRAME`; `INFO_KEYS` / `STAT_SHOW` (D18 info pages while a console key is held); `STAT_LINE` / `STAT_DRAW`, `SHOW_PAIR` |
 | `src/setup.asm` ✓ | game | Setup screen (R-MODE-3, D31), `GSTATE` = `GS_SETUP`: `SETUP_INIT` (defaults, once), `SETUP_ENTER` (own display list `SUDLIST`, text in the map's screen memory, cursors hidden; waits until everything is let go), `SETUP_FRAME` (stick/SELECT pick a line, stick left/right or digits change it, START/fire calls `GAME_START`). Values in `SU_VAL`: rounds 1-50, seconds 30-120, players 1-2, CPU level 1-3 |
 | `src/pause.asm` ✓ | game | Pause (D19): `PAUSE_KEY` (P toggles), `PAUSE_ON` (save status line 1, show PAUSED, `PAL_DIM`, silence AUDC1-4), `PAUSE_OFF` (restore, `PAL_NORM`, `TIC_SYNC`); `PAUSED` flag |
@@ -128,14 +128,16 @@ Main loop:           wait for FRAME change, then GAME_FRAME:
                        it is up skip everything below
                      PAUSE_KEY: P toggles pause; while paused skip
                        everything below except the status echo
+                     AI_FRAME (1 player: the CPU's stick and purchase)
                      cursor/boat movement from input, buying (ECO_KEY)
                      if tic due (20 Hz): run TIC tasks
                        fish (FISH_TIC), weather (WTH_TIC) and pirates
-                       and boat collisions (PIR_TIC), rounds only
+                       and boat collisions (PIR_TIC), the CPU (AI_TIC),
+                       rounds only
                      FISH_SHOW: draw the schools in P3, fill HP3ROW
                      WTH_SHOW: draw the weather in P2, fill HP2ROW, WCROW
                      PIR_SHOW: draw the pirates in the missiles, fill HMROW
-                       once per second: clock, AI decision
+                       once per second: clock
                        end of round: economy, population, score, rebels
                      redraw changed tiles / status fields
 ```
