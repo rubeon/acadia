@@ -143,7 +143,12 @@ Every other division here **rounds** (`X_DIVR`):
 Overflow notes from the original: earned gold over 255 or
 crops + fishing boats over 65 overflow. A clone may fix these.
 
-After scoring, a random crop destruction pass runs, removing crops.
+After scoring (and the reset of earned gold), a crop destruction pass
+runs once per round over both islands (`$5B6B-$5BB0`): each crop is
+destroyed when `rand(3) == 0`, so 1 in 3 is lost, with no limit. The
+square gets its island graphic back and the owner's crop count drops.
+No fort protects crops; no sound; population and gold don't change.
+There is no other crop loss during play (only weather and rebels).
 
 ## Rebels  [`$5BB2`]
 

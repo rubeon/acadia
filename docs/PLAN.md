@@ -46,7 +46,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 | T-ECO-3 | Population update | R-RULE-2 | T-ECO-2 | Same | done |
 | T-ECO-4 | Round score (housing, GDP, food, welfare, caps) | R-RULE-2,8 | T-ECO-3 | Same, incl. overflow cases fixed | done |
 | T-ECO-5 | Rebels: create/remove/placement, bought rebels (D38) | R-RULE-3 | T-ECO-4, T-MAP-2 | Thresholds behave as specified | done |
-| T-ECO-6 | Random crop destruction | R-RULE-2 | T-ECO-4 | Verify against original routine `$5B6B` first | todo |
+| T-ECO-6 | Random crop destruction (D37) | R-RULE-2 | T-ECO-4 | Verify against original routine `$5B6B` first | done |
 | T-SCR-2 | Round summary and game-over screens; info displays | R-SCR-6, R-MODE-4, R-CTL-4 | T-ECO-4 | Full game of N rounds completes | done |
 | T-SCR-3 | Purchase help screen: one line per item with its key number, its map icon (the same tile as on the map) its name and its price, e.g. `1 [fort] FORT 50` | R-CTL-2 | T-SCR-2, T-EVT-1 | All 9 items shown with the right icon; leaving it returns to the game unchanged (clock paused while up) | done (D34) |
 

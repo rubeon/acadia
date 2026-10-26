@@ -24,6 +24,7 @@
 R_LAND  =  2            ; square is not the player's own land
 R_TAKEN =  3            ; something already stands there
 R_GOLD  =  4            ; not enough gold
+E_CROPL =  3            ; 1 in 3 crops is lost at the end of a round
 
 ; ---------------------------------------------------------------------
 ;  ECO_KEY -- act on this frame's key, if any
@@ -160,7 +161,48 @@ ECO_ROUND
 ER_RG   STA RGOLD,X
         DEX
         BPL ER_RG
+        JSR ECO_CROPS   ; then some crops are lost
         JMP STAT_DRAW
+
+; ---------------------------------------------------------------------
+;  ECO_CROPS -- crop loss after scoring (T-ECO-6, $5B6B-$5BB0): every
+;  crop on either island is destroyed 1 time in 3; its square shows
+;  the island again and its owner has one crop fewer.  No sound, and
+;  nothing protects a crop.  Trashes A, X, Y.
+; ---------------------------------------------------------------------
+ECO_CROPS
+        LDY #MAPROWS-1
+CL_ROW  STY CL_R
+        LDX #MAPSQ-1
+CL_COL  STX CL_C
+        JSR MAP_GET
+        CMP #I_CROP
+        BNE CL_NEXT
+        LDA MKIND       ; owner: player x 10 + crop, for COUNT
+        ASL A
+        LDA #0
+        BCC CL_P0
+        LDA #10
+CL_P0   CLC
+        ADC #I_CROP
+        STA CL_I
+        LDA #E_CROPL
+        JSR RAND_N
+        BNE CL_NEXT     ; 2 in 3: it survives
+        LDX CL_C        ; lost: the island again
+        LDY CL_R
+        JSR MAP_SET     ; A = 0
+        LDX CL_I
+        LDA COUNT,X
+        BEQ CL_NEXT
+        DEC COUNT,X
+CL_NEXT LDY CL_R
+        LDX CL_C
+        DEX
+        BPL CL_COL
+        DEY
+        BPL CL_ROW
+        RTS
 
 ; ---------------------------------------------------------------------
 ;  ECO_INIT -- start of a game: 1000 people and 100 gold each ($50F9,
