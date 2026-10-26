@@ -34,7 +34,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 | T-MAP-1 | Island layout data (own design, Utopia-like shape and size), harbours | R-SCR-2 | T-DES-1 | Two islands drawn from data; grid ↔ screen mapping routines | done |
 | T-MAP-2 | Tile get/set with owner; "fort adjacent" check | R-RULE-5,7 | T-MAP-1 | Check routine verified on test layouts | done |
 | T-SPR-1 | P/M setup, two cursors moved by joysticks, snap to grid | R-CTL-1, R-SCR-4 | T-MAP-1 | Both cursors move smoothly, stay on screen | done |
-| T-ECO-1 | Purchase: key 1-9 at cursor, price check, refusal sound stub, item counts | R-RULE-1,7, R-CTL-2 | T-MAP-2, T-SPR-1 | Items appear, gold decreases, illegal squares refused | done (keys 1-6, 8/9 since T-EVT-1; 7 waits for T-ECO-5 and is refused until then) |
+| T-ECO-1 | Purchase: key 1-9 at cursor, price check, refusal sound stub, item counts | R-RULE-1,7, R-CTL-2 | T-MAP-2, T-SPR-1 | Items appear, gold decreases, illegal squares refused | done (keys 1-6, 8/9 since T-EVT-1, 7 since T-ECO-5) |
 | T-CTL-1 | Pause: `PAUSEK` edge flag in `input.asm`, freeze tic/clock/sprites/AI, mute and restore POKEY, PAUSED on status bar | R-CTL-6 | T-SVC-3, T-SVC-4 | Pausing mid-round and resuming changes nothing in game state; no keys or stick act while paused | done |
 | T-SCR-1 | Setup screen: rounds, round length, mode | R-MODE-3 | T-SVC-4 | Values validated to original ranges | done (D31; CPU from T-AI-1) |
 
@@ -45,7 +45,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 | T-ECO-2 | End-of-round income | R-RULE-2 | T-SVC-1, T-ECO-1 | Matches hand-calculated cases from utopia-rules.md | done |
 | T-ECO-3 | Population update | R-RULE-2 | T-ECO-2 | Same | done |
 | T-ECO-4 | Round score (housing, GDP, food, welfare, caps) | R-RULE-2,8 | T-ECO-3 | Same, incl. overflow cases fixed | done |
-| T-ECO-5 | Rebels: create/remove/placement, bought rebels | R-RULE-3 | T-ECO-4, T-MAP-2 | Thresholds behave as specified | todo |
+| T-ECO-5 | Rebels: create/remove/placement, bought rebels (D38) | R-RULE-3 | T-ECO-4, T-MAP-2 | Thresholds behave as specified | done |
 | T-ECO-6 | Random crop destruction | R-RULE-2 | T-ECO-4 | Verify against original routine `$5B6B` first | todo |
 | T-SCR-2 | Round summary and game-over screens; info displays | R-SCR-6, R-MODE-4, R-CTL-4 | T-ECO-4 | Full game of N rounds completes | done |
 | T-SCR-3 | Purchase help screen: one line per item with its key number, its map icon (the same tile as on the map) its name and its price, e.g. `1 [fort] FORT 50` | R-CTL-2 | T-SCR-2, T-EVT-1 | All 9 items shown with the right icon; leaving it returns to the game unchanged (clock paused while up) | done (D34) |

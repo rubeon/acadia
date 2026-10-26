@@ -147,16 +147,32 @@ After scoring, a random crop destruction pass runs, removing crops.
 
 ## Rebels  [`$5BB2`]
 
-Checked per player after scoring:
+Checked per player (player 1, then 2) after scoring and the crop
+loss, at most one change each. With d = previous round score − this
+round score (signed), in this order (`$5BC2-$5BD3`):
 
-- A rebel appears if the score fell by 10 or more since last round, or
-  the score is below 30.
-- Otherwise a rebel is removed if the score rose by 10 or more, or the
-  score is 70 or higher.
-- Placement: up to 250 tries at a random island square. It must be an
-  empty land square and not next to a fort.
-- A bought (mercenary) rebel uses the same placement on the opponent's
-  island.
+1. d ≥ 10: a rebel appears.
+2. Else d ≤ −10: a rebel is removed.
+3. Else score < 30: a rebel appears.
+4. Else score ≥ 70: a rebel is removed.
+
+So a score that rose by 10 or more removes a rebel even if it is still
+under 30. In round 1 the previous score is 0.
+
+- Placement (`$5BE8-$5C48`): up to about 250 tries (`RBLTRY`, gives up
+  above 250), each `rand(29)` into the player's island square table.
+  A square holding a rebel or a fort, or with a fort of either player
+  on one of its 8 neighbours (`FORT_NEAR_CARD` `$568D`), is skipped.
+  **Any other item there is destroyed** (count −1, "smite" sound
+  `$5FB6`) and the rebel takes the square. All tries failing: nothing.
+- Removal (`$5C50-$5C83`): the first rebel in island table order goes;
+  the square shows the island again. No sound.
+- Rebels are never counted (`REBL_0/1` unused) and affect nothing but
+  their square: nothing can be built on it. Weather damage can destroy
+  a rebel like any item. A fort built next to a rebel doesn't remove it.
+- A bought (mercenary) rebel, key 7, 30 gold, cursor anywhere: the gold
+  is deducted first, then the same placement runs on the opponent's
+  island (`$58B3`, `$594C-$5957`); no refund if it finds no square.
 
 ## Random events  (checked every tic, 20 Hz)
 

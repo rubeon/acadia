@@ -11,8 +11,9 @@
 ;  Boats (8 PT, 9 fishing) appear in the player's harbour wherever
 ;  the cursor is, as in the original ($5924); the harbour must be
 ;  empty.  Key 0 picks a boat up or parks it (BOATS.ASM).
-;  Not yet: 7 (a bought rebel, placed on the other island by T-ECO-5)
-;  is refused for now.
+;  7 buys a rebel for the other player's island, wherever the cursor
+;  is; it is placed as at the end of a round (REBELS.ASM), and the gold
+;  is spent even if no square is found, as in the original ($594C).
 ;
 ;  COUNT holds how many of each item each player owns: COUNT+k for
 ;  player 1's item k, COUNT+10+k for player 2's (COUNT+0 and +10 are
@@ -20,7 +21,6 @@
 ; =====================================================================
 
 ; Refusal reasons (ECO_BUY returns them in A with C set)
-R_ITEM  =  1            ; item can't be bought this way (yet)
 R_LAND  =  2            ; square is not the player's own land
 R_TAKEN =  3            ; something already stands there
 R_GOLD  =  4            ; not enough gold
@@ -53,7 +53,7 @@ ECO_BUY
         CMP #I_REBL
         BCC EB_LND      ; 1-6: on land
         BNE EB_BOAT     ; 8, 9: boats
-        JMP EB_NOIT     ; 7: not yet
+        JMP EB_PAY      ; 7: a rebel for the other island
 EB_BOAT TXA             ; a boat: into this player's harbour
         JSR MAP_HARB
         STX EB_C
@@ -96,6 +96,9 @@ EB_PAY  LDA EB_P        ; X = player x 2, for GOLD
         STA GOLD+1,X    ; pay
         LDA EB_LO
         STA GOLD,X
+        LDA EB_ITEM
+        CMP #I_REBL
+        BEQ EB_REB
         LDA EB_P        ; COUNT + player x 10 + item
         BEQ EB_CNT
         LDA #10
@@ -117,9 +120,6 @@ EB_SET  JSR MAP_SET
         JSR SND_BUY
         CLC
         RTS
-EB_NOIT LDA #R_ITEM
-        BNE EB_NO
-
 EB_LAND LDA #R_LAND
         BNE EB_NO
 EB_TAKEN LDA #R_TAKEN
@@ -127,6 +127,14 @@ EB_TAKEN LDA #R_TAKEN
 EB_GOLD LDA #R_GOLD
 EB_NO   JSR SND_REFUSE
         SEC
+        RTS
+EB_REB  JSR STAT_SHOW   ; a rebel: on the other player's island
+        JSR SND_BUY
+        LDA EB_P
+        EOR #1
+        TAX
+        JSR REB_ADD     ; not counted; no refund if it finds no square
+        CLC
         RTS
 
 ; ---------------------------------------------------------------------

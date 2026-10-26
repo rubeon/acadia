@@ -142,6 +142,7 @@ GS_DONE RTS
 ROUND_END
         JSR SND_ROUND
         JSR ECO_ROUND
+        JSR REB_ROUND   ; then a rebel more or less for each player
         INC CURTRN
         LDA #0
         STA INFOK
