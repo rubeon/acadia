@@ -189,6 +189,10 @@ WN_TYPE STA WACT,X
         STA WVY,X
         LDA #$FF        ; must be drawn afresh
         STA WDRAWN,X
+        LDA WACT,X      ; a storm or a hurricane: its rumble
+        CMP #WT_STRM
+        BCC WN_DONE
+        JMP SND_STORM
 WN_DONE RTS
 
 ; ---------------------------------------------------------------------
