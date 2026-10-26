@@ -1,6 +1,6 @@
 ; =====================================================================
 ;  SOUND.ASM -- POKEY sound driver and effects (T-SND-1, T-SND-2:
-;  R-SND-1, -3, -4; D41)
+;  R-SND-1, -3, -4; D41).  Music: MUSIC.ASM
 ;
 ;  Game code calls a hook (SND_BUY, SND_FISH, ...) where something
 ;  happens; each hook keeps A, X and Y and only starts an effect.  The
@@ -12,7 +12,8 @@
 ;  The step's AUDF and AUDC are written at its first frame; on each
 ;  further frame AUDF moves by the slide (signed: + lower, - higher).
 ;
-;  Four channels, one per POKEY voice.  A new effect takes a free
+;  Four channels, one per POKEY voice; while music plays (MUSIC.ASM)
+;  only voices 3 and 4, from SN_LO up.  A new effect takes a free
 ;  channel, else the one playing the lowest priority if that is no
 ;  higher than its own, else it is dropped.  SFXPRI gives each
 ;  effect's priority.
@@ -36,9 +37,8 @@ SF_FISH =  2
 SF_RAIN =  3
 SF_SMIT =  4
 SF_SINK =  5
-SF_ROUN =  6
-SF_REBL =  7
-SF_STRM =  8
+SF_REBL =  6
+SF_STRM =  7
 
 ; AUDC distortions (high nibble; low nibble is the volume)
 SD_PURE =  $A0          ; pure tone
@@ -51,6 +51,8 @@ SD_BUZZ =  $C0          ; buzz (4-bit polynomial)
 SND_INIT
         LDA #0
         STA AUDCTL
+        STA MZ_ON       ; no music
+        STA SN_LO
         LDX #SN_CH-1
 SI_CH   STA SN_ON,X
         DEX
@@ -103,11 +105,9 @@ SND_SINK
         LDA #SF_SINK
         JMP SND_GO
 
-; SND_ROUND -- end of a round
+; SND_ROUND -- end of a round: the fanfare (MUSIC.ASM)
 SND_ROUND
-        PHA
-        LDA #SF_ROUN
-        JMP SND_GO
+        JMP MUS_FANF
 
 ; SND_REBEL -- a rebel appeared
 SND_REBEL
@@ -137,12 +137,14 @@ SND_GO  STX SN_SX
 ; ---------------------------------------------------------------------
 SND_PLAY
         TAY
-        LDX #SN_CH-1    ; a free channel?
+        LDX #SN_CH-1    ; a free channel?  (from SN_LO up)
 SP_FREE LDA SN_ON,X
         BEQ SP_GOT
         DEX
-        BPL SP_FREE
-        LDX #SN_CH-1    ; else the lowest priority playing
+        BMI SP_FULL
+        CPX SN_LO
+        BCS SP_FREE
+SP_FULL LDX #SN_CH-1    ; else the lowest priority playing
         STX SN_T
 SP_LOW  LDA SN_PRI,X
         STX SN_I
@@ -152,7 +154,10 @@ SP_LOW  LDA SN_PRI,X
         BCS SP_NEXT
         STX SN_T        ; lower than the best so far
 SP_NEXT DEX
-        BPL SP_LOW
+        BMI SP_PICK
+        CPX SN_LO
+        BCS SP_LOW
+SP_PICK
         LDX SN_T
         LDA SFXPRI,Y    ; only if that is no higher than ours
         CMP SN_PRI,X
@@ -176,6 +181,7 @@ SP_GOT  LDA #0          ; the VBI leaves the channel alone while it is
 SND_VBI
         LDA PAUSED
         BNE SV_DONE
+        JSR MUS_VBI     ; the music (voices 1 and 2)
         LDX #SN_CH-1
 SV_CH   LDA SN_ON,X
         BEQ SV_NEXT
@@ -224,9 +230,8 @@ SV_END  LDA #0          ; done: free and quiet
 ;  priority (higher wins a channel).
 ; ---------------------------------------------------------------------
 SFXPOS  .BYTE SX_BUY-SNDDAT,SX_REF-SNDDAT,SX_FISH-SNDDAT,SX_RAIN-SNDDAT
-        .BYTE SX_SMIT-SNDDAT,SX_SINK-SNDDAT,SX_ROUN-SNDDAT,SX_REBL-SNDDAT
-        .BYTE SX_STRM-SNDDAT
-SFXPRI  .BYTE 2,2,1,1,4,4,5,3,3
+        .BYTE SX_SMIT-SNDDAT,SX_SINK-SNDDAT,SX_REBL-SNDDAT,SX_STRM-SNDDAT
+SFXPRI  .BYTE 2,2,1,1,4,4,3,3
 
 ; AUDF at the 64 kHz clock: f = 63921 / (2 x (AUDF + 1)) Hz;
 ; 121 is about C4, 60 C5, 47 E5, 40 G5, 29 C6.
@@ -252,10 +257,6 @@ SX_SMIT .BYTE 4,8,SD_NOIS+14,1, 8,20,SD_NOIS+10,3, 12,60,SD_NOIS+6,5
 ; boat sunk: a falling glide, then a low gurgle
 SX_SINK .BYTE 32,30,SD_PURE+10,3, 6,140,SD_BUZZ+6,0, 6,160,SD_BUZZ+4,0
         .BYTE 8,180,SD_BUZZ+2,0
-        .BYTE 0
-; end of round: three notes up and a held fourth
-SX_ROUN .BYTE 7,60,SD_PURE+10,0, 7,47,SD_PURE+10,0, 7,40,SD_PURE+10,0
-        .BYTE 20,29,SD_PURE+10,0, 10,29,SD_PURE+5,0, 10,29,SD_PURE+2,0
         .BYTE 0
 ; rebel: two low growls
 SX_REBL .BYTE 9,200,SD_BUZZ+10,0, 3,0,0,0, 14,240,SD_BUZZ+10,0

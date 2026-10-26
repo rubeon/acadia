@@ -187,6 +187,7 @@ CODE2   =  $5000
         .INCLUDE "rebels.asm"
         .INCLUDE "ai.asm"
         .INCLUDE "sound.asm"
+        .INCLUDE "music.asm"
         .INCLUDE "pause.asm"
         .INCLUDE "help.asm"
         .INCLUDE "screens.asm"
