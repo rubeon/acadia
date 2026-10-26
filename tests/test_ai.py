@@ -98,8 +98,8 @@ if spent not in (0, 50):
     fail("key 1 in a 1-player game: player 1 spent %d" % spent)
 for _ in range(600):
     frame(m)
-if not count(m, 1, I_CROP):
-    fail("CPU bought no crop in 10 s: %r" % [count(m, 1, k) for k in range(1, 10)])
+if not count(m, 1, I_CROP) or not count(m, 1, I_FSBT):
+    fail("CPU bought no boat and crop in 10 s: %r" % [count(m, 1, k) for k in range(1, 10)])
 
 # the stick heads for the square and buys once the cursor sits on it
 m = machine(3)
@@ -151,7 +151,8 @@ for sq in land:                          # no free land: C set
 if not m.call("AI_SPOT")[3]:
     fail("AI_SPOT found a square on a full island")
 
-# what: crops first, then the plan; nothing it can't pay for
+# what: a fishing boat (food too), crops, then the plan; nothing it
+# can't pay for
 m.call("MAP_INIT")
 for k in range(1, 10):
     m.mem[m.addr("COUNT") + 10 + k] = 0
@@ -163,11 +164,12 @@ for _ in range(12):
     order.append(a)
     if a:
         m.mem[m.addr("COUNT") + 10 + a] += 1
-if order[:6] != [I_CROP, I_CROP, I_FACT, I_HOUS, I_HOUS, I_SCHL]:
+if order[:6] != [I_FSBT, I_CROP, I_FACT, I_HOUS, I_HOUS, I_SCHL]:
     fail("plan order %r" % order)
 m.poke("GOLD", 0, 0, 2, 0)               # 2 gold: a crop costs 3
 for k in range(1, 10):
     m.mem[m.addr("COUNT") + 10 + k] = 0
+m.mem[m.addr("COUNT") + 10 + I_FSBT] = 1
 m.poke("AIST", 0)
 m.poke("AITMR", 1)
 m.call("AI_TIC")

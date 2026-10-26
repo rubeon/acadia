@@ -282,7 +282,12 @@ RB_I    *= *+1          ; REB_ADD: item on the square
 ; ---------------------------------------------------------------------
 ;  CPU governor (AI.ASM, T-AI-1)
 ; ---------------------------------------------------------------------
-AIST    *= *+1          ; 1 while the cursor heads for a square
+AIST    *= *+1          ; what is under way: 0 nothing, AS_BUY ... AS_PARK
+AI_TX   *= *+1          ; AI_STEER: target pixel (top left)
+AI_TY   *= *+1
+AI_LX   *= *+1          ; AI_TIC: the boat's place at the last decision
+AI_LY   *= *+1
+AI_STK  *= *+1          ; AI_TIC: decisions it hasn't moved
 AITMR   *= *+1          ; tics to the next decision
 AI_IT   *= *+1          ; item being bought
 AI_C    *= *+1          ; its square
@@ -296,6 +301,9 @@ AN_R    *= *+1
 AN_N    *= *+1          ; AI_NBR: count
 AN_I    *= *+1          ; AI_NBR: neighbour 7-0
 AN_T    *= *+1          ; AI_NBR: neighbour column
+AI_FJ   *= *+1          ; AI_FLEE: the way away
+AI_FL   *= *+1          ; AI_FLEE: frames left to keep it
+AI_TB   *= *+1          ; AI_WAY: 0 home, 1 above, 2 below the islands
 
 ; ---------------------------------------------------------------------
 ;  Setup screen (SETUP.ASM)

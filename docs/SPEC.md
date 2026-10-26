@@ -79,7 +79,7 @@ on the Atari. Requirement IDs (`R-...`) are referenced from PLAN.md.
 |---|---|
 | R-AI-1 | Plays by the same rules and prices; no hidden bonuses at normal difficulty. |
 | R-AI-2 | Decides purchases at least once per second of game time, using a priority scheme over the scoring formulas (housing, GDP, food, welfare, defence). |
-| R-AI-3 | Uses boats: sends fishing boats toward fish, PT boats toward pirates. |
+| R-AI-3 | Uses boats: sends fishing boats toward fish, PT boats toward pirates. (Fishing boats done, PT boats not steered: D40.) |
 | R-AI-4 | Difficulty levels change decision rate and quality, not the rules. |
 | R-AI-5 | Fits the per-tic CPU budget (ARCHITECTURE §6). |
 
