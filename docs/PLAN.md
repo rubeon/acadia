@@ -72,9 +72,9 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 
 | ID | Task | Reqs | Deps | Acceptance | Status |
 |---|---|---|---|---|---|
-| T-AI-1 | Purchase strategy over the scoring formulas | R-AI-1,2 | M3 | Beats a do-nothing player; scores ≥ 50/round on average after round 5 | todo |
+| T-AI-1 | Purchase strategy over the scoring formulas | R-AI-1,2 | M3 | Beats a do-nothing player; scores ≥ 50/round on average after round 5 | done (D39) |
 | T-AI-2 | Boat handling | R-AI-3 | M4, T-AI-1 | Catches fish, intercepts pirates | todo |
-| T-AI-3 | Difficulty levels | R-AI-4 | T-AI-1 | 3 levels, visibly different | todo |
+| T-AI-3 | Difficulty levels | R-AI-4 | T-AI-1 | 3 levels, visibly different | done (D39) |
 
 ## M7 — Release
 

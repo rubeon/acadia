@@ -68,6 +68,7 @@ GF_RUN  JSR HELP_KEY    ; H / HELP: price list (D34)
         BNE GF_SHOW     ; paused: nothing moves
         LDA GSTATE
         BNE GF_TICS     ; round summary: nothing moves either
+        JSR AI_FRAME    ; 1 player: the CPU's stick (D39)
         JSR CUR_MOVE
         JSR ECO_KEY     ; buy with digit keys (D17)
         JSR INFO_KEYS   ; console keys: info pages (D18)
@@ -82,6 +83,7 @@ GF_T1   JSR GAME_TIC
         JSR FISH_TIC
         JSR WTH_TIC
         JSR PIR_TIC
+        JSR AI_TIC      ; the CPU thinks (1 player)
         JMP GF_TIC
 GF_SHOW JSR FISH_SHOW
         JSR WTH_SHOW
@@ -182,6 +184,7 @@ CODE2   =  $5000
         .INCLUDE "weather.asm"
         .INCLUDE "pirates.asm"
         .INCLUDE "rebels.asm"
+        .INCLUDE "ai.asm"
         .INCLUDE "sound.asm"
         .INCLUDE "pause.asm"
         .INCLUDE "help.asm"
