@@ -27,12 +27,16 @@
 ;  P3 memory and fills HP3ROW, the horizontal position for each map
 ;  row, which the DLIs load (DISPLAY.ASM).  When both schools share a
 ;  map row, they take turns, one per frame (D14).
+;
+;  Pirates (PIRATES.ASM) are slots 2 and 3 of the same arrays and use
+;  FISH_NEW, FISH_KICK and FISH_MOVE too, at the original's speed.
 ; =====================================================================
 
 F_SPAWN =  20           ; 1 in 20 tics: a new school
 F_KICK  =  10           ; 1 in 10 tics: a speed kick
 F_V0    =  3            ; starting speed
 F_VMAX  =  15           ; speed limit either way (table size)
+F_VTAB  =  2*F_VMAX+1   ; entries per speed table
 F_XMAX  =  168          ; FXH range 0-168: map column -8..160
 F_YMAX  =  96           ; FYH range 0-96: map line -8..88
 F_TOP   =  8            ; FYH of the top band, + 0-7: lines 0-14 (rows 0-1)
@@ -110,7 +114,7 @@ FT_NEXT LDX FT_I
         RTS
 
 ; ---------------------------------------------------------------------
-;  FISH_NEW -- start school X.  Trashes A, Y; X kept.
+;  FISH_NEW -- start school X (pirate X: 2 or 3).  Trashes A, Y; X kept.
 ; ---------------------------------------------------------------------
 FISH_NEW
         TXA             ; band: the other school's opposite, if it is out
@@ -191,7 +195,8 @@ FS_DEC  CMP #256-F_VMAX
 FS_DONE RTS
 
 ; ---------------------------------------------------------------------
-;  FISH_MOVE -- move school X one tic, axis by axis.  Trashes A, Y.
+;  FISH_MOVE -- move school (or pirate) X one tic, axis by axis.
+;  Trashes A, Y.
 ;  A school already touching land or a PT boat (a boat parked on it)
 ;  moves freely until it is clear.
 ; ---------------------------------------------------------------------
@@ -204,7 +209,7 @@ FISH_MOVE
         STA FM_S        ; 1: already blocked
         LDA FVX,X       ; horizontal
         CLC
-        ADC #F_VMAX
+        ADC FM_VB,X     ; this slot's speed table
         TAY
         LDA FXL,X
         CLC
@@ -227,7 +232,7 @@ FM_XOK  LDA FM_L
         STA FXH,X
 FM_VERT LDA FVY,X       ; vertical
         CLC
-        ADC #F_VMAX
+        ADC FM_VB,X
         TAY
         LDA FYL,X
         CLC
@@ -253,6 +258,9 @@ FM_YOK  LDA FM_L
 FM_GONE LDA #0
         STA FACT,X
         RTS
+; speed 0 in FV_LO / FV_HI for each slot: fish 2/3 of the original's
+; units (D33), pirates the original's
+FM_VB   .BYTE F_VMAX,F_VMAX,F_VTAB+F_VMAX,F_VTAB+F_VMAX
 ; FM_BLK  -- FISH_BLK2 at FXH = FM_H; FM_BLK2 -- FISH_BLK2.  Never
 ; blocked if FM_S is set.  X kept; trashes A, Y.
 FM_BLK  LDA FM_H
@@ -526,11 +534,16 @@ FR_LO   CMP #MAPROWS
         LDA #MAPROWS-1
 FR_DONE RTS
 
-; Speed steps: 34/256 pixel per tic for each unit, speeds -15..+15
+; Speed steps, speeds -15..+15: fish 34/256 pixel per tic for each
+; unit, then pirates (and weather, WV_LO) 51/256, the original's
 FV_LO   .BYTE $02,$24,$46,$68,$8A,$AC,$CE,$F0,$12,$34,$56,$78,$9A,$BC,$DE,$00
         .BYTE $22,$44,$66,$88,$AA,$CC,$EE,$10,$32,$54,$76,$98,$BA,$DC,$FE
+        .BYTE $03,$36,$69,$9C,$CF,$02,$35,$68,$9B,$CE,$01,$34,$67,$9A,$CD,$00
+        .BYTE $33,$66,$99,$CC,$FF,$32,$65,$98,$CB,$FE,$31,$64,$97,$CA,$FD
 FV_HI   .BYTE $FE,$FE,$FE,$FE,$FE,$FE,$FE,$FE,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$00
         .BYTE $00,$00,$00,$00,$00,$00,$00,$01,$01,$01,$01,$01,$01,$01,$01
+        .BYTE $FD,$FD,$FD,$FD,$FD,$FE,$FE,$FE,$FE,$FE,$FF,$FF,$FF,$FF,$FF,$00
+        .BYTE $00,$00,$00,$00,$00,$01,$01,$01,$01,$01,$02,$02,$02,$02,$02
 
 ; School shapes: 4 frames of a shimmering scatter of small fish
 FISHSHP .BYTE $22,$08,$41,$14,$22,$88,$14,$41

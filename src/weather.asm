@@ -328,12 +328,14 @@ WH_DONE RTS
 ;  WTH_SMITE -- destroy item WH_K of player WH_P on square WH_C, WH_R:
 ;  one fewer owned, damage back to 0; a parked boat sinks (wreck),
 ;  anything else also kills 0-100 people.  Trashes A, X, Y.
+;  WS_GONE -- the same without touching the damage: pirates (and PT
+;  boats) sinking a parked fishing boat (PIRATES.ASM).
 ; ---------------------------------------------------------------------
 WTH_SMITE
         LDX WH_P
         LDA #0
         STA WDMG,X
-        JSR WS_COUNT    ; one fewer of the item
+WS_GONE JSR WS_COUNT    ; one fewer of the item
         LDX WH_C        ; the square's terrain again
         LDY WH_R
         LDA #0
@@ -389,8 +391,8 @@ WS_COUNT
 WC_DONE RTS
 
 ; ---------------------------------------------------------------------
-;  WTH_BOAT -- hurricane in slot X sinks any steered boat it touches:
-;  the 16 x 32 hurricane and the boat's 8 x 8 box overlap.
+;  WTH_BOAT -- hurricane in slot X sinks any steered boat or pirate it
+;  touches: the 16 x 32 hurricane and the 8 x 8 box overlap.
 ;  Trashes A, X, Y.
 ; ---------------------------------------------------------------------
 WTH_BOAT
@@ -415,16 +417,36 @@ WB_PL   STX WH_P
         SBC WYH,Y
         CMP #39
         BCS WB_NEXT
-        JSR WS_COUNT    ; sunk: one fewer boat
-        LDX WH_P
-        LDA #0          ; back to the cursor
-        STA BOATK,X
-        LDA #SH_CUR
-        JSR SPR_SHAPE
-        JSR SND_SINK
+        JSR BOAT_LOSE   ; sunk
 WB_NEXT LDX WH_P
         DEX
         BPL WB_PL
+        LDX #3          ; pirates (slots 2, 3)
+WB_PIR  STX WH_P
+        LDA FACT,X
+        BEQ WB_PNXT
+        LDY WH_I
+        LDA FXH,X       ; as above, with FXH - 8 for CURX
+        CLC
+        ADC #16-8-1
+        SEC
+        SBC WXH,Y
+        CMP #23
+        BCS WB_PNXT
+        LDA FYH,X
+        CLC
+        ADC #16-8-1
+        SEC
+        SBC WYH,Y
+        CMP #39
+        BCS WB_PNXT
+        LDA #0          ; sunk: gone
+        STA FACT,X
+        JSR SND_SINK
+WB_PNXT LDX WH_P
+        DEX
+        CPX #2
+        BCS WB_PIR
         RTS
 
 ; ---------------------------------------------------------------------
@@ -582,11 +604,10 @@ WCOL    .BYTE 0,C_RAIN,C_STRM,C_HURR ; colour (COLPM2)
 WSH_LO  .BYTE 0,<WSH_RAIN,<WSH_STRM,<WSH_HURR
 WSH_HI  .BYTE 0,>WSH_RAIN,>WSH_STRM,>WSH_HURR
 
-; Speed steps: 51/256 pixel per tic for each unit, speeds -15..+15
-WV_LO   .BYTE $03,$36,$69,$9C,$CF,$02,$35,$68,$9B,$CE,$01,$34,$67,$9A,$CD,$00
-        .BYTE $33,$66,$99,$CC,$FF,$32,$65,$98,$CB,$FE,$31,$64,$97,$CA,$FD
-WV_HI   .BYTE $FD,$FD,$FD,$FD,$FD,$FE,$FE,$FE,$FE,$FE,$FF,$FF,$FF,$FF,$FF,$00
-        .BYTE $00,$00,$00,$00,$00,$01,$01,$01,$01,$01,$02,$02,$02,$02,$02
+; Speed steps: 51/256 pixel per tic for each unit, speeds -15..+15,
+; shared with the pirates (FISH.ASM)
+WV_LO   =  FV_LO+F_VTAB
+WV_HI   =  FV_HI+F_VTAB
 
 ; Shapes, 4 frames each; a byte is one line, 8 pixels of 2 colour
 ; clocks (player 2 is double width), bit 7 on the left.

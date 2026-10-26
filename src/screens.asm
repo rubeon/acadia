@@ -72,6 +72,7 @@ GN_SC   STA SCORE,X
         JSR CUR_INIT
         JSR FISH_INIT   ; no schools yet
         JSR WTH_INIT    ; no weather either
+        JSR PIR_INIT    ; nor pirates
         JSR TIC_INIT    ; the clock starts now, not when the last game ended
         LDA TRNLEN
         STA REMSEC

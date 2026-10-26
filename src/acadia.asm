@@ -81,9 +81,11 @@ GF_T1   JSR GAME_TIC
         BNE GF_TIC      ; fish only during a round
         JSR FISH_TIC
         JSR WTH_TIC
+        JSR PIR_TIC
         JMP GF_TIC
 GF_SHOW JSR FISH_SHOW
         JSR WTH_SHOW
+        JSR PIR_SHOW
         LDA GSTATE
         CMP #GS_OVER
         BEQ GF_DONE     ; line 2 holds the winner now
@@ -178,6 +180,7 @@ CODE2   =  $5000
         .INCLUDE "boats.asm"
         .INCLUDE "fish.asm"
         .INCLUDE "weather.asm"
+        .INCLUDE "pirates.asm"
         .INCLUDE "sound.asm"
         .INCLUDE "pause.asm"
         .INCLUDE "help.asm"

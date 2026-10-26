@@ -212,14 +212,16 @@ BM_R1   *= *+1
 ; ---------------------------------------------------------------------
 ;  Fish (FISH.ASM, T-EVT-2)
 ; ---------------------------------------------------------------------
-FACT    *= *+2          ; per school: 1 while it is out
-FXL     *= *+2          ; per school: position, 8.8 (FXH = column + 8)
-FXH     *= *+2
-FYL     *= *+2          ; per school: FYH = line + 8
-FYH     *= *+2
-FVX     *= *+2          ; per school: signed speed, 1/5 pixel per tic
-FVY     *= *+2
-FDRAWN  *= *+2          ; per school: P3 line drawn at, $FF = none
+; Slots 0-1 are the schools; slots 2-3 are the pirates (PIRATES.ASM),
+; which use the same movement code.
+FACT    *= *+4          ; per slot: 1 while it is out
+FXL     *= *+4          ; per slot: position, 8.8 (FXH = column + 8)
+FXH     *= *+4
+FYL     *= *+4          ; per slot: FYH = line + 8
+FYH     *= *+4
+FVX     *= *+4          ; per slot: signed speed (FV_LO units)
+FVY     *= *+4
+FDRAWN  *= *+4          ; per slot: P3 / missile line drawn at, $FF = none
 FCNT    *= *+2          ; per player: touches towards the next gold
 FANIM   *= *+1          ; animation frame 0-3
 FATIC   *= *+1          ; tics in this frame
@@ -243,6 +245,23 @@ FS_A0   *= *+1          ; FISH_SHOW: school 0's rows
 FS_A1   *= *+1
 FS_N    *= *+1          ; FISH_SHOW: bytes left
 FW_R0   *= *+1          ; FW_ROWS: first row
+
+; ---------------------------------------------------------------------
+;  Pirates (PIRATES.ASM, T-EVT-3)
+; ---------------------------------------------------------------------
+PTCH    *= *+2          ; per player: attacks on a parked fishing boat
+HMROW   *= *+MAPROWS    ; fifth player (missiles) position per map row
+PT_I    *= *+1          ; PIR_TIC: slot
+PH_I    *= *+1          ; PIR_HIT: slot
+PH_P    *= *+1          ; PIR_HIT / PT_TIC: player
+PA_C    *= *+1          ; PIR_ATK: square
+PA_R    *= *+1
+PA_O    *= *+1          ; PIR_ATK: the boat's owner
+PS_V    *= *+2          ; PIR_SHOW: show pirate 2 / 3 this frame
+PS_I    *= *+1          ; PIR_SHOW: slot
+PS_A0   *= *+1          ; PIR_SHOW: pirate 2's rows
+PS_A1   *= *+1
+PS_N    *= *+1          ; PIR_SHOW: bytes left
 
 ; ---------------------------------------------------------------------
 ;  Setup screen (SETUP.ASM)
