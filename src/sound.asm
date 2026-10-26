@@ -18,6 +18,18 @@ SND_ROUND
 SND_REFUSE
         RTS
 
+; SND_RAIN -- rain over crops earned 1 gold (the original's $5F97)
+SND_RAIN
+        RTS
+
+; SND_SMITE -- weather destroyed an item (the original's $5FB6)
+SND_SMITE
+        RTS
+
+; SND_SINK -- a boat sank (the original's $5FA8)
+SND_SINK
+        RTS
+
 ; SND_FISH -- a fishing boat caught 1 gold (the original's "pling",
 ; $5FD4)
 SND_FISH

@@ -118,6 +118,10 @@ DLI_MAP
         STA CHBASE
         LDA HP3ROW      ; player 3 (fish) position for row 0
         STA HPOSP3
+        LDA HP2ROW      ; player 2 (weather) position and colour
+        STA HPOSP2
+        LDA WCROW
+        STA COLPM2
 DM_ROWS         LDA #1
         STA DLIROW
         LDA #<DLI_ROW   ; the rest of this frame's DLIs are map rows
@@ -134,6 +138,7 @@ DM_HELP LDA #>HLPFONT     ; help screen (HELP.ASM): its font, no fish;
         STA CHBASE      ; HDLIST has no row DLIs
         LDA #0
         STA HPOSP3
+        STA HPOSP2      ; no weather either
         BEQ DM_ROWS     ; always
 
 ; ---------------------------------------------------------------------
@@ -168,7 +173,8 @@ PALTAB  .BYTE C_SEA,C_GRASS,C_DARK,C_LIGHT,C_WHITE
 
 ; ---------------------------------------------------------------------
 ;  DLI_ROW -- end of map row n-1: switch to row n's font and set
-;  player 3's horizontal position for row n (HP3ROW, FISH.ASM)
+;  the horizontal positions of player 3 (HP3ROW, FISH.ASM) and player
+;  2 (HP2ROW, WEATHER.ASM) and player 2's colour for row n
 ; ---------------------------------------------------------------------
 DLI_ROW
         PHA
@@ -180,6 +186,10 @@ DLI_ROW
         STA CHBASE
         LDA HP3ROW,X    ; player 3 (fish) position for row n
         STA HPOSP3
+        LDA HP2ROW,X    ; player 2 (weather) position and colour
+        STA HPOSP2
+        LDA WCROW,X
+        STA COLPM2
         INC DLIROW
         PLA
         TAX
@@ -192,7 +202,8 @@ DLI_ROW
 VBI_D
         INC FRAME
         JSR SPR_VBI
-        LDA #0          ; player 3 hidden above the map (DLIs set it)
+        LDA #0          ; players 2 and 3 hidden above the map (the
+        STA HPOSP2      ; DLIs set them)
         STA HPOSP3
         LDA #0
         STA ATRACT

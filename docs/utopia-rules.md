@@ -160,9 +160,13 @@ Checked per player after scoring:
 
 ## Random events  (checked every tic, 20 Hz)
 
-- Weather: `rand(100) == 0` starts weather (rain, tropical storm or
-  hurricane) if a weather sprite is free. Existing weather has a 1-in-10
-  chance per tic to change velocity by one step N/S/E/W.
+- Weather: `rand(100) == 0` starts weather in the first free of 2
+  slots (`$51AA`): `rand(12)` 0 hurricane, 1-3 tropical storm, 4-11
+  rain. It starts at X 27, Y 0 moving +4, +5 (template `$5C85`). Each
+  tic, 1 in 10 a ±1 kick N/S/E/W, no limit (`$51F8`). Not blocked by
+  land; removed when it leaves the screen; no lifetime, no change of
+  type. Rain and storm are 16 × 8 pixels (storm black, rain grey),
+  the hurricane 16 × 32.
 - Fish: `rand(20) == 0` spawns a school of fish into one of 2 slots
   (`$520D`): band top or bottom 50/50, X = 0 heading east at 3 or
   X = 167 heading west at -3. Each tic, 1 in 10 a ±1 kick to vx or
@@ -174,14 +178,29 @@ Checked per player after scoring:
 
 ## Weather effects  [`$5691`, `$573E`]
 
-- Damage rate: hurricane 5, tropical storm 1, rain 0.
-- Storm damage accumulates per player; once over 125 an item under the
-  storm can be destroyed and 0-101 population killed. Forts protect
-  adjacent squares: "adjacent" is the 8 squares around a square, not
-  the square itself, and a fort of either player counts
-  (`FORT_NEAR_MOB` `$564A`, `NBR_TBL` `$5689`; see D25).
-- Storms can sink boats, parked or moving (`$5591`, `$55BF`); fort protection here not yet verified.
-- Rain over crops: every 12 tic-overlaps award 1 gold (with sound).
+- Only the card under the weather sprite's centre counts (`$56AF`),
+  and only when it holds an item or a parked boat; open sea and bare
+  land do nothing.
+- Damage rate: hurricane 5, tropical storm 1, rain 0, added to the
+  card owner's total (`TDMG`) once per interaction. At 125 (`$56C4`)
+  the item is destroyed, whatever it is (forts and rebels too): its
+  count drops by 1; a parked boat sinks (`$5591`, one sinking
+  animation at a time); any other item also kills `rand(101)` people,
+  with no check for going below 0 (`$56E1`). The square shows its
+  island graphic again ("smite" sound `$5FB6`) and the total resets to
+  0, except after a boat, where it is left as it was.
+- **Forts do not protect against weather**: `WTHR_V_LAND`
+  (`$5691-$570B`) never calls `FORT_NEAR_MOB`. Forts protect boats
+  from pirates only.
+- Moving boats: only a hurricane sinks them, on contact, with no fort
+  check or chance roll (`$559A`); the fishing boat count drops
+  (`$55FC`), the PT count doesn't. Rain and storms pass over moving
+  boats. A hurricane also sinks pirates.
+- Rain over crops: any weather over a crop counts for the crop's
+  owner (`RCRP`, `$573E`); every 12 counts award 1 gold (`INC_GOLD`,
+  sound `$5F97`). Counts carry over between rounds.
+- Weather carries on through round changes and does nothing to
+  rebels.
 
 ## Boats
 

@@ -90,6 +90,7 @@ def box_on_land(x, y):
 
 
 m.poke("PAL", 0x0F)
+m.poke("RANDOM", 5)                      # no weather or fish events (1-in-N rolls fail)
 for r in ("VARS_INIT", "DISP_INIT", "TIC_INIT", "SETUP_INIT", "GAME_NEW"):
     m.call(r)
 
