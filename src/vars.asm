@@ -116,6 +116,21 @@ PAUSED  *= *+1          ; 1 while the game is paused
 PSAVE   *= *+40         ; status line 1 while PAUSED is shown
 
 ; ---------------------------------------------------------------------
+;  Sound driver (SOUND.ASM): per channel 0-3
+; ---------------------------------------------------------------------
+SN_ON   *= *+4          ; 1 while an effect plays
+SN_PRI  *= *+4          ; its priority
+SN_POS  *= *+4          ; next step, offset in SNDDAT
+SN_CNT  *= *+4          ; frames left of this step
+SN_F    *= *+4          ; AUDF now
+SN_C    *= *+4          ; AUDC now
+SN_D    *= *+4          ; slide per frame
+SN_SX   *= *+1          ; SND_GO: X and Y kept
+SN_SY   *= *+1
+SN_T    *= *+1          ; SND_PLAY: channel chosen
+SN_I    *= *+1          ; SND_PLAY: work
+
+; ---------------------------------------------------------------------
 ;  Weather (WEATHER.ASM)
 ; ---------------------------------------------------------------------
 WACT    *= *+2          ; per slot: 0 none, WT_RAIN, WT_STRM, WT_HURR

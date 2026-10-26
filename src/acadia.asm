@@ -39,6 +39,7 @@ OLDVBD  =  $CD          ; 2-byte saved deferred VBI vector
 START
         CLD
         JSR VARS_INIT
+        JSR SND_INIT    ; POKEY quiet
         JSR DISP_INIT
         JSR TIC_INIT
         JSR SETUP_INIT  ; default rounds and round length

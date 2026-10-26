@@ -222,10 +222,11 @@ DLI_MSL STA HPOSM3
         RTS
 
 ; ---------------------------------------------------------------------
-;  VBI_D -- deferred VBI: frame counter, keep attract mode off
+;  VBI_D -- deferred VBI: frame counter, sound, keep attract mode off
 ; ---------------------------------------------------------------------
 VBI_D
         INC FRAME
+        JSR SND_VBI
         JSR SPR_VBI
         LDA #0          ; players 2 and 3 hidden above the map (the
         STA HPOSP2      ; DLIs set them)

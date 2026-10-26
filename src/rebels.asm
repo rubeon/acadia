@@ -95,7 +95,8 @@ RA_P0   CLC
         BEQ RA_SND
         DEC COUNT,X
 RA_SND  JSR SND_SMITE
-RA_SET  LDA #I_REBL
+RA_SET  JSR SND_REBEL
+        LDA #I_REBL
         LDX RB_C
         LDY RB_R
         JSR MAP_SET

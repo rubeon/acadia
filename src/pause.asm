@@ -8,8 +8,8 @@
 ;  resume, and TIC_SYNC drops the paused frames so no time is lost.
 ;
 ;  Sound: POKEY's registers can't be read back, so pausing silences
-;  AUDC1-4.  The sound driver (T-SND-1) must not play while PAUSED is
-;  set and rewrites its channels when play resumes.
+;  AUDC1-4 (SND_OFF).  The sound driver stands still while PAUSED is
+;  set and rewrites its voices every frame, so play picks up again.
 ; =====================================================================
 
 PS_COL  =  17           ; PAUSED's column on status line 1
@@ -49,12 +49,7 @@ PO_SAVE LDA STATUS1,X
         LDX #PS_COL
         JSR TXT_STR
         JSR PAL_DIM
-        LDA #0          ; silence all four channels
-        STA AUDC1
-        STA AUDC2
-        STA AUDC3
-        STA AUDC4
-        RTS
+        JMP SND_OFF     ; silence all four voices
 
 ; ---------------------------------------------------------------------
 ;  PAUSE_OFF -- carry on: restore status line 1 and the map colours,
