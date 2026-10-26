@@ -28,7 +28,7 @@ on the Atari. Requirement IDs (`R-...`) are referenced from PLAN.md.
 | R-RULE-2 | End-of-round income, population, and round score formulas exactly as in utopia-rules.md, including the 30/30/30 caps and the 100 cap. |
 | R-RULE-3 | Rebel creation/removal thresholds (−10 / <30 / +10 / ≥70) and placement rules. Buying a rebel puts it on the opponent's island. |
 | R-RULE-4 | Random events at the original rates per 20 Hz tic: weather 1/100, fish 1/20, pirates 1/100. |
-| R-RULE-5 | Weather effects: rain on crops pays gold, storms and hurricanes damage items, kill population and sink boats; forts protect adjacent squares. |
+| R-RULE-5 | Weather effects: rain on crops pays gold, storms and hurricanes damage items, kill population and sink parked boats, hurricanes sink moving boats; forts give no protection from weather (D35). |
 | R-RULE-6 | Boats: fishing boats earn gold over fish; PT boats sink pirates; pirates sink unprotected fishing boats. |
 | R-RULE-7 | Items can only be built on the player's own island on a free land square (boats: in the harbour). Not enough gold = refusal sound. |
 | R-RULE-8 | Known overflow bugs in the original (gold earned >255, crops+boats >65) are **fixed**, not reproduced. |

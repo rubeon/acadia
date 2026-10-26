@@ -111,7 +111,7 @@ DMA_PM    = $0C         ; player + missile DMA, double-line resolution
 GR_PM     = $03         ; enable players and missiles
 
 ; PRIOR values
-PRI_MAP   = $02         ; P0-P1 over playfield, P2-P3 under it (D13)
+PRI_MAP   = $01         ; all players over the playfield (D35)
 PRI_5TH   = $10         ; missiles form a fifth player in COLPF3
 
 ; NMIEN values

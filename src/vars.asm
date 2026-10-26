@@ -113,6 +113,43 @@ PAUSED  *= *+1          ; 1 while the game is paused
 PSAVE   *= *+40         ; status line 1 while PAUSED is shown
 
 ; ---------------------------------------------------------------------
+;  Weather (WEATHER.ASM)
+; ---------------------------------------------------------------------
+WACT    *= *+2          ; per slot: 0 none, WT_RAIN, WT_STRM, WT_HURR
+WXL     *= *+2          ; position, 8.8: WXH = map column + 8
+WXH     *= *+2
+WYL     *= *+2          ; WYH = map line + 8
+WYH     *= *+2
+WVX     *= *+2          ; speed, signed, -15..15
+WVY     *= *+2
+WDRAWN  *= *+2          ; missile line drawn at, $FF = none
+WDH     *= *+2          ; height drawn
+WRCNT   *= *+2          ; per player: rain-over-crop count (0-11)
+WDMG    *= *+2          ; per player: storm damage (0-124)
+WANIM   *= *+1          ; animation frame 0-3
+WATIC   *= *+1          ; tics into the frame
+HP2ROW  *= *+MAPROWS    ; player 2 position for each map row (DLIs)
+WCROW   *= *+MAPROWS    ; player 2 colour for each map row (DLIs)
+SNKT    *= *+1          ; tics the wreck still shows, 0 = none
+SNKC    *= *+1          ; its square
+SNKR    *= *+1
+WT_I    *= *+1          ; WTH_TIC: slot
+WN_S    *= *+1          ; WTH_NEW: slot
+WN_T    *= *+1          ; WTH_NEW: work
+WH_I    *= *+1          ; WTH_HIT: slot
+WH_C    *= *+1          ; WTH_HIT: square
+WH_R    *= *+1
+WH_IT   *= *+1          ; WTH_HIT: item byte
+WH_K    *= *+1          ; WTH_HIT: item 1-9
+WH_P    *= *+1          ; WTH_HIT: owner 0/1
+WS_N    *= *+1          ; WTH_SMITE / WTH_SHOW: work
+WS_V    *= *+2          ; WTH_SHOW: show slot?
+WS_I    *= *+1          ; WTH_SHOW: slot
+WS_A0   *= *+1          ; WTH_SHOW: rows
+WS_A1   *= *+1
+WW_R0   *= *+1          ; WW_ROWS: first row
+
+; ---------------------------------------------------------------------
 ;  Help screen (HELP.ASM)
 ; ---------------------------------------------------------------------
 HELPON  *= *+1          ; 1 while the help screen is up

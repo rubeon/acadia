@@ -14,8 +14,9 @@
 ;  the horizontal positions go to the hardware in SPR_VBI, called from
 ;  the deferred VBI, so they never change mid-frame.
 ;
-;  Only players 0 and 1 (the cursors) are used so far; pirates, fish
-;  and weather (P2, P3, fifth player) come with M4.
+;  Players 0 and 1 are the cursors; player 2 (weather, WEATHER.ASM) and
+;  player 3 (fish, FISH.ASM) are drawn by their modules and moved per
+;  map row by the DLIs.  The missiles are left for the pirates (D35).
 ; =====================================================================
 
 PMAREA  =  $4000        ; 1K aligned (double-line)
@@ -60,6 +61,8 @@ PI_CLR  STA PMAREA+$100,X       ; $4100-$43FF: missiles and players
         STA SIZEP3
         LDA #C_FISH
         STA PCOLR3
+        LDA #1          ; player 2: weather, double width (2 squares,
+        STA SIZEP2      ; WEATHER.ASM, D35)
         LDA #PRI_MAP
         STA GPRIOR
         LDA #GR_PM
