@@ -57,7 +57,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 | T-DES-2 | Resolve Q2 (P/M allocation, multiplexing) | R-SCR-4 | T-SPR-1 | Decision recorded | done (D13, D14; colour detail D29) |
 | T-EVT-1 | Boats: buy into harbour, pick up/drop (key 0), move, island collision | R-RULE-6, R-CTL-3 | T-DES-2 | Boats can't cross land | done (D32) |
 | T-EVT-2 | Fish schools: spawn, drift, fishing income | R-RULE-4,6 | T-EVT-1 | 1 gold per 50 tic-overlaps | done (D33) |
-| T-EVT-3 | Pirates: spawn, move, sink fishing boats, sunk by PT boats, fort protection; drawn with the missiles as a fifth player (D35) | R-RULE-6 | T-EVT-1 | Verify sinking rules against original `$54F8-$5600` first | todo |
+| T-EVT-3 | Pirates: spawn, move, sink fishing boats, stopped by PT boats, fort protection, PT boats against fishing boats; drawn with the missiles as a fifth player (D36) | R-RULE-6 | T-EVT-1 | Verify sinking rules against original `$54F8-$5600` first | done |
 | T-EVT-4 | Weather: rain/storm/hurricane, movement, crop gold, damage, boat sinking | R-RULE-5 | T-EVT-1, T-MAP-2 | Damage rates and thresholds as specified | done (D35) |
 
 ## M5 — Sound

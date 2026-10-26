@@ -63,7 +63,9 @@ PI_CLR  STA PMAREA+$100,X       ; $4100-$43FF: missiles and players
         STA PCOLR3
         LDA #1          ; player 2: weather, double width (2 squares,
         STA SIZEP2      ; WEATHER.ASM, D35)
-        LDA #PRI_MAP
+        LDA #0          ; missiles: pirates, as a fifth player of
+        STA SIZEM       ; normal width (PIRATES.ASM, D36)
+        LDA #PRI_MAP+PRI_5TH
         STA GPRIOR
         LDA #GR_PM
         STA GRACTL

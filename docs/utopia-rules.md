@@ -174,7 +174,11 @@ Checked per player after scoring:
   PT boats; parked fishing boats are passed). A school that leaves the
   screen is removed. Green dot sprite, 4 animation frames, behind the
   playfield.
-- Pirates: `rand(100) == 0` spawns a pirate ship.
+- Pirates: `rand(100) == 0` spawns a pirate ship into one of 2 slots,
+  placed like fish (top or bottom band, X = 0 heading east at 3 or
+  X = 167 heading west at -3). Each tic, 1 in 10 a ±1 kick, no limit;
+  blocked like fish; removed off the screen. No homing; nothing
+  scales with the round. One black ship sprite; only a sinking sound.
 
 ## Weather effects  [`$5691`, `$573E`]
 
@@ -209,9 +213,21 @@ Checked per player after scoring:
   Parked: the boat on the card under the school's centre; moving: the
   boat sprite touching the school (`$549F-$54D2`). The count is per
   player and is not reset at round end; schools are never used up.
-- PT boats sink pirates.
-- Pirates sink fishing boats unless a fort is adjacent.
-- A fishing boat can be sunk by the other player's boat (routine at `$55BF`; exact rule not yet verified).
+- **PT boats do not sink pirates.** A moving PT boat touching a pirate
+  only halts it (its velocity is zeroed). Only a hurricane sinks
+  pirates.
+- Pirate over a parked fishing boat (the boat on the card under the
+  pirate's centre): nothing while a sinking is showing; nothing if the
+  fort found next to the boat (`FORT_NEAR_MOB`) belongs to the boat's
+  owner; otherwise a per-owner counter goes up, and at 20 the boat
+  sinks (count -1, sinking animation) and the counter resets. The
+  pirate survives.
+- Pirate touching a moving fishing boat: sunk at once (count -1, back
+  to the cursor) unless a fort of either player is next to it.
+- A moving PT boat over the other player's parked fishing boat: the
+  same handler as a pirate (owner's fort protects; sinks at 20).
+- A moving fishing boat touching the other player's moving PT boat:
+  sunk unless a fort of its own player is next to it.
 - Boats cannot run aground; the island edge blocks them. Blocking test
   `$5320-$53CD`: the card one step ahead on each axis (X, then Y) is
   checked; a blank GROM card is open sea, any GRAM card (island, coast,

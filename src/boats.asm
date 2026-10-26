@@ -206,3 +206,20 @@ BM_LAND JSR MAP_GET
 BF_DONE RTS
 BL_YES  SEC
         RTS
+
+; ---------------------------------------------------------------------
+;  BOAT_LOSE -- player X's steered boat sinks (weather, pirates, a PT
+;  boat): one fewer of its kind, the sprite is the cursor again, and
+;  the sinking sound.  Trashes A, X, Y, WH_P, WH_K.
+; ---------------------------------------------------------------------
+BOAT_LOSE
+        STX WH_P
+        LDA BOATK,X
+        STA WH_K
+        JSR WS_COUNT    ; one fewer boat
+        LDX WH_P
+        LDA #0          ; back to the cursor
+        STA BOATK,X
+        LDA #SH_CUR
+        JSR SPR_SHAPE
+        JMP SND_SINK

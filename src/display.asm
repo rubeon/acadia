@@ -122,6 +122,8 @@ DLI_MAP
         STA HPOSP2
         LDA WCROW
         STA COLPM2
+        LDA HMROW       ; missiles (pirates) position for row 0
+        JSR DLI_MSL
 DM_ROWS         LDA #1
         STA DLIROW
         LDA #<DLI_ROW   ; the rest of this frame's DLIs are map rows
@@ -139,7 +141,8 @@ DM_HELP LDA #>HLPFONT     ; help screen (HELP.ASM): its font, no fish;
         LDA #0
         STA HPOSP3
         STA HPOSP2      ; no weather either
-        BEQ DM_ROWS     ; always
+        JSR DLI_MSL     ; nor pirates
+        JMP DM_ROWS
 
 ; ---------------------------------------------------------------------
 ;  PAL_NORM -- map colours to the D16 palette
@@ -173,8 +176,9 @@ PALTAB  .BYTE C_SEA,C_GRASS,C_DARK,C_LIGHT,C_WHITE
 
 ; ---------------------------------------------------------------------
 ;  DLI_ROW -- end of map row n-1: switch to row n's font and set
-;  the horizontal positions of player 3 (HP3ROW, FISH.ASM) and player
-;  2 (HP2ROW, WEATHER.ASM) and player 2's colour for row n
+;  the horizontal positions of player 3 (HP3ROW, FISH.ASM), player 2
+;  (HP2ROW, WEATHER.ASM) and the missiles (HMROW, PIRATES.ASM) and
+;  player 2's colour for row n
 ; ---------------------------------------------------------------------
 DLI_ROW
         PHA
@@ -190,11 +194,32 @@ DLI_ROW
         STA HPOSP2
         LDA WCROW,X
         STA COLPM2
+        LDA HMROW,X     ; missiles (pirates): M3 at HMROW, M2-M0
+        STA HPOSM3      ; 2 colour clocks apart each (DLI_MSL, inline
+        CLC             ; for time)
+        ADC #2
+        STA HPOSM2
+        ADC #2
+        STA HPOSM1
+        ADC #2
+        STA HPOSM0
         INC DLIROW
         PLA
         TAX
         PLA
         RTI
+
+; DLI_MSL -- missiles side by side as an 8-pixel fifth player: M3 at
+; A, M2, M1, M0 2 colour clocks apart each.  (A = 0: all off the left.)
+DLI_MSL STA HPOSM3
+        CLC
+        ADC #2
+        STA HPOSM2
+        ADC #2
+        STA HPOSM1
+        ADC #2
+        STA HPOSM0
+        RTS
 
 ; ---------------------------------------------------------------------
 ;  VBI_D -- deferred VBI: frame counter, keep attract mode off
@@ -205,6 +230,7 @@ VBI_D
         LDA #0          ; players 2 and 3 hidden above the map (the
         STA HPOSP2      ; DLIs set them)
         STA HPOSP3
+        JSR DLI_MSL     ; and the missiles
         LDA #0
         STA ATRACT
         LDA #<DLI_MAP   ; first DLI of the next frame
