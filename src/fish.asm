@@ -535,7 +535,7 @@ FR_LO   CMP #MAPROWS
 FR_DONE RTS
 
 ; Speed steps, speeds -15..+15: fish 34/256 pixel per tic for each
-; unit, then pirates (and weather, WV_LO) 51/256, the original's
+; unit, then pirates 51/256, the original's
 FV_LO   .BYTE $02,$24,$46,$68,$8A,$AC,$CE,$F0,$12,$34,$56,$78,$9A,$BC,$DE,$00
         .BYTE $22,$44,$66,$88,$AA,$CC,$EE,$10,$32,$54,$76,$98,$BA,$DC,$FE
         .BYTE $03,$36,$69,$9C,$CF,$02,$35,$68,$9B,$CE,$01,$34,$67,$9A,$CD,$00
