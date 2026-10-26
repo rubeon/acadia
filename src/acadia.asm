@@ -181,6 +181,7 @@ CODE2   =  $5000
         .INCLUDE "fish.asm"
         .INCLUDE "weather.asm"
         .INCLUDE "pirates.asm"
+        .INCLUDE "rebels.asm"
         .INCLUDE "sound.asm"
         .INCLUDE "pause.asm"
         .INCLUDE "help.asm"

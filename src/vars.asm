@@ -267,6 +267,19 @@ PS_A1   *= *+1
 PS_N    *= *+1          ; PIR_SHOW: bytes left
 
 ; ---------------------------------------------------------------------
+;  Rebels (REBELS.ASM, T-ECO-5)
+; ---------------------------------------------------------------------
+RBCOL   *= *+64         ; RB_LAND: a player's land squares, row by row
+RBROW   *= *+64
+RB_N    *= *+1          ; RB_LAND: how many
+RB_P    *= *+1          ; RB_LAND: player
+RB_K    *= *+1          ; RB_LAND: the player's owner bit
+RB_C    *= *+1          ; work: square
+RB_R    *= *+1
+RB_T    *= *+1          ; REB_ADD: tries left; REB_DEL: list index
+RB_I    *= *+1          ; REB_ADD: item on the square
+
+; ---------------------------------------------------------------------
 ;  Setup screen (SETUP.ASM)
 ; ---------------------------------------------------------------------
 SU_VAL  *= *+4          ; rounds, seconds per round, players, CPU level

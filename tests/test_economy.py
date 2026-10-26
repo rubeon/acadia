@@ -9,7 +9,7 @@ from run6502 import Machine  # noqa: E402
 
 COLS = 20
 PRICES = {1: 50, 2: 40, 3: 3, 4: 35, 5: 75, 6: 60}
-R_ITEM, R_LAND, R_TAKEN, R_GOLD = 1, 2, 3, 4
+R_LAND, R_TAKEN, R_GOLD = 2, 3, 4
 KBCODE_2 = 0x1E                       # keyboard code of "2"
 
 m = Machine()
@@ -79,8 +79,6 @@ expect_buy("P1 on P2's island", 0, 3, 14, 5, False, R_LAND)
 expect_buy("sea square", 0, 3, 9, 5, False, R_LAND)
 expect_buy("harbour square", 0, 3, 1, 4, False, R_LAND)
 expect_buy("off the map", 0, 3, 20, 5, False, R_LAND)
-for item in (7,):                          # rebels: T-ECO-5
-    expect_buy("item %d not yet" % item, 0, item, 5, 5, False, R_ITEM)
 expect_buy("P2 factory on own land", 1, 2, 14, 5, True)
 expect_buy("P2 on P1's island", 1, 3, 5, 5, False, R_LAND)
 
