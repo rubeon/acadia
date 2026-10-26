@@ -55,6 +55,7 @@ SETUP_INIT
 ;  Trashes A, X, Y, ZPTR, TPTR.
 ; ---------------------------------------------------------------------
 SETUP_ENTER
+        JSR MUS_TITLE   ; the title tune while the setup is up
         LDA #GS_SETUP
         STA GSTATE
         LDA #0

@@ -49,6 +49,7 @@ GAME_NEW
         LDA #DEF_TRNLEN
         STA TRNLEN
 GAME_START
+        JSR MUS_STOP    ; the title tune ends
         LDA #0
         LDX #19
 GN_CNT  STA COUNT,X
