@@ -336,6 +336,18 @@ AI_FL   *= *+1          ; AI_FLEE: frames left to keep it
 AI_TB   *= *+1          ; AI_WAY: 0 home, 1 above, 2 below the islands
 
 ; ---------------------------------------------------------------------
+;  News line (NEWS.ASM, D44)
+; ---------------------------------------------------------------------
+NW_T    *= *+1          ; tics until the message clears; 0: none
+NW_PR   *= *+1          ; priority of the message showing
+NW_P    *= *+1          ; NEWS: player ($FF none); X kept here
+NW_SA   *= *+1          ; NEWS: message number; A kept here
+NW_SY   *= *+1          ; NEWS: Y kept
+NW_SY2  *= *+1          ; NW_SLEN: Y kept
+NW_N    *= *+1          ; NEWS: length, then the column
+NW_GX   *= *+1          ; NEWSG: X kept
+
+; ---------------------------------------------------------------------
 ;  Setup screen (SETUP.ASM)
 ; ---------------------------------------------------------------------
 SU_VAL  *= *+4          ; rounds, seconds per round, players, CPU level

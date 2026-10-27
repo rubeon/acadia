@@ -64,11 +64,11 @@ BK_LIFT LDY CURROW,X    ; off the map: terrain (sea or pier) again
         CLC
         RTS
 BK_PARK LDA BK_ITEM     ; park: nothing on the square
-        BNE BK_NO
+        BNE BK_NOPK
         LDA MKIND       ; and it must not be land
         AND #K_KIND
         CMP #K_LAND
-        BEQ BK_NO
+        BEQ BK_NOPK
         LDA BOATK,X     ; boat item, with I_P1 for player 2
         CPX #0
         BEQ BK_PUT
@@ -86,7 +86,12 @@ BK_PUT  LDY CURROW,X
         JSR SPR_SHAPE
         CLC
         RTS
-BK_NO   JSR SND_REFUSE
+BK_NOPK LDA #NW_NOPK     ; refused: why, on the news line
+        BNE BK_REF
+BK_NO   LDA #NW_NOBT
+BK_REF  LDX BK_P
+        JSR NEWS_REF
+        JSR SND_REFUSE
         SEC
         RTS
 
@@ -222,4 +227,7 @@ BOAT_LOSE
         STA BOATK,X
         LDA #SH_CUR
         JSR SPR_SHAPE
+        LDA #NW_SINK    ; news: this player's boat sunk
+        LDX WH_P
+        JSR NEWS
         JMP SND_SINK

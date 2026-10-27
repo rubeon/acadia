@@ -95,7 +95,10 @@ RA_P0   CLC
         BEQ RA_SND
         DEC COUNT,X
 RA_SND  JSR SND_SMITE
-RA_SET  JSR SND_REBEL
+RA_SET  LDA #NW_REBL     ; news: rebels on this player's island
+        LDX RB_P
+        JSR NEWS
+        JSR SND_REBEL
         LDA #I_REBL
         LDX RB_C
         LDY RB_R

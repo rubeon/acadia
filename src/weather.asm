@@ -192,7 +192,11 @@ WN_TYPE STA WACT,X
         LDA WACT,X      ; a storm or a hurricane: its rumble
         CMP #WT_STRM
         BCC WN_DONE
-        JMP SND_STORM
+        CMP #WT_HURR    ; a hurricane is news too
+        BCC WN_SND
+        LDA #NW_HURR
+        JSR NEWSG
+WN_SND  JMP SND_STORM
 WN_DONE RTS
 
 ; ---------------------------------------------------------------------
@@ -357,7 +361,10 @@ WS_GONE JSR WS_COUNT    ; one fewer of the item
         STY SNKR
         LDA #T_WRECK
         JSR MAP_PUT
-WS_SNK  JMP SND_SINK
+WS_SNK  LDA #NW_SINK     ; news: the owner's boat sunk
+        LDX WH_P
+        JSR NEWS
+        JMP SND_SINK
 WS_PEOP LDA #101        ; 0-100 people die
         JSR RAND_N
         STA WS_N
@@ -375,7 +382,10 @@ WS_PEOP LDA #101        ; 0-100 people die
         LDA #0          ; not below 0 (D35)
         STA POP,X
         STA POP+1,X
-WS_SND  JMP SND_SMITE
+WS_SND  LDA #NW_DMG      ; news: storm damage to the owner
+        LDX WH_P
+        JSR NEWS
+        JMP SND_SMITE
 
 ; WS_COUNT -- one fewer item WH_K for player WH_P (not below 0).
 ; Trashes A, X.
@@ -446,6 +456,8 @@ WB_PIR  STX WH_P
         BCS WB_PNXT
         LDA #0          ; sunk: gone
         STA FACT,X
+        LDA #NW_PSNK
+        JSR NEWSG
         JSR SND_SINK
 WB_PNXT LDX WH_P
         DEX
