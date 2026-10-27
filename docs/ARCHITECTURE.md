@@ -49,6 +49,7 @@ Current files are marked ✓; the rest are planned (see PLAN.md).
 | `src/screens.asm` ✓ (rounds, summary, game over, info) | game | `GAME_NEW` (defaults: 10 rounds of 30 s; tests) / `GAME_START` (current `NUMTRN`, `TRNLEN`); `GSTATE` play → `GS_SUM1` round scores (3 s) → `GS_SUM2` totals (3 s) → next round or `GS_OVER` (final scores, winner on line 2; fire or a key, once let go, goes back to the setup screen). `GAME_SEC` (clock, `ROUND_END`), `GAME_TIC` (summary timing), `OVER_FRAME`; `INFO_KEYS` / `STAT_SHOW` (D18 info pages while a console key is held); `STAT_LINE` / `STAT_DRAW` (line 1, and the populations on line 2), `SHOW_PAIR` |
 | `src/news.asm` ✓ | game | Status line 2 news slot (T-SCR-4, D44): `NEWS` (message A for player X, `$FF` none; keeps A, X, Y; centred in columns 10-29 with a `P1` / `P2` / `CPU` prefix, priority from `NWPRI`), `NEWSG` (no player), `NEWS_REF` (refusals, silent for the CPU), `NEWS_TIC` (clears after 3 s, from `GAME_TIC`), `NEWS_OFF` |
 | `src/setup.asm` ✓ | game | Setup screen (R-MODE-3, D31), `GSTATE` = `GS_SETUP`: `SETUP_INIT` (defaults, once), `SETUP_ENTER` (own display list `SUDLIST`, text in the map's screen memory, cursors hidden; waits until everything is let go), `SETUP_FRAME` (stick/SELECT pick a line, stick left/right or digits change it, START/fire calls `GAME_START`). Values in `SU_VAL`: rounds 1-50, seconds 30-120, players 1-2, CPU level 1-3 |
+| `src/title.asm` ✓ | game | Title screen (T-REL-1, D45): `TITLE_ENTER` (own display list `TDLIST`, the name in a mode 7 band and the credits in mode 2 lines, in the map's screen memory; starts the title tune), `TITLE_FRAME` (once everything is let go, START or fire calls `SETUP_ENTER`); `TI_DRAW` (the text into the screen memory), `TI_ROWADR` (the address of a mode 2 line). The text is generated: `src/title_text.asm` from `tools/gen-title.py` |
 | `src/pause.asm` ✓ | game | Pause (D19): `PAUSE_KEY` (P toggles), `PAUSE_ON` (save status line 1, show PAUSED, `PAL_DIM`, silence AUDC1-4), `PAUSE_OFF` (restore, `PAL_NORM`, `TIC_SYNC`); `PAUSED` flag |
 | `src/help.asm` ✓ | game | Purchase help screen (T-SCR-3, D34): `HELP_KEY` (H / HELP toggles it during a round, not while paused), `HELP_ON` (`HELP_DRAW` fills `HELPSCR`: key, map tile, name, price per item; cursors hidden; `HDLIST`), `HELP_OFF` (`DLIST`, `TIC_SYNC`, cursors back); `HELPON` flag, read by `DLI_MAP` to load `HLPFONT` |
 | `src/math.asm` ✓ | services | On 24-bit `M_NUM`: `MUL8` (8×8), `MULN` (×8, C = overflow), `DIVN` (÷8, remainder in A), `DIVNR` (÷8 rounded half up); C set on ÷0 |
@@ -65,8 +66,8 @@ Current files are marked ✓; the rest are planned (see PLAN.md).
 | `$00CB-$00CE` | `ZPTR` (2), `OLDVBD` (2) — in use |
 | `$2000-$2FFF` | Code: start-up, services, map and display (`acadia.asm` up to `display.asm`) |
 | `$3000-$33FF` | Map font 0 (1K aligned): fixed tiles + coast tiles of the first rows |
-| `$3400-$37FF` | Map screen memory (`$3400-$35B7` used: 11 rows × 40); the setup screen uses `$3400-$36E3` while it is up (`GAME_START` redraws the map); the help screen `HELPSCR` is `$35C0-$3777` |
-| `$3800-$38FF` | Display lists: `DLIST` (map), `SUDLIST` (setup) and `HDLIST` (help), same page so one store to `SDLSTL` switches |
+| `$3400-$37FF` | Map screen memory (`$3400-$35B7` used: 11 rows × 40); the setup screen uses `$3400-$36E3` while it is up (`GAME_START` redraws the map); the title screen uses `$3400-$35B7` before the setup screen (`TI_SCR` = `$3400`, `TI_TXT` = `$3414`); the help screen `HELPSCR` is `$35C0-$3777` |
+| `$3800-$38FF` | Display lists: `DLIST` (map), `TDLIST` (title), `SUDLIST` (setup) and `HDLIST` (help), same page so one store to `SDLSTL` switches |
 | `$3900-$3FFF` | RAM variables (`src/vars.asm`), cleared by `VARS_INIT` at start-up |
 | `$4000-$43FF` | P/M graphics, double-line resolution, 1K aligned (`PMAREA`); `$4400-$47FF` spare |
 | `$4800-$4BFF` | Map font 1 (the islands need 2 fonts; `mkfont.py` stops if they need more) |
@@ -124,6 +125,7 @@ the saved pointer `OLDVBD`. No OS routine is ever called.
 VBI (every frame):   FRAME++, ATRACT=0, sound driver step, sprite positions
 Main loop:           wait for FRAME change, then GAME_FRAME:
                      INPUT_POLL
+                     title screen (GS_TITLE): TITLE_FRAME only
                      setup screen (GS_SETUP): SETUP_FRAME only
                      game over (GS_OVER): OVER_FRAME only
                      HELP_KEY: H / HELP toggles the price list; while

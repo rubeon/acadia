@@ -19,6 +19,7 @@ on the Atari. Requirement IDs (`R-...`) are referenced from PLAN.md.
 | R-MODE-2 | One player against a CPU governor on the other island. |
 | R-MODE-3 | Setup screen: number of rounds (1-50), round length (30-120 s), mode (1P/2P), CPU difficulty (1P only). Keyboard driven. |
 | R-MODE-4 | End-of-game screen showing final scores and winner; any key/fire returns to setup. |
+| R-MODE-5 | Title screen at start-up: the name, the credits and the controls; START or fire goes on to the setup screen. The original game is credited by name, with a line saying that this is an independent game and not a Mattel product (D45). |
 
 ## 3. Rules
 

@@ -58,14 +58,17 @@ Output is an XEX load file for now; an ATR disk image will follow.
 | `src/economy.asm` | Buying items with the digit keys |
 | `src/sound.asm` | Sound hooks (stubs until the sound driver) |
 | `src/pause.asm` | Pause and resume with P |
+| `src/title.asm` | Title screen: the name, the credits and the controls |
 | `src/display.asm` | Display list, DLI, VBI, map drawing (mode 5) |
 | `src/vars.asm` | All RAM variables, one block at `$3900` |
 | `src/tiles.asm` | Tile-number equates (generated) |
 | `src/font_map.asm` | Map fonts (generated) |
 | `src/islands.asm` | Tile-to-character table and island data (generated) |
+| `src/title_text.asm` | The title screen's text (generated) |
 | `tools/run6502.py` | Test helper: runs routines from the XEX on a 6502 core |
 | `tests/` | Unit tests, run by `make test` |
 | `tools/mkfont.py` | Tile art and island outlines; generates the three files above (`--preview DIR` renders PNG previews of the islands) |
+| `tools/gen-title.py` | The title screen's text; generates `src/title_text.asm` |
 | `docs/utopia-rules.md` | Rules and constants taken from the original game |
 
 ## Assembler compatibility
