@@ -405,6 +405,13 @@ PR_OFF  SEC
 ; ---------------------------------------------------------------------
 MAPSCR  =  $3400
 
+; The title screen's screen memory (TITLE.ASM): a mode 7 line of 20
+; characters, then the mode 2 lines of the credits.  It shares the
+; map's memory, like the setup screen does: the setup screen follows
+; the title screen and clears the same memory.
+TI_SCR  =  MAPSCR
+TI_TXT  =  MAPSCR+20
+
 ; ---------------------------------------------------------------------
 ;  Display list
 ; ---------------------------------------------------------------------
@@ -437,6 +444,21 @@ SUDLIST
         .BYTE DL_MODE2,DL_MODE2,DL_MODE2,DL_MODE2,DL_MODE2
         .BYTE DL_JVB
         .WORD SUDLIST
+
+; Title screen (TITLE.ASM): a mode 7 name, then 18 mode 2 lines of
+; the credits; same page as DLIST, like SUDLIST
+TDLIST
+        .BYTE DL_BLANK8,DL_BLANK8,DL_BLANK8
+        .BYTE DL_LMS+DL_MODE7           ; the name, 16 lines
+        .WORD TI_SCR
+        .BYTE DL_BLANK8
+        .BYTE DL_LMS+DL_MODE2           ; 18 text lines (TI_ROWS-1)
+        .WORD TI_TXT
+        .BYTE DL_MODE2,DL_MODE2,DL_MODE2,DL_MODE2,DL_MODE2,DL_MODE2
+        .BYTE DL_MODE2,DL_MODE2,DL_MODE2,DL_MODE2,DL_MODE2,DL_MODE2
+        .BYTE DL_MODE2,DL_MODE2,DL_MODE2,DL_MODE2,DL_MODE2
+        .BYTE DL_JVB
+        .WORD TDLIST
 
 ; Help screen (HELP.ASM): status bar, then 11 mode 5 lines in the help
 ; font; same page as DLIST, like SUDLIST

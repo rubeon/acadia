@@ -43,7 +43,7 @@ START
         JSR DISP_INIT
         JSR TIC_INIT
         JSR SETUP_INIT  ; default rounds and round length
-        JSR SETUP_ENTER ; the setup screen first (T-SCR-1)
+        JSR TITLE_ENTER ; the title screen first (T-REL-1)
 
 MAIN    LDA FRAME       ; wait for the next frame
 MN_WAIT CMP FRAME
@@ -58,8 +58,11 @@ GAME_FRAME
         JSR INPUT_POLL
         LDA GSTATE
         CMP #GS_SETUP
+        BEQ GF_SETUP
+        CMP #GS_TITLE
         BNE GF_OVER
-        JMP SETUP_FRAME ; setup screen
+        JMP TITLE_FRAME ; title screen (T-REL-1)
+GF_SETUP JMP SETUP_FRAME ; setup screen
 GF_OVER CMP #GS_OVER
         BNE GF_RUN
         JMP OVER_FRAME  ; game over: wait for fire or a key
@@ -140,6 +143,7 @@ CODE2   =  $5000
         .INCLUDE "pause.asm"
         .INCLUDE "help.asm"
         .INCLUDE "screens.asm"
+        .INCLUDE "title.asm"
         .INCLUDE "news.asm"
         .INCLUDE "setup.asm"
         .INCLUDE "vars.asm"

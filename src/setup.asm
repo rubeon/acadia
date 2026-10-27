@@ -55,8 +55,10 @@ SETUP_INIT
 ;  Trashes A, X, Y, ZPTR, TPTR.
 ; ---------------------------------------------------------------------
 SETUP_ENTER
+        LDA MZ_ON        ; the title tune is already playing
+        BNE SE_SND
         JSR MUS_TITLE   ; the title tune while the setup is up
-        LDA #GS_SETUP
+SE_SND  LDA #GS_SETUP
         STA GSTATE
         LDA #0
         STA SU_ARM

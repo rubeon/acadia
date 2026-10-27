@@ -348,6 +348,16 @@ NW_N    *= *+1          ; NEWS: length, then the column
 NW_GX   *= *+1          ; NEWSG: X kept
 
 ; ---------------------------------------------------------------------
+;  Title screen (TITLE.ASM)
+; ---------------------------------------------------------------------
+TI_ARM  *= *+1          ; 1 once everything has been let go
+TI_F    *= *+1          ; this frame: either fire button
+TI_OLDF *= *+1          ; last frame's TI_F
+TI_OLDC *= *+1          ; last frame's CONKEY
+TI_I    *= *+1          ; TI_DRAW: line index
+TI_T    *= *+1          ; TI_ROWADR: work
+
+; ---------------------------------------------------------------------
 ;  Setup screen (SETUP.ASM)
 ; ---------------------------------------------------------------------
 SU_VAL  *= *+4          ; rounds, seconds per round, players, CPU level
