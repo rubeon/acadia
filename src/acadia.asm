@@ -88,58 +88,7 @@ GF_T1   JSR GAME_TIC
         JMP GF_TIC
 GF_SHOW JSR FISH_SHOW
         JSR WTH_SHOW
-        JSR PIR_SHOW
-        LDA GSTATE
-        CMP #GS_OVER
-        BEQ GF_DONE     ; line 2 holds the winner now
-        JMP SHOW_INPUT
-GF_DONE RTS
-
-; ---------------------------------------------------------------------
-;  SHOW_INPUT -- echo the input layer state on status line 2
-; ---------------------------------------------------------------------
-SHOW_INPUT
-        LDX JOY0
-        LDA HEXTAB,X
-        STA STATUS2+ST_J0
-        LDX FIRE0
-        LDA HEXTAB,X
-        STA STATUS2+ST_F0
-        LDX JOY1
-        LDA HEXTAB,X
-        STA STATUS2+ST_J1
-        LDX FIRE1
-        LDA HEXTAB,X
-        STA STATUS2+ST_F1
-
-        LDX KEY         ; show only new presses; keep the last one
-        BMI SI_FRM
-        LDA HEXTAB,X
-        STA STATUS2+ST_KEY
-
-SI_FRM  LDA FRAME
-        LSR A
-        LSR A
-        LSR A
-        LSR A
-        TAX
-        LDA HEXTAB,X
-        STA STATUS2+ST_FRM
-        LDA FRAME
-        AND #$0F
-        TAX
-        LDA HEXTAB,X
-        STA STATUS2+ST_FRM+1
-
-        LDA #$2E        ; screen code "N"
-        LDX TICLEN
-        CPX #5
-        BNE SI_STD
-        LDA #$30        ; screen code "P"
-SI_STD  STA STATUS2+ST_STD
-        RTS
-
-HEXTAB  .SBYTE "0123456789ABCDEF"
+        JMP PIR_SHOW
 
 ; ---------------------------------------------------------------------
 ;  VARS_INIT -- clear the RAM variable block, then set the variables
@@ -191,6 +140,7 @@ CODE2   =  $5000
         .INCLUDE "pause.asm"
         .INCLUDE "help.asm"
         .INCLUDE "screens.asm"
+        .INCLUDE "news.asm"
         .INCLUDE "setup.asm"
         .INCLUDE "vars.asm"
 

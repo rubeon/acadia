@@ -126,7 +126,9 @@ EB_LAND LDA #R_LAND
 EB_TAKEN LDA #R_TAKEN
         BNE EB_NO
 EB_GOLD LDA #R_GOLD
-EB_NO   JSR SND_REFUSE
+EB_NO   LDX EB_P        ; the reason on the news line (D44)
+        JSR NEWS_REF
+        JSR SND_REFUSE
         SEC
         RTS
 EB_REB  JSR STAT_SHOW   ; a rebel: on the other player's island

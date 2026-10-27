@@ -53,7 +53,7 @@ m.call("VARS_INIT")
 for i in range(80):
     m.mem[m.addr("STATUS1") + i] = m.mem[tpl + i]
 line = screen_text(40, 40)                       # template is exactly 2 x 40
-want = "J0:0 F0:0 J1:0 F1:0 KEY:- FRM:00      N "
+want = "POP                            POP      "
 if line != want:
     fail("status line 2 template %r, want %r" % (line, want))
 m.call("GAME_NEW")
@@ -63,6 +63,10 @@ if line != want:
     fail("status line 1 %r, want %r" % (line, want))
 else:
     print("status line 1: %r" % line)
+line = screen_text(40, 40)
+want = "POP  1000                      POP  1000"
+if line != want:
+    fail("status line 2 %r, want %r" % (line, want))
 for _ in range(30):                              # one full round
     m.call("GAME_SEC")
 line = screen_text(0, 40)
@@ -77,6 +81,13 @@ if line != want:
     fail("after a round %r, want %r" % (line, want))
 else:
     print("after a round: %r" % line)
+line = screen_text(40, 40)
+pops = [m.byte("POP", 2 * p) + 256 * m.byte("POP", 2 * p + 1) for p in (0, 1)]
+want = "POP %5d                      POP %5d" % tuple(pops)
+if line != want:
+    fail("line 2 after a round %r, want %r" % (line, want))
+else:
+    print("line 2 after a round: %r" % line)
 
 print("text: %d failed" % fails)
 sys.exit(1 if fails else 0)

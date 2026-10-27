@@ -301,23 +301,18 @@ MD_COL  LDX GIDX
 ;  RAM status lines STATUS1/STATUS2 (VARS.ASM) by DISP_INIT.
 ; ---------------------------------------------------------------------
 STATTPL .SBYTE "GOLD       TURNS     TIME      GOLD     "
-        .SBYTE "J0:0 F0:0 J1:0 F1:0 KEY:- FRM:00      N "
+        .SBYTE "POP                            POP      "
 STATLEN =  80
-
-; Offsets of the live fields in STATUS2
-ST_J0   =  3
-ST_F0   =  8
-ST_J1   =  13
-ST_F1   =  18
-ST_KEY  =  24
-ST_FRM  =  30
-ST_STD  =  38           ; N or P: TV standard found by TIC_INIT
 
 ; Offsets of the number fields in STATUS1 (R-SCR-1)
 ST_G0   =  5            ; player 1 gold, 4 digits
 ST_TRN  =  17           ; rounds left, 2 digits
 ST_TIME =  26           ; seconds left in the round, 3 digits
 ST_G1   =  36           ; player 2 gold, 4 digits
+
+; Offsets of the population fields in STATUS2 (status offsets, D44)
+ST_P0   =  44           ; player 1 population, 5 digits
+ST_P1   =  75           ; player 2 population, 5 digits
 
 ; ---------------------------------------------------------------------
 ;  MAP_IDX -- grid index of a square

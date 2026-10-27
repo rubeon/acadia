@@ -83,6 +83,7 @@ GN_L2   LDA STATTPL+40,X
         STA STATUS2,X
         DEX
         BPL GN_L2
+        JSR NEWS_OFF    ; no news yet
         ; fall through
 
 ; ---------------------------------------------------------------------
@@ -98,7 +99,7 @@ SL_COPY LDA STATTPL,X
 
 ; ---------------------------------------------------------------------
 ;  STAT_DRAW -- status line 1: both players' gold, rounds left and the
-;  seconds left in the round (R-SCR-1)
+;  seconds left in the round (R-SCR-1); line 2: both populations (D44)
 ; ---------------------------------------------------------------------
 STAT_DRAW
         LDA GOLD
@@ -126,6 +127,18 @@ STAT_DRAW
         JSR NUM16
         LDA #4
         LDX #ST_G1
+        JSR TXT_DEC
+        LDA POP         ; line 2: populations (D44)
+        LDX POP+1
+        JSR NUM16
+        LDA #5
+        LDX #ST_P0
+        JSR TXT_DEC
+        LDA POP+2
+        LDX POP+3
+        JSR NUM16
+        LDA #5
+        LDX #ST_P1
         JMP TXT_DEC
 
 ; ---------------------------------------------------------------------
@@ -164,9 +177,10 @@ ROUND_END
         JMP SHOW_PAIR
 
 ; ---------------------------------------------------------------------
-;  GAME_TIC -- every tic: time the summary pages.  Trashes A, X, Y.
+;  GAME_TIC -- every tic: time the news and the summary pages.  Trashes A, X, Y.
 ; ---------------------------------------------------------------------
 GAME_TIC
+        JSR NEWS_TIC    ; the news slot clears after 3 s
         LDA GSTATE
         BEQ GT_DONE     ; in a round
         CMP #GS_OVER
@@ -207,6 +221,11 @@ GAME_OVER
         STA GSTATE
         LDA #0
         STA GO_ARM
+        STA NW_T        ; line 2 blank for the winner
+        LDX #39
+GO_CL2  STA STATUS2,X
+        DEX
+        BPL GO_CL2
         LDX #3
 GO_TOT  LDA SCORE,X
         STA SV0,X
