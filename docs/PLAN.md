@@ -81,7 +81,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 
 | ID | Task | Deps | Status |
 |---|---|---|---|
-| T-REL-1 | Title screen, credits (no Mattel trademarks in a way that implies affiliation) | M6 | todo |
+| T-REL-1 | Title screen, credits (no Mattel trademarks in a way that implies affiliation) | M6 | in progress (hermes) |
 | T-REL-2 | Test on MiSTer and real 800XL; PAL check | M6 | todo |
 | T-REL-3 | ATR + XEX release build, README play instructions | T-INFRA-4 | todo |
 
