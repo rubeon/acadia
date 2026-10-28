@@ -20,7 +20,7 @@ and keep your people fed and happy through storms, pirates and rebels.
 - POKEY sound effects and music.
 - Mixed ANTIC modes: a mode 2 text status bar over a mode 5
   multicolour map, split with display list interrupts.
-- Menus and item selection on the keyboard for now; this is a computer.
+- Menus and item selection on the keyboard; this is a computer. In a 1-player game an Atari keypad controller in port 2 works too.
 
 Acadia is an independent project, not affiliated with or endorsed by
 Mattel. All code, graphics, sound and music are new.

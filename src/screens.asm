@@ -50,6 +50,14 @@ GAME_NEW
         STA TRNLEN
 GAME_START
         JSR MUS_STOP    ; the title tune ends
+        JSR KP_OFF      ; port 2: a stick, or the keypad in a 1-player
+        LDA SU_VAL+SU_FPLY ; game with KEYPAD set (D49)
+        CMP #1
+        BNE GS_KP
+        LDA SU_VAL+SU_FKP
+        BEQ GS_KP
+        JSR KP_ON
+GS_KP
         LDA #0
         LDX #19
 GN_CNT  STA COUNT,X
