@@ -203,8 +203,8 @@ MV_END  LDA #0          ; this voice is done: quiet
 
 ; per voice: distortion, starting volume, sustain volume
 INSDIST .BYTE SD_PURE,SD_PURE
-INSVOL  .BYTE 10,9
-INSSUS  .BYTE 5,4
+INSVOL  .BYTE 8,7
+INSSUS  .BYTE 4,3
 
 ; AUDF of notes 1-36, C3-B5, at the 64 kHz clock (pure tone; within
 ; 1.3 % of equal temperament)
@@ -217,39 +217,35 @@ MUSLP   .BYTE 1,0
 MUSV0   .BYTE MT_MEL-MUSDAT,MF_MEL-MUSDAT
 MUSV1   .BYTE MT_BAS-MUSDAT,MF_BAS-MUSDAT
 
-; lengths (frames): eighth 10, quarter 20, dotted quarter 30, half 40,
-; dotted half 60
-ME      =  10
-MQ      =  20
-MDQ     =  30
-MH      =  40
-MDH     =  60
+; lengths (frames): a 4/4 bar of the title is MW; the title moves in
+; halves and quarters only (D45)
+MQ      =  30           ; quarter
+MH      =  60           ; half
+MDH     =  90           ; dotted half
+MW      =  120          ; whole
 
 MUSDAT
-; title, melody: 8 bars of 4/4 in C, pentatonic
-MT_MEL  .BYTE N_E4,MQ, N_G4,ME, N_A4,ME, N_C5,MQ, N_A4,MQ
-        .BYTE N_G4,MDQ, N_E4,ME, N_D4,MH
-        .BYTE N_E4,MQ, N_G4,ME, N_A4,ME, N_C5,MQ, N_D5,MQ
-        .BYTE N_E5,MDH, 0,MQ
-        .BYTE N_D5,MQ, N_C5,ME, N_A4,ME, N_G4,MQ, N_A4,MQ
-        .BYTE N_C5,MDQ, N_A4,ME, N_G4,MH
-        .BYTE N_E4,MQ, N_D4,ME, N_E4,ME, N_G4,MQ, N_A4,MQ
-        .BYTE N_C5,MDH, 0,MQ
+; title, melody: 9 bars of slow 4/4 in D minor, few and long notes
+; (Dm Bb F C Dm Gm A Dm, then a bar's rest before it comes round)
+MT_MEL  .BYTE N_A4,MW
+        .BYTE N_G4,MH, N_F4,MH
+        .BYTE N_A4,MDH, N_C5,MQ
+        .BYTE N_G4,MW
+        .BYTE N_F4,MH, N_A4,MH
+        .BYTE N_D5,MDH, N_C5,MQ
+        .BYTE N_E4,MH, N_CS4,MH
+        .BYTE N_D4,MW
+        .BYTE 0,MW
         .BYTE $FF
-; title, bass: root and fifth in quarters; C G C Am F C G C
-MT_BAS  .BYTE N_C3,MQ, N_G3,MQ, N_C3,MQ, N_G3,MQ
-        .BYTE N_G3,MQ, N_D3,MQ, N_G3,MQ, N_D3,MQ
-        .BYTE N_C3,MQ, N_G3,MQ, N_C3,MQ, N_G3,MQ
-        .BYTE N_A3,MQ, N_E3,MQ, N_A3,MQ, N_E3,MQ
-        .BYTE N_F3,MQ, N_C4,MQ, N_F3,MQ, N_C4,MQ
-        .BYTE N_C3,MQ, N_G3,MQ, N_C3,MQ, N_G3,MQ
-        .BYTE N_G3,MQ, N_D3,MQ, N_G3,MQ, N_D3,MQ
-        .BYTE N_C3,MQ, N_G3,MQ, N_C3,MH
+; title, bass: one root a bar
+MT_BAS  .BYTE N_D3,MW, N_AS3,MW, N_F3,MW, N_C3,MW
+        .BYTE N_D3,MW, N_G3,MW, N_A3,MW, N_D3,MW
+        .BYTE 0,MW
         .BYTE $FF
-; fanfare, melody: up the C chord to a held G
-MF_MEL  .BYTE N_G4,6, N_C5,6, N_E5,6, N_G5,12, N_E5,6, N_G5,36
+; fanfare, melody: up the D minor chord, a step down to D
+MF_MEL  .BYTE N_A4,8, N_D5,8, N_F5,8, N_E5,12, N_D5,36
         .BYTE $FF
-; fanfare, bass
-MF_BAS  .BYTE N_C3,18, N_G3,12, N_C3,42
+; fanfare, bass: D, A, D
+MF_BAS  .BYTE N_D3,24, N_A3,12, N_D3,36
         .BYTE $FF
 MUSEND

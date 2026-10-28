@@ -136,9 +136,9 @@ if playing()[:2] != [0, 0] or m.byte("SN_LO") != 2:
     fail("title: effects left on voices 1-2: %r" % playing())
 frames = run(1400)
 mel = starts(frames, 0)
-if mel[:6] != [E4, G4, A4, C5, A4, G4]:
+if mel[:6] != [A4, G4, NOTES[18], A4, C5, G4]:
     fail("title melody starts %r" % mel[:6])
-if not m.byte("MZ_ON") or len(mel) < 50:
+if not m.byte("MZ_ON") or len(mel) <= 13:
     fail("title tune did not loop: %d notes, on %d" % (len(mel), m.byte("MZ_ON")))
 if not starts(frames, 1):
     fail("title: no bass")
@@ -157,7 +157,7 @@ loud = [i for i, v in enumerate(frames) if v[0][1] & 0x0F or v[1][1] & 0x0F]
 print("fanfare    %3d frames" % (loud[-1] + 1))
 if not 60 <= loud[-1] + 1 <= 90 or m.byte("MZ_ON") or m.byte("SN_LO"):
     fail("fanfare: %d frames, on %d" % (loud[-1] + 1, m.byte("MZ_ON")))
-if starts(frames, 0)[:4] != [G4, C5, NOTES[29], NOTES[32]]:
+if starts(frames, 0)[:5] != [A4, NOTES[27], NOTES[30], NOTES[29], NOTES[27]]:
     fail("fanfare notes %r" % starts(frames, 0))
 
 # paused: the music stands still
