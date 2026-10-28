@@ -89,5 +89,22 @@ if line != want:
 else:
     print("line 2 after a round: %r" % line)
 
+# each screen byte of a field is written once, with its final value: a
+# leading zero must never show, even for a moment (no flicker)
+base = m.addr("STATUS1")
+writes = []
+m.mem.subscribe_to_write(range(base, base + 80), lambda a, v: writes.append((a - base, v)))
+for value, width in [(100, 4), (7, 4), (0, 3), (9999, 4), (65535, 5), (10000, 4), (42, 2)]:
+    del writes[:]
+    m.set_long("M_NUM", value)
+    m.call("TXT_DEC", a=width, x=10)
+    want = "%*d" % (width, value) if len(str(value)) <= width else "*" * width
+    offsets = [a for a, _ in writes]
+    if sorted(offsets) != list(range(10, 10 + width)):
+        fail("TXT_DEC(%d) wrote offsets %r" % (value, offsets))
+    for a, v in writes:
+        if v != (0 if want[a - 10] == " " else ord(want[a - 10]) - 0x20):
+            fail("TXT_DEC(%d) wrote %02X at %d, want %r" % (value, v, a, want))
+
 print("text: %d failed" % fails)
 sys.exit(1 if fails else 0)

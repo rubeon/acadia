@@ -34,43 +34,46 @@ TS_DONE RTS
 ;  In: M_NUM = value (24 bits; see NUM16), A = field width (1-5),
 ;      X = status offset of the field's first character.
 ;  Leading zeros become spaces (a zero value prints "0").  A value too
-;  wide for the field prints as all "*".
-;  Trashes A, X, Y, M_NUM, TCNT, TOFS, TPOS, TLAST.
+;  wide for the field prints as all "*".  The digits are worked out in
+;  TBUF first, so each screen byte is written once, with its final
+;  value: a leading zero never shows, even for a moment.
+;  Trashes A, X, Y, M_NUM, TCNT, TOFS, TPOS.
 ; ---------------------------------------------------------------------
 TXT_DEC
         STA TCNT
         STX TOFS
-        TXA
-        CLC
-        ADC TCNT
-        STA TPOS        ; one past the field
-        SEC
-        SBC #1
-        STA TLAST       ; last character of the field
-TD_DIG  DEC TPOS        ; digits from the right
+        STA TPOS        ; digits from the right, into TBUF
+TD_DIG  DEC TPOS
         LDA #10
         JSR DIVN        ; A = next digit (DIVN trashes X)
-        CLC
-        ADC #SC_0
         LDX TPOS
-        STA STATUS1,X
-        CPX TOFS
+        STA TBUF,X
+        TXA
         BNE TD_DIG
         LDA M_NUM       ; anything left over: too wide
         ORA M_NUM+1
         ORA M_NUM+2
         BNE TD_OVF
-        LDX TOFS        ; blank leading zeros, keep the last digit
-TD_LZ   CPX TLAST
-        BEQ TD_DONE
-        LDA STATUS1,X
-        CMP #SC_0
-        BNE TD_DONE
-        LDA #0
-        STA STATUS1,X
+        LDX TOFS        ; the field: leading zeros as spaces, then the
+        LDY #0          ; digits (the last one always)
+TD_LZ   INY
+        CPY TCNT
+        BEQ TD_REST     ; the last digit
+        LDA TBUF-1,Y
+        BNE TD_REST     ; the first non-zero digit
+        STA STATUS1,X   ; (A = 0: a space)
         INX
         BNE TD_LZ
-TD_DONE RTS
+TD_REST LDA TBUF-1,Y
+        CLC
+        ADC #SC_0
+        STA STATUS1,X
+        INX
+        INY
+        CPY TCNT
+        BCC TD_REST
+        BEQ TD_REST
+        RTS
 TD_OVF  LDX TOFS
         LDY TCNT
         LDA #SC_STAR

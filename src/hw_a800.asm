@@ -126,6 +126,8 @@ NMI_DLI   = $80
 ; ---------------------------------------------------------------------
 RTCLOK  =  $12          ; 3-byte frame clock (LSB at $14)
 ATRACT  =  $4D          ; attract-mode timer
+DRKMSK  =  $4E          ; attract-mode luminance mask (OS)
+COLRSH  =  $4F          ; attract-mode colour shift (OS)
 VDSLST  =  $0200        ; DLI vector
 VVBLKI  =  $0222        ; immediate VBI vector
 VVBLKD  =  $0224        ; deferred VBI vector

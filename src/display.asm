@@ -101,16 +101,16 @@ DLI_MAP
         PHA
         TYA
         PHA
-        LDA MAPPAL      ; map palette from RAM (PAL_NORM / PAL_DIM)
-        LDX MAPPAL+1
-        LDY MAPPAL+2
+        LDA MAPCOL      ; map palette from RAM (VBI_D: MAPPAL, attract)
+        LDX MAPCOL+1
+        LDY MAPCOL+2
         STA WSYNC
         STA COLBK
         STX COLPF0
         STY COLPF1
-        LDA MAPPAL+3
+        LDA MAPCOL+3
         STA COLPF2
-        LDA MAPPAL+4
+        LDA MAPCOL+4
         STA COLPF3
         LDA HELPON
         BNE DM_HELP
@@ -147,7 +147,8 @@ DM_HELP LDA #>HLPFONT     ; help screen (HELP.ASM): its font, no fish;
 ; ---------------------------------------------------------------------
 ;  PAL_NORM -- map colours to the D16 palette
 ;  PAL_DIM  -- map colours at half brightness (pause)
-;  The DLI copies MAPPAL (sea, grass, dark, light, white) to the
+;  VBI_D copies MAPPAL (sea, grass, dark, light, white), with attract
+;  mode applied, to MAPCOL, which the DLI writes to the
 ;  colour registers each frame.  Trash A, X.
 ; ---------------------------------------------------------------------
 PAL_NORM
@@ -222,7 +223,11 @@ DLI_MSL STA HPOSM3
         RTS
 
 ; ---------------------------------------------------------------------
-;  VBI_D -- deferred VBI: frame counter, sound, keep attract mode off
+;  VBI_D -- deferred VBI: frame counter, sound, sprites, and the map
+;  colours for this frame's DLI.  Attract mode (D48): INPUT_POLL clears
+;  ATRACT on any input; once the OS timer runs out it sets COLRSH and
+;  DRKMSK for its shadow colours, and the map colours get the same
+;  change here: colour EOR COLRSH AND DRKMSK.
 ; ---------------------------------------------------------------------
 VBI_D
         INC FRAME
@@ -232,8 +237,13 @@ VBI_D
         STA HPOSP2      ; DLIs set them)
         STA HPOSP3
         JSR DLI_MSL     ; and the missiles
-        LDA #0
-        STA ATRACT
+        LDX #4          ; map colours, attract mode applied
+VD_COL  LDA MAPPAL,X
+        EOR COLRSH
+        AND DRKMSK
+        STA MAPCOL,X
+        DEX
+        BPL VD_COL
         LDA #<DLI_MAP   ; first DLI of the next frame
         STA VDSLST
         LDA #>DLI_MAP

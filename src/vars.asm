@@ -35,7 +35,8 @@ KEYDOWN *= *+1          ; key held flag (edge detection)
 ; ---------------------------------------------------------------------
 FRAME   *= *+1          ; frame counter, incremented by the VBI
 DLIROW  *= *+1          ; DLI_ROW: map row whose font is set next
-MAPPAL  *= *+5          ; map colours the DLI uses (PAL_NORM / PAL_DIM)
+MAPPAL  *= *+5          ; map colours (PAL_NORM / PAL_DIM)
+MAPCOL  *= *+5          ; the same with attract mode applied (VBI_D, for the DLI)
 PD_LUM  *= *+1          ; PAL_DIM: work byte
 ROWLO   *= *+MAPROWS    ; map row addresses, low bytes
 ROWHI   *= *+MAPROWS    ; map row addresses, high bytes
@@ -214,7 +215,7 @@ TICSEC  *= *+1          ; tic within the second, 0-19
 TCNT    *= *+1          ; TXT_DEC: field width
 TOFS    *= *+1          ; TXT_DEC: field start
 TPOS    *= *+1          ; TXT_DEC: current digit position
-TLAST   *= *+1          ; TXT_DEC: last character of the field
+TBUF    *= *+5          ; TXT_DEC: the digits, before they go on screen
 
 ; ---------------------------------------------------------------------
 ;  Game state (ARCHITECTURE section 7 names).  For now only the test
