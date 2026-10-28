@@ -45,6 +45,14 @@ INPUT_POLL
         EOR #$FF
         AND #$07        ; b0 START, b1 SELECT, b2 OPTION
         STA CONKEY
+        ORA JOY0        ; any input holds off attract mode (D48)
+        ORA JOY1
+        ORA FIRE0
+        ORA FIRE1
+        BEQ IP_ATR
+        LDA #0
+        STA ATRACT
+IP_ATR
         LDA #0
         STA PAUSEK
         STA HELPK
@@ -57,7 +65,9 @@ INPUT_POLL
         LDA #$00        ; no key: rearm
         STA KEYDOWN
         RTS
-IP_HELD LDA KEYDOWN
+IP_HELD LDA #0          ; a key held: no attract mode either
+        STA ATRACT
+        LDA KEYDOWN
         BNE IP_DONE     ; still the same press
         INC KEYDOWN
         LDA KBCODE
