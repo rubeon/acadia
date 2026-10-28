@@ -1,11 +1,12 @@
 ; =====================================================================
 ;  SETUP.ASM -- the game setup screen (T-SCR-1: R-MODE-3, R-MODE-4)
 ;
-;  Shown at start-up and after every game over.  Four lines:
+;  Shown at start-up and after every game over.  Five lines:
 ;    ROUNDS              1-50     ("term of office" in the original)
 ;    SECONDS PER ROUND   30-120   ("turn length")
 ;    PLAYERS             1-2
 ;    CPU LEVEL           1-3      (1 player only; skipped with 2)
+;    KEYPAD IN PORT 2    NO/YES   (1 player only; skipped with 2; D49)
 ;  Stick up/down or SELECT picks a line; stick left/right changes it
 ;  (held: repeats), or digits type a number.  START or fire begins.
 ;  Typed numbers are brought into range when the line is left or the
@@ -19,9 +20,10 @@
 
 GS_SETUP = 4            ; GSTATE while the setup screen is up
 
-SU_NF   =  4            ; number of lines (fields)
+SU_NF   =  5            ; number of lines (fields)
 SU_FPLY =  2            ; PLAYERS field
-SU_FLVL =  3            ; CPU LEVEL field
+SU_FLVL =  3            ; CPU LEVEL field; this and the next: 1 player
+SU_FKP  =  4            ; KEYPAD field: 0 no, 1 yes
 SU_DEFP =  2            ; default: 2 players
 SU_DEFL =  2            ; default CPU level
 SU_DELAY = 20           ; frames before a held left/right repeats
@@ -47,6 +49,8 @@ SETUP_INIT
         STA SU_VAL+SU_FPLY
         LDA #SU_DEFL
         STA SU_VAL+SU_FLVL
+        LDA #0          ; no keypad
+        STA SU_VAL+SU_FKP
         RTS
 
 ; ---------------------------------------------------------------------
@@ -60,6 +64,7 @@ SETUP_ENTER
         BNE SE_MUS
         JSR MUS_TITLE
 SE_MUS
+        JSR KP_OFF      ; port 2 is a stick port again
         LDA #GS_SETUP
         STA GSTATE
         LDA #0
@@ -209,7 +214,8 @@ SG_CLMP JSR SU_CLX
 
 ; ---------------------------------------------------------------------
 ;  SU_NEXT / SU_PREV -- move to the next / previous line, bringing the
-;  line left into range; CPU LEVEL is skipped with 2 players.
+;  line left into range; CPU LEVEL and KEYPAD are skipped with 2
+;  players.
 ;  Trashes A, X.
 ; ---------------------------------------------------------------------
 SU_NEXT JSR SU_CLAMP
@@ -219,7 +225,7 @@ SU_NEXT JSR SU_CLAMP
         BCC SN_LVL
         LDX #0
 SN_LVL  CPX #SU_FLVL
-        BNE SU_SETF
+        BCC SU_SETF
         LDA SU_VAL+SU_FPLY
         CMP #2
         BNE SU_SETF
@@ -234,7 +240,7 @@ SU_PREV JSR SU_CLAMP
         BPL SP_LVL
         LDX #SU_NF-1
 SP_LVL  CPX #SU_FLVL
-        BNE SU_SETF
+        BCC SU_SETF
         LDA SU_VAL+SU_FPLY
         CMP #2
         BNE SU_SETF
@@ -321,8 +327,9 @@ SD_OK   STA SU_VAL,X
 SD_RTS  RTS
 
 ; ---------------------------------------------------------------------
-;  SU_DRAW -- redraw the four value lines: a ">" and an inverse value
-;  on the current one, "-" for CPU LEVEL with 2 players.
+;  SU_DRAW -- redraw the five value lines: a ">" and an inverse value
+;  on the current one, "-" for CPU LEVEL and KEYPAD with 2 players,
+;  NO / YES for KEYPAD.
 ;  Trashes A, X, Y, ZPTR, TPTR, M_NUM.
 ; ---------------------------------------------------------------------
 SU_DRAW LDX #SU_NF-1
@@ -342,13 +349,24 @@ SW_LAB  LDA SULAB_L,X
         JSR TXT_STR
         LDX SU_I
         CPX #SU_FLVL
-        BNE SW_NUM
+        BCC SW_NUM
         LDA SU_VAL+SU_FPLY
         CMP #2
-        BNE SW_NUM
-        LDA #SC_DASH    ; no CPU in a 2-player game
+        BNE SW_ONE
+        LDA #SC_DASH    ; no CPU or keypad in a 2-player game
         STA STATUS1+SU_COLV+2
         BNE SW_INV
+SW_ONE  CPX #SU_FKP
+        BNE SW_NUM
+        LDY SU_VAL+SU_FKP
+        LDA SUKP_L,Y    ; NO / YES
+        PHA
+        LDA SUKP_H,Y
+        TAY
+        PLA
+        LDX #SU_COLV
+        JSR TXT_STR
+        JMP SW_INV
 SW_NUM  LDA SU_VAL,X
         LDX #0
         JSR NUM16
@@ -374,8 +392,9 @@ SW_CPY  LDA STATUS1,Y
         BPL SW_CPY
         LDX SU_I
         DEX
-        BPL SW_LINE
-        RTS
+        BMI SW_RTS
+        JMP SW_LINE
+SW_RTS  RTS
 
 ; ---------------------------------------------------------------------
 ;  SU_ROWADR -- ZPTR = address of mode 2 line A (0-17).  Trashes A, Y.
@@ -402,13 +421,13 @@ SU_ROWADR
         RTS
 
 ; Field ranges (original: $504C, $50F3) and stick steps
-SU_MIN  .BYTE 1,30,1,1
-SU_MAX  .BYTE 50,120,2,3
-SU_STP  .BYTE 1,5,1,1
-SUF_ROW .BYTE 3,5,7,9           ; mode 2 line of each field
+SU_MIN  .BYTE 1,30,1,1,0
+SU_MAX  .BYTE 50,120,2,3,1
+SU_STP  .BYTE 1,5,1,1,1
+SUF_ROW .BYTE 3,5,7,9,11        ; mode 2 line of each field
 
-SULAB_L .BYTE <SUL_RND,<SUL_SEC,<SUL_PLY,<SUL_LVL
-SULAB_H .BYTE >SUL_RND,>SUL_SEC,>SUL_PLY,>SUL_LVL
+SULAB_L .BYTE <SUL_RND,<SUL_SEC,<SUL_PLY,<SUL_LVL,<SUL_KP
+SULAB_H .BYTE >SUL_RND,>SUL_SEC,>SUL_PLY,>SUL_LVL,>SUL_KP
 SUL_RND .SBYTE "ROUNDS (1-50)"
         .BYTE TX_END
 SUL_SEC .SBYTE "SECONDS PER ROUND (30-120)"
@@ -417,11 +436,19 @@ SUL_PLY .SBYTE "PLAYERS (1-2)"
         .BYTE TX_END
 SUL_LVL .SBYTE "CPU LEVEL (1-3)"
         .BYTE TX_END
+SUL_KP  .SBYTE "KEYPAD IN PORT 2 (0-1)"
+        .BYTE TX_END
+SUKP_L  .BYTE <SUK_NO,<SUK_YES
+SUKP_H  .BYTE >SUK_NO,>SUK_YES
+SUK_NO  .SBYTE " NO"
+        .BYTE TX_END
+SUK_YES .SBYTE "YES"
+        .BYTE TX_END
 
 ; Fixed text: title (mode 7, 20 characters) and mode 2 lines
 SUS_TTL .SBYTE "       ACADIA       "
 SUS_N   =  4
-SUS_ROW .BYTE 1,12,13,15
+SUS_ROW .BYTE 1,13,14,16
 SUS_LO  .BYTE <SUS_1,<SUS_12,<SUS_13,<SUS_15
 SUS_HI  .BYTE >SUS_1,>SUS_12,>SUS_13,>SUS_15
 SUS_1   .SBYTE "      BUILD, FEED AND KEEP THE PEACE"

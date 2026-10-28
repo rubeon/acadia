@@ -59,9 +59,11 @@ AUDC3   =  $D205
 AUDF4   =  $D206
 AUDC4   =  $D207
 AUDCTL  =  $D208        ; W  audio control
+ALLPOT  =  $D208        ; R  pot lines still counting (1 = still low)
 KBCODE  =  $D209        ; R  last keyboard code
 STIMER  =  $D209        ; W  restart timers
 RANDOM  =  $D20A        ; R  random number
+POTGO   =  $D20B        ; W  start a pot scan
 SKREST  =  $D20A        ; W  reset SKSTAT
 IRQEN   =  $D20E        ; W  IRQ enable
 IRQST   =  $D20E        ; R  IRQ status

@@ -21,7 +21,7 @@ DM_NONE =  $FF          ; script: no key
 ;  Trashes A, X, Y.
 ; ---------------------------------------------------------------------
 DEMO_GO
-        LDX #3          ; the setup values aside
+        LDX #SU_NF-1    ; the setup values aside
 DG_SAV  LDA SU_VAL,X
         STA DM_SAV,X
         DEX
@@ -35,6 +35,8 @@ DG_SAV  LDA SU_VAL,X
         STA TRNLEN
         LDA #DM_LVL
         STA SU_VAL+SU_FLVL
+        LDA #0          ; no keypad
+        STA SU_VAL+SU_FKP
         LDA #1
         STA DEMO
         STA DM_CNT      ; the first script step at the next frame
@@ -99,7 +101,7 @@ DF_IDLE LDA #1
 DEMO_END
         LDA #0
         STA DEMO
-        LDX #3
+        LDX #SU_NF-1
 DE_SAV  LDA DM_SAV,X
         STA SU_VAL,X
         DEX

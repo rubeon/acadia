@@ -16,7 +16,7 @@ START, SELECT = 1, 2
 GS_PLAY, GS_OVER, GS_SETUP = 0, 3, 4
 KC = {"0": 0x32, "1": 0x1F, "2": 0x1E, "3": 0x1A, "4": 0x18,
       "5": 0x1D, "6": 0x1B, "7": 0x33, "8": 0x35, "9": 0x30}
-ROUNDS, SECS, PLAYERS, LEVEL = range(4)
+ROUNDS, SECS, PLAYERS, LEVEL, KEYPAD = range(5)
 m = Machine()
 fails = 0
 
@@ -151,18 +151,28 @@ typ("3")
 typ("9")
 check([1, 120, 1, 3], "CPU level 3, 9 ignored")
 tap(stick=DOWN)
+if m.byte("SU_FLD") != KEYPAD or row(11)[32:35] != " NO":
+    fail("1 player: down from CPU LEVEL: field %d, %r" % (m.byte("SU_FLD"), row(11)))
+typ("5")
+typ("1")
+if m.byte("SU_VAL", KEYPAD) != 1 or row(11)[32:35] != "YES":
+    fail("keypad 1 (5 ignored): %d, %r" % (m.byte("SU_VAL", KEYPAD), row(11)))
+tap(stick=DOWN)
 if m.byte("SU_FLD") != ROUNDS:
-    fail("1 player: down from CPU LEVEL went to %d" % m.byte("SU_FLD"))
+    fail("1 player: down from KEYPAD went to %d" % m.byte("SU_FLD"))
 tap(stick=RIGHT)
 tap(stick=RIGHT)
 check([3, 120, 1, 3], "rounds 3")
 tap(stick=UP)                             # 1 player: up from ROUNDS
-if m.byte("SU_FLD") != LEVEL:
+if m.byte("SU_FLD") != KEYPAD:
     fail("1 player: up from ROUNDS went to %d" % m.byte("SU_FLD"))
+tap(stick=UP)
 tap(stick=UP)
 tap(stick=RIGHT)                          # back to 2 players
 tap(stick=RIGHT)                          # stays at 2
 check([3, 120, 2, 3], "2 players")
+if row(11)[32:35] != "  -":
+    fail("2 players: keypad line %r" % row(11))
 
 # START begins with these values
 tap(console=START)
@@ -172,6 +182,8 @@ if (m.byte("NUMTRN"), m.byte("TRNLEN"), m.byte("REMSEC")) != (3, 120, 120):
     fail("game settings %r" % [m.byte("NUMTRN"), m.byte("TRNLEN"), m.byte("REMSEC")])
 if m.byte("SDLSTL") != m.addr("DLIST") & 0xFF:
     fail("map display list not back")
+if m.byte("KPMODE"):
+    fail("keypad on in a 2-player game")
 line1 = "".join(chr(m.byte("STATUS1", i) + 0x20) for i in range(40))
 if "TURNS  3  TIME 120" not in line1:
     fail("status line %r" % line1)
@@ -184,6 +196,8 @@ tap(fire0=True)
 if m.byte("GSTATE") != GS_SETUP:
     fail("no setup screen after game over (state %d)" % m.byte("GSTATE"))
 check([3, 120, 2, 3], "values kept for the next game")
+if m.byte("SU_VAL", KEYPAD) != 1:
+    fail("keypad setting not kept")
 if m.byte("SU_FLD") != ROUNDS or row(3)[32:35] != "  3":
     fail("setup after game over %r" % row(3))
 
