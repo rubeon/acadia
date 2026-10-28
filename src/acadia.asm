@@ -43,7 +43,7 @@ START
         JSR DISP_INIT
         JSR TIC_INIT
         JSR SETUP_INIT  ; default rounds and round length
-        JSR SETUP_ENTER ; the setup screen first (T-SCR-1)
+        JSR TITLE_ENTER ; the title screen first (T-REL-1)
 
 MAIN    LDA FRAME       ; wait for the next frame
 MN_WAIT CMP FRAME
@@ -57,7 +57,10 @@ MN_WAIT CMP FRAME
 GAME_FRAME
         JSR INPUT_POLL
         LDA GSTATE
-        CMP #GS_SETUP
+        CMP #GS_TITLE
+        BNE GF_SU
+        JMP TITLE_FRAME ; title screen
+GF_SU   CMP #GS_SETUP
         BNE GF_OVER
         JMP SETUP_FRAME ; setup screen
 GF_OVER CMP #GS_OVER
@@ -142,7 +145,9 @@ CODE2   =  $5000
         .INCLUDE "screens.asm"
         .INCLUDE "news.asm"
         .INCLUDE "setup.asm"
+        .INCLUDE "title.asm"
         .INCLUDE "vars.asm"
+        .INCLUDE "title_gfx.asm"
 
 ; ---------------------------------------------------------------------
 ;  Run address
