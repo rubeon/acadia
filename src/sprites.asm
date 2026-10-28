@@ -144,6 +144,20 @@ SA_P0   STA SPTR
 ;  SPR_VBI -- copy the players' horizontal positions to GTIA
 ;  Called from the deferred VBI.  Trashes A.
 ; ---------------------------------------------------------------------
+; ---------------------------------------------------------------------
+;  PM_HIDE -- every player and missile off screen (HPOS 0), for the
+;  screens without the map's DLIs.  Trashes A, X.
+; ---------------------------------------------------------------------
+PM_HIDE
+        LDA #0
+        STA SPRHP
+        STA SPRHP+1
+        LDX #7          ; HPOSP0-3, HPOSM0-3
+PM_HPL  STA HPOSP0,X
+        DEX
+        BPL PM_HPL
+        RTS
+
 SPR_VBI
         LDA SPRHP
         STA HPOSP0

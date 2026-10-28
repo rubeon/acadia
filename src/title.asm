@@ -6,7 +6,8 @@
 ;  letters with beach-yellow edges and a black shadow, then
 ;  "REBUILD YOUR WORLD" and a prompt.  The title tune plays.  Fire,
 ;  START or any key, once everything has been let go, goes on to the
-;  setup screen, with the tune still playing.
+;  setup screen, with the tune still playing.  Left alone for DM_IDLE
+;  seconds, it plays the demo (DEMO.ASM), which comes back here.
 ;
 ;  Its display list, TDLIST, sits in DLIST's page like SUDLIST.  The
 ;  two text lines are built in the map's screen memory (MAPSCR), which
@@ -21,7 +22,7 @@ TT_WHT  =  $C0          ; mode 6/7 colour bits: COLPF3, white
 TT_YEL  =  $40          ; COLPF1, yellow
 
 ; ---------------------------------------------------------------------
-;  TITLE_ENTER -- show the title screen.  Trashes A, X.
+;  TITLE_ENTER -- show the title screen.  Trashes A, X, Y.
 ; ---------------------------------------------------------------------
 TITLE_ENTER
         JSR MUS_TITLE
@@ -29,8 +30,9 @@ TITLE_ENTER
         STA GSTATE
         LDA #0
         STA TI_ARM
-        STA SPRHP       ; cursors off screen (HPOS 0)
-        STA SPRHP+1
+        STA TI_SEC
+        JSR PM_HIDE     ; no cursors, fish, weather or pirates
+        JSR TIC_SYNC    ; idle time counts from now
         LDX #19         ; the two text lines, with their colours
 TE_TXT  LDA TT_SUB,X
         ORA #TT_WHT
@@ -56,11 +58,30 @@ TE_TXT  LDA TT_SUB,X
 
 ; ---------------------------------------------------------------------
 ;  TITLE_FRAME -- each frame of the title screen: once everything is
-;  let go, fire, START or any key goes on to the setup screen.
-;  Trashes A, X, Y.
+;  let go, fire, START or any key goes on to the setup screen; after
+;  DM_IDLE seconds with nothing touched, the demo.  Trashes A, X, Y.
 ; ---------------------------------------------------------------------
 TITLE_FRAME
-        LDA FIRE0
+        LDA JOY0        ; anything touched: idle time from 0
+        ORA JOY1
+        ORA FIRE0
+        ORA FIRE1
+        ORA KEYDOWN
+        ORA CONKEY
+        BEQ TF_IDLE
+        LDA #0
+        STA TI_SEC
+TF_IDLE JSR TIC_POLL    ; count the idle seconds
+TF_TIC  JSR TIC_NEXT
+        BCC TF_TDON
+        BNE TF_TIC      ; not a new second
+        INC TI_SEC
+        BNE TF_TIC
+TF_TDON LDA TI_SEC
+        CMP #DM_IDLE
+        BCC TF_KEYS
+        JMP DEMO_GO
+TF_KEYS LDA FIRE0
         ORA FIRE1
         ORA KEYDOWN
         ORA CONKEY
@@ -73,13 +94,17 @@ TF_DONE RTS
 TF_ARMED
         CMP #0
         BEQ TF_DONE
-        LDA #C_STXT     ; status bar colours back for the other screens
+        JSR TI_COLS
+        JMP SETUP_ENTER
+
+; TI_COLS -- status bar colours back for the other screens.  Trashes A.
+TI_COLS LDA #C_STXT
         STA COLOR1
         LDA #C_SBAR
         STA COLOR2
         LDA #C_SBRD
         STA COLOR4
-        JMP SETUP_ENTER
+        RTS
 
 ; the text lines, 20 characters each (screen codes; colour added above)
 TT_SUB  .SBYTE " REBUILD YOUR WORLD "
