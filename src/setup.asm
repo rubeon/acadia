@@ -55,7 +55,11 @@ SETUP_INIT
 ;  Trashes A, X, Y, ZPTR, TPTR.
 ; ---------------------------------------------------------------------
 SETUP_ENTER
-        JSR MUS_TITLE   ; the title tune while the setup is up
+        LDA MZ_ON       ; the title tune while the setup is up, unless
+        AND MZ_LOOP     ; it is still playing from the title screen
+        BNE SE_MUS
+        JSR MUS_TITLE
+SE_MUS
         LDA #GS_SETUP
         STA GSTATE
         LDA #0
