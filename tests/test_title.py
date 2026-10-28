@@ -23,9 +23,9 @@ def fail(msg):
     print("FAIL " + msg)
 
 
-def frame(fire0=False, console=0, kb=None):
+def frame(fire0=False, console=0, kb=None, stick=0):
     m.poke("FRAME", (m.byte("FRAME") + 1) & 0xFF)
-    m.poke("PORTA", 0xFF)
+    m.poke("PORTA", 0xFF ^ stick)
     m.poke("TRIG0", 0 if fire0 else 1)
     m.poke("TRIG1", 1)
     m.poke("CONSOL", 0x07 ^ console)
@@ -110,5 +110,51 @@ if not m.byte("MZ_ON") or m.byte("MZ_POS") < pos:
     fail("the title tune restarted: position %d, was %d" % (m.byte("MZ_POS"), pos))
 if [m.byte("COLOR1"), m.byte("COLOR2"), m.byte("COLOR4")] != [0x0E, 0x82, 0x00]:
     fail("status bar colours not restored")
+# left alone for 30 s the demo starts: 1 player against the CPU, player
+# 1 scripted; it goes back to the title after 15 s, setup values kept
+m.poke("PAL", 0x0F)                       # NTSC: 60 frames a second
+boot()
+m.poke("SU_VAL", 7, 45, 2, 1)
+for i in range(29 * 60):
+    frame()
+    if m.byte("GSTATE") != GS_TITLE:
+        fail("left the title after %d frames" % i)
+        break
+for i in range(90):
+    frame()
+    if m.byte("DEMO"):
+        break
+if not m.byte("DEMO") or m.byte("GSTATE") != 0 or m.byte("SDLSTL") != m.addr("DLIST") & 0xFF:
+    fail("no demo after 30 s: state %d" % m.byte("GSTATE"))
+if [m.byte("SU_VAL", i) for i in range(4)] != [1, 30, 1, 3]:
+    fail("demo setup %r" % [m.byte("SU_VAL", i) for i in range(4)])
+gold = m.byte("GOLD")
+for i in range(16 * 60):
+    frame()
+    if not m.byte("DEMO"):
+        break
+print("demo: %d frames, player 1 spent %d gold" % (i + 1, gold - m.byte("GOLD")))
+if not 14 * 60 <= i + 1 <= 16 * 60 or m.byte("GSTATE") != GS_TITLE:
+    fail("demo ran %d frames, state %d" % (i + 1, m.byte("GSTATE")))
+if gold - m.byte("GOLD") < 80:
+    fail("the script bought little: %d gold spent" % (gold - m.byte("GOLD")))
+if [m.byte("SU_VAL", i) for i in range(4)] != [7, 45, 2, 1]:
+    fail("setup values not restored: %r" % [m.byte("SU_VAL", i) for i in range(4)])
+if any(m.mem[0xD000 + i] for i in range(8)):
+    fail("sprites left on the title: %r" % [m.mem[0xD000 + i] for i in range(8)])
+
+# any touch ends the demo at once
+for touch in ({"fire0": True}, {"console": START}, {"kb": 0x21}, {"stick": 1}):
+    boot()
+    m.call("DEMO_GO")
+    for _ in range(60):
+        frame()
+    frame(**touch)
+    if m.byte("DEMO") or m.byte("GSTATE") != GS_TITLE:
+        fail("%r did not end the demo" % touch)
+    frame(**touch)                        # still held: stays on the title
+    if m.byte("GSTATE") != GS_TITLE:
+        fail("%r held went on from the title" % touch)
+
 print("title: %d failed" % fails)
 sys.exit(1 if fails else 0)

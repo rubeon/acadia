@@ -56,7 +56,12 @@ MN_WAIT CMP FRAME
 ; ---------------------------------------------------------------------
 GAME_FRAME
         JSR INPUT_POLL
-        LDA GSTATE
+        LDA DEMO
+        BEQ GF_ST
+        JSR DEMO_FRAME  ; the demo: scripted player 1, or back to title
+        BCC GF_ST
+        RTS
+GF_ST   LDA GSTATE
         CMP #GS_TITLE
         BNE GF_SU
         JMP TITLE_FRAME ; title screen
@@ -146,6 +151,7 @@ CODE2   =  $5000
         .INCLUDE "news.asm"
         .INCLUDE "setup.asm"
         .INCLUDE "title.asm"
+        .INCLUDE "demo.asm"
         .INCLUDE "vars.asm"
         .INCLUDE "title_gfx.asm"
 
