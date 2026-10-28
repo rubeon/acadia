@@ -66,8 +66,8 @@ SE_MUS
         STA SU_ARM
         STA SU_FLD
         STA SU_TYPD
-        STA SPRHP       ; cursors off screen (HPOS 0)
-        STA SPRHP+1
+        JSR PM_HIDE     ; no cursors, fish, weather or pirates
+        LDA #0
         TAX
 SE_CLR  STA SU_SCR,X    ; clear title and text lines (740 bytes)
         STA SU_SCR+$100,X
