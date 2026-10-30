@@ -105,6 +105,15 @@ WTH_TIC
         ADC #1
         AND #7
         STA WANIM
+        CMP #W_BOLT     ; a storm's lightning: its thunder (D53)
+        BNE WT_WRK
+        LDA WACT
+        CMP #WT_STRM
+        BEQ WT_THND
+        LDA WACT+1
+        CMP #WT_STRM
+        BNE WT_WRK
+WT_THND JSR SND_THNDR
 WT_WRK  LDA SNKT        ; a wreck showing: clear it when its time is up
         BEQ WT_SPWN
         DEC SNKT
@@ -142,6 +151,7 @@ WT_ONE  STX WT_I
         LDA WACT,X
         CMP #WT_HURR
         BNE WT_NEXT
+        JSR SND_ROAR    ; its roar keeps going while it is out (D53)
         JSR WTH_BOAT
 WT_NEXT LDX WT_I
         DEX

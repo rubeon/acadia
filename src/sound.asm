@@ -39,6 +39,8 @@ SF_SMIT =  4
 SF_SINK =  5
 SF_REBL =  6
 SF_STRM =  7
+SF_THND =  8
+SF_ROAR =  9
 
 ; AUDC distortions (high nibble; low nibble is the volume)
 SD_PURE =  $A0          ; pure tone
@@ -119,7 +121,36 @@ SND_REBEL
 SND_STORM
         PHA
         LDA #SF_STRM
-        ; fall through
+        JMP SND_GO
+
+; SND_THNDR -- a storm's lightning flashed: soft thunder (D53)
+SND_THNDR
+        PHA
+        LDA #SF_THND
+        JMP SND_GO
+
+; SND_ROAR -- a hurricane is out: call it every tic.  It starts the
+; quiet roar only when none is playing, so the roar runs on unbroken
+; while it is called and dies away within a second once it isn't (D53).
+SND_ROAR
+        PHA
+        STX SN_SX
+        LDX #SN_CH-1
+SR_CH   LDA SN_ON,X     ; a roar playing: SN_POS within SX_ROAR
+        BEQ SR_NEXT
+        LDA SN_POS,X
+        CMP #SX_ROAR-SNDDAT
+        BCC SR_NEXT
+        CMP #SXR_END-SNDDAT+1
+        BCC SR_PLAY     ; yes: leave it
+SR_NEXT DEX
+        BPL SR_CH
+        LDX SN_SX
+        LDA #SF_ROAR
+        JMP SND_GO
+SR_PLAY LDX SN_SX
+        PLA
+        RTS
 
 ; SND_GO -- the hooks' tail: start effect A, then restore X, Y and the
 ; A each hook pushed.
@@ -231,7 +262,8 @@ SV_END  LDA #0          ; done: free and quiet
 ; ---------------------------------------------------------------------
 SFXPOS  .BYTE SX_BUY-SNDDAT,SX_REF-SNDDAT,SX_FISH-SNDDAT,SX_RAIN-SNDDAT
         .BYTE SX_SMIT-SNDDAT,SX_SINK-SNDDAT,SX_REBL-SNDDAT,SX_STRM-SNDDAT
-SFXPRI  .BYTE 2,2,1,1,4,4,3,3
+        .BYTE SX_THND-SNDDAT,SX_ROAR-SNDDAT
+SFXPRI  .BYTE 2,2,1,1,4,4,3,3,1,0
 
 ; AUDF at the 64 kHz clock: f = 63921 / (2 x (AUDF + 1)) Hz;
 ; 121 is about C4, 60 C5, 47 E5, 40 G5, 29 C6.
@@ -265,4 +297,13 @@ SX_REBL .BYTE 9,200,SD_BUZZ+10,0, 3,0,0,0, 14,240,SD_BUZZ+10,0
 SX_STRM .BYTE 10,230,SD_NOIS+3,0, 14,230,SD_NOIS+6,0, 16,240,SD_NOIS+4,0
         .BYTE 16,250,SD_NOIS+2,0
         .BYTE 0
+; thunder: a soft crack, then a low roll dying away
+SX_THND .BYTE 2,30,SD_NOIS+6,0, 6,150,SD_NOIS+5,4, 10,200,SD_NOIS+4,2
+        .BYTE 14,230,SD_NOIS+3,1, 18,250,SD_NOIS+2,0, 12,255,SD_NOIS+1,0
+        .BYTE 0
+; hurricane: a quiet low roar, swelling a little (60 frames; SND_ROAR
+; starts it again)
+SX_ROAR .BYTE 15,210,SD_NOIS+2,$FF, 15,195,SD_NOIS+3,1, 15,210,SD_NOIS+3,1
+        .BYTE 15,225,SD_NOIS+2,$FF
+SXR_END .BYTE 0
 SNDEND
