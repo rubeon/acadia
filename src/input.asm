@@ -151,6 +151,18 @@ KP_OFF  LDA #0
         STA KPMODE
         ; A = 0: every line an input, falls through
 
+; KP_DDR -- PORTA's data direction = A (1 = output).  Trashes A.
+KP_DDR  PHA
+        LDA PACTL
+        AND #$FF-PA_DATA ; PORTA is the direction register
+        STA PACTL
+        PLA
+        STA PORTA
+        LDA PACTL
+        ORA #PA_DATA    ; and the data register again
+        STA PACTL
+        RTS
+
 ; ---------------------------------------------------------------------
 ;  KP_AUTO -- KP_ON if a keypad is plugged into port 2 (D57).  Call
 ;  with port 2 a stick port (KP_OFF).  A keypad's three columns are
@@ -175,18 +187,6 @@ KP_W2   CMP VCOUNT
         DEY
         BNE KP_W1
         LDA ALLPOT
-        RTS
-
-; KP_DDR -- PORTA's data direction = A (1 = output).  Trashes A.
-KP_DDR  PHA
-        LDA PACTL
-        AND #$FF-PA_DATA ; PORTA is the direction register
-        STA PACTL
-        PLA
-        STA PORTA
-        LDA PACTL
-        ORA #PA_DATA    ; and the data register again
-        STA PACTL
         RTS
 
 ; ---------------------------------------------------------------------
