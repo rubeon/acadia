@@ -204,7 +204,7 @@ enough because the islands use about 7-8 rows.
 
 A map square is one **tile**: 2 × 2 ANTIC mode 4 characters, 8 × 16
 pixels shown 8 colour clocks wide and 16 scan lines tall (D50). Colours
-(D16, D50): `00` sea (COLBK), `01` grass (PF0), `10` dark green (PF1),
+(D16, D50): `00` sea (COLBK), `01` grass (PF0), `10` brick red (PF1),
 `11` sand (PF2), or white (PF3) in characters with bit 7 set. A
 character is 4 × 8 pixels, so one character can't hold both sand and
 white; a tile's four characters can each be inverse or not.

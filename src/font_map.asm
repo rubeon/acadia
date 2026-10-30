@@ -34,8 +34,8 @@ MAPFONT
         .BYTE $55,$FF,$BF,$BF,$AB,$AB,$BF,$BF
         .BYTE $FF,$EF,$FF,$FE,$FE,$FE,$AA,$55
         .BYTE $FF,$FB,$FF,$BF,$BF,$BF,$AA,$55
-        .BYTE $55,$55,$57,$5F,$7F,$FF,$FF,$6A
-        .BYTE $55,$55,$D5,$F5,$FD,$FF,$FF,$A9
+        .BYTE $55,$55,$56,$5A,$6A,$AA,$AA,$55
+        .BYTE $55,$55,$95,$A5,$A9,$AA,$AA,$55
         .BYTE $7F,$7B,$7F,$7E,$7E,$7E,$6A,$55
         .BYTE $FD,$ED,$FD,$BD,$BD,$BD,$A9,$55
         .BYTE $55,$75,$65,$66,$6A,$9A,$5A,$5A
@@ -160,8 +160,8 @@ MAPFNT1
         .BYTE $55,$FF,$BF,$BF,$AB,$AB,$BF,$BF
         .BYTE $FF,$EF,$FF,$FE,$FE,$FE,$AA,$55
         .BYTE $FF,$FB,$FF,$BF,$BF,$BF,$AA,$55
-        .BYTE $55,$55,$57,$5F,$7F,$FF,$FF,$6A
-        .BYTE $55,$55,$D5,$F5,$FD,$FF,$FF,$A9
+        .BYTE $55,$55,$56,$5A,$6A,$AA,$AA,$55
+        .BYTE $55,$55,$95,$A5,$A9,$AA,$AA,$55
         .BYTE $7F,$7B,$7F,$7E,$7E,$7E,$6A,$55
         .BYTE $FD,$ED,$FD,$BD,$BD,$BD,$A9,$55
         .BYTE $55,$75,$65,$66,$6A,$9A,$5A,$5A
@@ -274,8 +274,8 @@ HLPFONT
         .BYTE $BD,$A5,$A9,$AA,$FF,$FB,$BF,$AA
         .BYTE $FF,$FE,$EA,$FE,$FF,$EE,$FE,$AA
         .BYTE $FF,$BF,$AB,$BF,$FF,$BB,$BF,$AA
-        .BYTE $57,$5F,$7F,$FF,$6A,$6E,$6B,$6B
-        .BYTE $D5,$F5,$FD,$FF,$A9,$B9,$E9,$E9
+        .BYTE $56,$5A,$6A,$AA,$7F,$7B,$7E,$7E
+        .BYTE $95,$A5,$A9,$AA,$FD,$ED,$BD,$BD
         .BYTE $75,$66,$6A,$9A,$5A,$59,$69,$55
         .BYTE $5D,$99,$A9,$A6,$A5,$65,$69,$55
         .BYTE $00,$00,$03,$0F,$AA,$2A,$0A,$00

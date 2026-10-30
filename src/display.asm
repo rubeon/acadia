@@ -35,8 +35,8 @@ C_SBRD  =  $00          ; status bar border (COLBK)
 ; Map palette (D16, D50), set by the DLI
 C_SEA   =  $94          ; COLBK  -- sea
 C_GRASS =  $C6          ; COLPF0 -- grass
-C_DARK  =  $C0          ; COLPF1 -- dark green: grass tufts, shadows, hulls
-C_LIGHT =  $2C          ; COLPF2 -- sand: beach, crops, roofs, sails
+C_DARK  =  $32          ; COLPF1 -- brick red: roofs, soil, hulls, flowers
+C_LIGHT =  $2C          ; COLPF2 -- sand: beach, crops, sails
 C_WHITE =  $0E          ; COLPF3 -- white (inverse chars): fort, school,
                         ;           hospital, walls, smoke, surf, waves
 
