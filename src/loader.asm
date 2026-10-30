@@ -20,11 +20,21 @@
         .INCLUDE "hw_a800.asm"
 
 PB_BASOFF = $02         ; PORTB bit 1 set: BASIC ROM out (XL/XE)
+GINTLK  =  $03FA        ; XL OS: TRIG3 at power-on (cartridge there)
+BASICF  =  $03F8        ; XL OS: not 0 = BASIC out after RESET
 LDRBASE =  $8730        ; free RAM after the logo, below the BASIC ROM
 
         *= LDRBASE
 LDR_INIT
+        LDA #0          ; no VBI between BASIC going and GINTLK
+        STA NMIEN
         LDA PORTB       ; BASIC out
         ORA #PB_BASOFF
         STA PORTB
+        LDA TRIG3       ; the XL OS's VBI hangs if TRIG3 (cartridge
+        STA GINTLK      ; there) is not what it was at power-on
+        LDA #1          ; and RESET keeps BASIC out
+        STA BASICF
+        LDA #NMI_VBI
+        STA NMIEN
         RTS
