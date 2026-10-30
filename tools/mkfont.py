@@ -296,24 +296,66 @@ WAVE1 = wave_frame("T_WAVE1", 0)
 WAVE2 = wave_frame("T_WAVE2", 0)
 SPARK = wave_frame("T_SPARK", 0)
 
-# Grass texture: dark tufts on green, repeated every square
+# Grass texture: a few dark specks on green.  Full grass squares pick
+# one of four variants (grass_tile) built from the same two speck
+# characters in different quarters, so the specks don't line up and
+# cost no extra characters; coast squares use the same variant.
 GRASS = [
     "GGGGGGGG",
     "GGGGGGGG",
     "GDGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGDG",
+    "GGGGGGGG",
+    "GGGGGGGG"]
+
+GRASS2 = [
+    "GGGGGGGG",
     "GGGGGGGG",
     "GGGGGDGG",
     "GGGGGGGG",
     "GGGGGGGG",
     "GGGGGGGG",
     "GGGGGGGG",
-    "GGGDGGGG",
     "GGGGGGGG",
     "GGGGGGGG",
-    "GGGGGGGD",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGDGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG"]
+
+GRASS3 = [
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GDGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
     "GGGGGGGG",
     "GGGGGGGG",
     "GGGGGGGG"]
+
+GRASS4 = ["GGGGGGGG"] * 16
+GRASS_ART = (GRASS, GRASS2, GRASS3, GRASS4)
 
 ITEM_EQU = ["T_FORT", "T_FACTORY", "T_CROP", "T_SCHOOL", "T_HOSPITAL",
             "T_HOUSE", "T_REBEL", "T_PTBOAT", "T_FISHBOAT"]
@@ -508,6 +550,7 @@ def land_176(bm, outline):
 def coast_art(land, sy, sx):
     """8 x 16 art for land square sy, sx: sand edge, textured grass,
     surf on the sea next to the land."""
+    tex = GRASS_ART[grass_pick(sy, sx)]
     def isl(x, y):
         return 0 <= x < PW and 0 <= y < H2 and land[y][x]
     a = []
@@ -517,7 +560,7 @@ def coast_art(land, sy, sx):
             if land[y][x]:
                 edge = any(not isl(x + dx, y + dy)
                            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1), (0, 2), (0, -2)))
-                row += "Y" if edge else GRASS[y % TH][x % TW]
+                row += "Y" if edge else tex[y % TH][x % TW]
             else:
                 near = any(isl(x + dx, y + dy) for dx in (-1, 0, 1) for dy in (-2, -1, 0, 1, 2))
                 row += "W" if near and (x * 7 + y * 3) % 5 < 3 else "."
@@ -557,7 +600,10 @@ FIXED += [("T_WRECK", "wreck of a parked boat", WRECK),
           ("T_PIER_E", "harbour pier, land to the east", pier_art(False)),
           ("T_WAVE1", "open sea, a wave", WAVE1),
           ("T_WAVE2", "open sea, another wave", WAVE2),
-          ("T_SPARK", "open sea, sparkles", SPARK)]
+          ("T_SPARK", "open sea, sparkles", SPARK),
+          ("T_GRASS2", "plain grass, other specks", GRASS2),
+          ("T_GRASS3", "plain grass, one speck", GRASS3),
+          ("T_GRASS4", "plain grass, no specks", GRASS4)]
 T = {t[0]: n for n, t in enumerate(FIXED)}
 NFIX = len(FIXED)
 
@@ -580,6 +626,16 @@ def wave_tile(r, c):
     """Decorative sea tile for open-sea square r, c."""
     h = (r * 7 + c * 13) % 18
     return {0: T["T_WAVE1"], 9: T["T_WAVE2"], 5: T["T_SPARK"]}.get(h, T["T_SEA"])
+
+
+def grass_pick(r, c):
+    """Which grass variant (0-3) land square r, c uses."""
+    return (r * 5 + c * 3 + r * c) % 4
+
+
+def grass_tile(r, c):
+    """Grass tile for full land square r, c."""
+    return (T["T_GRASS"], T["T_GRASS2"], T["T_GRASS3"], T["T_GRASS4"])[grass_pick(r, c)]
 
 
 def build_pair(name, desc, left, right):
@@ -623,8 +679,8 @@ def build_pair(name, desc, left, right):
             elif ch == "#":
                 a = coast_art(land, r, c)
                 k = K_LAND | p1
-                if a == GRASS:
-                    t = T["T_GRASS"]
+                if a == GRASS_ART[grass_pick(r, c)]:
+                    t = grass_tile(r, c)
                 else:
                     key = (r, tuple(a))
                     if key not in index:
@@ -691,7 +747,7 @@ def build_pair(name, desc, left, right):
     stats = []
     for side, cols in (("left", range(0, 10)), ("right", range(10, 20))):
         lsq = [(r, c) for r in range(ROWS) for c in cols if outline[r][c] == "#"]
-        full = sum(1 for r, c in lsq if tgrid[r][c] == T["T_GRASS"])
+        full = sum(1 for r, c in lsq if tgrid[r][c] in (T["T_GRASS"], T["T_GRASS2"], T["T_GRASS3"], T["T_GRASS4"]))
         px = sum(1 for y in range(H2) for x in range(cols.start * TW, cols.stop * TW) if land[y][x])
         rows = [r for r, c in lsq]
         harb = [(r, c if side == "left" else COLS - 1 - c)
