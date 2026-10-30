@@ -84,6 +84,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 |---|---|---|---|
 | T-REL-1 | Title screen, credits (no Mattel trademarks in a way that implies affiliation) | M6 | title screen and demo done (D46, D47); credits open |
 | T-GFX-1 | Map in ANTIC mode 4: 8 × 16 tiles, new art (D50) | M6 | done (colour per row and moving waves added, D51; status bar font still to come) |
+| T-GFX-2 | Weather sprites redrawn: rain and storm clouds with falling rain, storm lightning, a turning hurricane spiral (D52) | T-GFX-1 | done |
 | T-REL-2 | Test on MiSTer and real 800XL; PAL check | M6 | todo |
 | T-REL-3 | ATR + XEX release build, README play instructions | T-INFRA-4 | todo |
 

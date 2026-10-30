@@ -295,7 +295,7 @@ if any(m.mem[msl:msl + 128]):
 # the DLIs place M3-M0 side by side; the help screen hides them
 m.poke("HMROW", 0, 77)
 m.poke("DLIROW", 2)                  # character row 2 starts square row 1
-m.interrupt("DLI_ROW")
+m.interrupt("DLI_SQ")
 pos = [m.byte("HPOSM3"), m.byte("HPOSM2"), m.byte("HPOSM1"), m.byte("HPOSM0")]
 if pos != [77, 79, 81, 83]:
     fail("DLI_ROW missile positions %r" % pos)

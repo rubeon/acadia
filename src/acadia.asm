@@ -7,6 +7,7 @@
 ;    $0080-$0087  zero page: math work area (MATH.ASM)
 ;    $0088-$0089  zero page: TPTR (TEXT.ASM)
 ;    $008A-$008B  zero page: SPTR (SPRITES.ASM)
+;    $008C-$008D  zero page: DL_NP2, DL_NP3 (DISPLAY.ASM)
 ;    $00CB-$00CE  zero page: ZPTR, OLDVBD
 ;    $2000-       code and constant tables
 ;    $3000-$33FF  map font 0 (1K aligned)
@@ -29,6 +30,8 @@ M_OP    =  $86          ; math multiplier / divisor
 M_OVF   =  $87          ; math overflow count
 TPTR    =  $88          ; 2-byte string pointer (TEXT.ASM)
 SPTR    =  $8A          ; 2-byte P/M pointer (SPRITES.ASM)
+DL_NP2  =  $8C          ; DLI_ROW -> DLI_SQ: next square row's weather
+DL_NP3  =  $8D          ; and fish positions (DISPLAY.ASM, D52)
 ZPTR    =  $CB          ; 2-byte general pointer
 OLDVBD  =  $CD          ; 2-byte saved deferred VBI vector
 

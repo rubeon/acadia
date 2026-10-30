@@ -185,13 +185,13 @@ PALTAB  .BYTE C_SEA,C_GRASS,C_DARK,C_LIGHT,C_WHITE
 ;  missiles (HMROW, PIRATES.ASM) and player 2's colour for row s
 ; ---------------------------------------------------------------------
 DLI_ROW
-        PHA
-        TXA
+        PHA             ; a square's second character row starts:
+        TXA             ; its font and shades
         PHA
         TYA
         PHA
         LDX DLIROW
-        LDY ROWBK,X     ; this row's sea and grass shades (D51)
+        LDY ROWBK,X
         LDA ROWPF0,X
         STA DL_PF0
         LDA ROWFONT,X
@@ -200,18 +200,53 @@ DLI_ROW
         STA CHBASE
         STY COLBK
         STX COLPF0
-        LDX DLIROW
+        LDA #<DLI_SQ    ; the next DLI starts a square row
+        STA VDSLST
+        LDA #>DLI_SQ
+        STA VDSLST+1
+        LDX DLIROW      ; look up its fish and weather now
         INC DLIROW
         TXA
-        LSR A           ; square row; C set: its second character row
-        BCS DL_RDONE
+        LSR A
         TAX
-        LDA HP3ROW,X    ; player 3 (fish) position for row s
-        STA HPOSP3
-        LDA HP2ROW,X    ; player 2 (weather) position and colour
-        STA HPOSP2
+        INX             ; the next square row
+        LDA HP2ROW,X
+        STA DL_NP2
+        LDA HP3ROW,X
+        STA DL_NP3
         LDA WCROW,X
-        STA COLPM2
+        STA DL_NC
+        JMP DL_RDONE
+
+; DLI_SQ -- a square row's first character row starts: the fish and
+; weather positions first, looked up by DLI_ROW, from zero page, with
+; only A and X saved, so that they are set before the row's first line
+; (late, they would cut off the top line of a shape, D52); then the
+; shades and the pirates.  A new font only ever starts on a square's
+; second character row (MKFONT.PY), so the font stays.
+DLI_SQ  PHA
+        TXA
+        PHA
+        LDA DL_NP2
+        LDX DL_NP3
+        STA WSYNC
+        STA HPOSP2      ; player 2 (weather)
+        STX HPOSP3      ; player 3 (fish)
+        LDA DL_NC
+        STA COLPM2      ; weather colour
+        LDX DLIROW      ; this row's sea and grass shades (D51)
+        INC DLIROW
+        LDA ROWBK,X
+        STA COLBK
+        LDA ROWPF0,X
+        STA COLPF0
+        LDA #<DLI_ROW   ; the next DLI is the square's second row
+        STA VDSLST
+        LDA #>DLI_ROW
+        STA VDSLST+1
+        TXA
+        LSR A
+        TAX             ; square row
         LDA HMROW,X     ; missiles (pirates): M3 at HMROW, M2-M0
         STA HPOSM3      ; 2 colour clocks apart each (DLI_MSL, inline
         CLC             ; for time)
@@ -221,6 +256,11 @@ DLI_ROW
         STA HPOSM1
         ADC #2
         STA HPOSM0
+        PLA
+        TAX
+        PLA
+        RTI
+
 DL_RDONE PLA
         TAY
         PLA

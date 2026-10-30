@@ -715,17 +715,25 @@ def build_pair(name, desc, left, right):
             cr = 2 * r + q // 2
             if bs not in fixed_code and bs not in rowchars[cr]:
                 rowchars[cr].append(bs)
+    # a new font only starts on an odd character row (a square's second),
+    # whose DLI sets CHBASE; DLI_SQ has no time for it (D52).  So rows
+    # are taken in groups: 0, then 1-2, 3-4, ... 21.
     fonts, rowfont = [[]], []
-    for cr in range(CROWS):
-        new = [bs for bs in rowchars[cr] if bs not in fonts[-1]]
+    groups = [[0]] + [[cr, cr + 1] if cr + 1 < CROWS else [cr] for cr in range(1, CROWS, 2)]
+    for grp in groups:
+        need = []
+        for cr in grp:
+            need += [bs for bs in rowchars[cr] if bs not in need]
+        new = [bs for bs in need if bs not in fonts[-1]]
         if nfc + len(fonts[-1]) + len(new) > 128:
             fonts.append([])
-            new = rowchars[cr]
-        if nfc + len(rowchars[cr]) > 128:
-            sys.exit("character row %d needs %d coast characters; max %d"
-                     % (cr, len(rowchars[cr]), 128 - nfc))
+            new = need
+        if nfc + len(need) > 128:
+            sys.exit("character rows %r need %d coast characters; max %d"
+                     % (grp, len(need), 128 - nfc))
         fonts[-1] += new
-        rowfont.append(len(fonts) - 1)
+        rowfont += [len(fonts) - 1] * len(grp)
+    assert all(rowfont[cr] == rowfont[cr - 1] or cr % 2 for cr in range(1, CROWS))
     if len(fonts) > len(FONT_ADDR):
         sys.exit("pair %s needs %d map fonts; only %d fit" % (name, len(fonts), len(FONT_ADDR)))
     # the 4 codes of each tile (bit 7 = inverse: 11 pixels white)

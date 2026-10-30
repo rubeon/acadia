@@ -58,6 +58,8 @@ PM_TOP  =  PM_MAP-8     ; first P/M line WTH_SHOW uses (WYH = 0)
 C_RAIN  =  $0C          ; light grey
 C_STRM  =  $04          ; dark grey
 C_HURR  =  $0E          ; white
+C_FLASH =  $0E          ; a storm lit by its lightning: white
+W_BOLT  =  7            ; WANIM of a storm's lightning (frame 4)
 
 ; ---------------------------------------------------------------------
 ;  WTH_INIT -- no weather, no damage, no rain counts (start of a game).
@@ -92,7 +94,7 @@ WI_PM   STA PM_P2,X
 ;  Trashes A, X, Y.
 ; ---------------------------------------------------------------------
 WTH_TIC
-        INC WATIC       ; animation
+        INC WATIC       ; animation: WANIM 0-7
         LDA WATIC
         CMP #W_ANIM
         BCC WT_WRK
@@ -101,7 +103,7 @@ WTH_TIC
         LDA WANIM
         CLC
         ADC #1
-        AND #3
+        AND #7
         STA WANIM
 WT_WRK  LDA SNKT        ; a wreck showing: clear it when its time is up
         BEQ WT_SPWN
@@ -520,17 +522,26 @@ WW_HP   STA HP2ROW,X  ; its colour when the DLI is late to set it
         LDX #1
 WW_ONE  STX WS_I
         LDA WS_V,X
-        BEQ WW_NEXT
-        TAY             ; shape: WSHAPE[type] + frame x height
-        LDA WHGT,Y
+        BNE WW_SHOW
+        JMP WW_NEXT
+WW_SHOW TAY             ; shape: WSHAPE[type] + frame x height
+        LDA WDRH,Y
         STA WDH,X
         STA WS_N
         LDA WSH_LO,Y
         STA SPTR
         LDA WSH_HI,Y
         STA SPTR+1
-        LDY WDH,X
-        LDA WANIM
+        LDA WANIM       ; frame: WANIM 0-3, 4-7 again, except a
+        CMP #W_BOLT     ; storm's lightning (frame 4) at W_BOLT
+        BNE WW_F03
+        CPY #WT_STRM
+        BNE WW_F03
+        LDA #4
+        BNE WW_F4
+WW_F03  AND #3
+WW_F4   LDY WDH,X
+        CMP #0
 WW_FRM  BEQ WW_LINE     ; + frame x height
         PHA
         TYA
@@ -543,9 +554,12 @@ WW_FR1  PLA
         SEC
         SBC #1
         JMP WW_FRM
-WW_LINE LDA WYH,X       ; P/M line: WYH - 8 + PM_MAP
+WW_LINE LDY WACT,X      ; P/M line: WYH - 8 + PM_MAP - WTOP
+        LDA WYH,X
         CLC
         ADC #PM_TOP
+        SEC
+        SBC WTOP,Y
         STA WDRAWN,X
         TAX
         LDY #0
@@ -559,9 +573,15 @@ WW_PUT  LDA (SPTR),Y
 WW_PUTD LDX WS_I        ; its rows get its horizontal position
         JSR WW_ROWS
         STA WS_A1
-        LDY WACT,X      ; its colour
-        LDA WCOL,Y
-        STA WS_N
+        LDY WACT,X      ; its colour; a storm lights up with its
+        LDA WCOL,Y      ; lightning
+        CPY #WT_STRM
+        BNE WW_COL
+        LDY WANIM
+        CPY #W_BOLT
+        BNE WW_COL
+        LDA #C_FLASH
+WW_COL  STA WS_N
         LDA WXH,X       ; WXH - 8 + HP_MAP
         CLC
         ADC #HP_MAP-8
@@ -581,10 +601,15 @@ WW_NEXT LDX WS_I
         JMP WW_ONE
 WW_DONE RTS
 
-; WW_ROWS -- map rows slot X covers: WW_R0..A, held to 0..10.
-; X kept; trashes A, Y.
-WW_ROWS LDA WYH,X       ; first: (WYH >> 3) - 1, at least 0
-        LSR A
+; WW_ROWS -- map rows slot X's shape covers: WW_R0..A, held to
+; 0..10.  X kept; trashes A, Y.
+WW_ROWS LDY WACT,X      ; first: ((WYH - WTOP) >> 3) - 1, at least 0
+        LDA WYH,X
+        SEC
+        SBC WTOP,Y
+        BCS WR_POS
+        LDA #0          ; above the top of P/M line 0's row
+WR_POS  LSR A
         LSR A
         LSR A
         BEQ WR_TOP
@@ -594,10 +619,12 @@ WW_ROWS LDA WYH,X       ; first: (WYH >> 3) - 1, at least 0
         BCC WR_TOP
         LDA #MAPROWS-1  ; below the map: row 10 (nothing shows there)
 WR_TOP  STA WW_R0
-        LDY WACT,X      ; last: ((WYH + height - 1) >> 3) - 1, at most 10
-        LDA WYH,X
+        LDY WACT,X      ; last: ((WYH - WTOP + height - 1) >> 3) - 1,
+        LDA WYH,X       ; at most 10
         CLC
-        ADC WHGT,Y
+        ADC WDRH,Y
+        SEC
+        SBC WTOP,Y
         SEC
         SBC #1
         LSR A
@@ -613,7 +640,9 @@ WR_LO   CMP #MAPROWS
 WR_DONE RTS
 
 ; Per type (none, rain, storm, hurricane)
-WHGT    .BYTE 0,8,8,32          ; height in lines
+WHGT    .BYTE 0,8,8,32          ; height in lines (the original's)
+WDRH    .BYTE 0,16,16,32        ; height drawn: clouds tower above it
+WTOP    .BYTE 0,8,8,0           ; lines drawn above WYH - 8
 WHALF   .BYTE 0,4,4,16          ; half the height: the centre
 WRATE   .BYTE 0,0,1,5           ; damage per tic (the original's DMG_RT)
 WCOL    .BYTE 0,C_RAIN,C_STRM,C_HURR ; colour (COLPM2)
@@ -627,35 +656,298 @@ WV_LO   .BYTE $C6,$EC,$12,$38,$5E,$84,$AA,$D0,$F6,$1C,$42,$68,$8E,$B4,$DA,$00
 WV_HI   .BYTE $FD,$FD,$FE,$FE,$FE,$FE,$FE,$FE,$FE,$FF,$FF,$FF,$FF,$FF,$FF,$00
         .BYTE $00,$00,$00,$00,$00,$00,$01,$01,$01,$01,$01,$01,$01,$02,$02
 
-; Shapes, 4 frames each; a byte is one line, 8 pixels of 2 colour
-; clocks (player 2 is double width), bit 7 on the left.
-; Rain: a small cloud with falling drops (D29)
+; Shapes, a byte per line, 8 pixels of 2 colour clocks (D52).  Rain
+; and storms are drawn 16 lines tall, WTOP above their 8-line box (the
+; cloud), so the rain falls on the square they damage; storms have a
+; fifth frame, their lightning.
+
 WSH_RAIN
-        .BYTE $3C,$7E,$92,$49,$24,$92,$49,$24
-        .BYTE $3C,$7E,$24,$92,$49,$24,$92,$49
-        .BYTE $3C,$7E,$49,$24,$92,$49,$24,$92
-        .BYTE $3C,$7E,$92,$49,$24,$92,$49,$24
-; Tropical storm: a heavy cloud, lightning and sheets of rain (D29)
+; rain, frame 0: the drops fall 2 lines a frame
+        .BYTE $18   ;    XX
+        .BYTE $3C   ;   XXXX
+        .BYTE $7E   ;  XXXXXX
+        .BYTE $DE   ; XX XXXX
+        .BYTE $FF   ; XXXXXXXX
+        .BYTE $FF   ; XXXXXXXX
+        .BYTE $7E   ;  XXXXXX
+        .BYTE $40   ;  X
+        .BYTE $40   ;  X
+        .BYTE $04   ;      X
+        .BYTE $24   ;   X  X
+        .BYTE $20   ;   X
+        .BYTE $10   ;    X
+        .BYTE $10   ;    X
+        .BYTE $02   ;       X
+        .BYTE $02   ;       X
+; frame 1
+        .BYTE $18   ;    XX
+        .BYTE $3C   ;   XXXX
+        .BYTE $7E   ;  XXXXXX
+        .BYTE $DE   ; XX XXXX
+        .BYTE $FF   ; XXXXXXXX
+        .BYTE $FF   ; XXXXXXXX
+        .BYTE $7E   ;  XXXXXX
+        .BYTE $02   ;       X
+        .BYTE $02   ;       X
+        .BYTE $40   ;  X
+        .BYTE $40   ;  X
+        .BYTE $04   ;      X
+        .BYTE $24   ;   X  X
+        .BYTE $20   ;   X
+        .BYTE $10   ;    X
+        .BYTE $10   ;    X
+; frame 2
+        .BYTE $18   ;    XX
+        .BYTE $3C   ;   XXXX
+        .BYTE $7E   ;  XXXXXX
+        .BYTE $DE   ; XX XXXX
+        .BYTE $FF   ; XXXXXXXX
+        .BYTE $FF   ; XXXXXXXX
+        .BYTE $7E   ;  XXXXXX
+        .BYTE $10   ;    X
+        .BYTE $10   ;    X
+        .BYTE $02   ;       X
+        .BYTE $02   ;       X
+        .BYTE $40   ;  X
+        .BYTE $40   ;  X
+        .BYTE $04   ;      X
+        .BYTE $24   ;   X  X
+        .BYTE $20   ;   X
+; frame 3
+        .BYTE $18   ;    XX
+        .BYTE $3C   ;   XXXX
+        .BYTE $7E   ;  XXXXXX
+        .BYTE $DE   ; XX XXXX
+        .BYTE $FF   ; XXXXXXXX
+        .BYTE $FF   ; XXXXXXXX
+        .BYTE $7E   ;  XXXXXX
+        .BYTE $20   ;   X
+        .BYTE $20   ;   X
+        .BYTE $10   ;    X
+        .BYTE $10   ;    X
+        .BYTE $02   ;       X
+        .BYTE $02   ;       X
+        .BYTE $40   ;  X
+        .BYTE $40   ;  X
+        .BYTE $04   ;      X
+
 WSH_STRM
-        .BYTE $3C,$7E,$FF,$7E,$18,$30,$18,$20
-        .BYTE $3C,$7E,$FF,$7E,$AA,$55,$AA,$55
-        .BYTE $3C,$7E,$FF,$7E,$18,$0C,$18,$04
-        .BYTE $3C,$7E,$FF,$7E,$55,$AA,$55,$AA
-; Hurricane: a turning spiral, 4 squares tall
+; storm, frame 0: rain driven by the wind
+        .BYTE $36   ;   XX XX
+        .BYTE $7F   ;  XXXXXXX
+        .BYTE $FF   ; XXXXXXXX
+        .BYTE $FF   ; XXXXXXXX
+        .BYTE $FF   ; XXXXXXXX
+        .BYTE $DB   ; XX XX XX
+        .BYTE $49   ;  X  X  X
+        .BYTE $80   ; X
+        .BYTE $10   ;    X
+        .BYTE $22   ;   X   X
+        .BYTE $44   ;  X   X
+        .BYTE $88   ; X   X
+        .BYTE $11   ;    X   X
+        .BYTE $02   ;       X
+        .BYTE $40   ;  X
+        .BYTE $80   ; X
+; frame 1
+        .BYTE $36   ;   XX XX
+        .BYTE $7F   ;  XXXXXXX
+        .BYTE $FF   ; XXXXXXXX
+        .BYTE $FF   ; XXXXXXXX
+        .BYTE $FF   ; XXXXXXXX
+        .BYTE $DB   ; XX XX XX
+        .BYTE $49   ;  X  X  X
+        .BYTE $22   ;   X   X
+        .BYTE $44   ;  X   X
+        .BYTE $08   ;     X
+        .BYTE $01   ;        X
+        .BYTE $20   ;   X
+        .BYTE $44   ;  X   X
+        .BYTE $88   ; X   X
+        .BYTE $11   ;    X   X
+        .BYTE $22   ;   X   X
+; frame 2
+        .BYTE $36   ;   XX XX
+        .BYTE $7F   ;  XXXXXXX
+        .BYTE $FF   ; XXXXXXXX
+        .BYTE $FF   ; XXXXXXXX
+        .BYTE $FF   ; XXXXXXXX
+        .BYTE $DB   ; XX XX XX
+        .BYTE $49   ;  X  X  X
+        .BYTE $80   ; X
+        .BYTE $10   ;    X
+        .BYTE $22   ;   X   X
+        .BYTE $44   ;  X   X
+        .BYTE $88   ; X   X
+        .BYTE $11   ;    X   X
+        .BYTE $02   ;       X
+        .BYTE $40   ;  X
+        .BYTE $80   ; X
+; frame 3
+        .BYTE $36   ;   XX XX
+        .BYTE $7F   ;  XXXXXXX
+        .BYTE $FF   ; XXXXXXXX
+        .BYTE $FF   ; XXXXXXXX
+        .BYTE $FF   ; XXXXXXXX
+        .BYTE $DB   ; XX XX XX
+        .BYTE $49   ;  X  X  X
+        .BYTE $22   ;   X   X
+        .BYTE $44   ;  X   X
+        .BYTE $08   ;     X
+        .BYTE $01   ;        X
+        .BYTE $20   ;   X
+        .BYTE $44   ;  X   X
+        .BYTE $88   ; X   X
+        .BYTE $11   ;    X   X
+        .BYTE $22   ;   X   X
+; frame 4: lightning (WANIM = W_BOLT)
+        .BYTE $36   ;   XX XX
+        .BYTE $7F   ;  XXXXXXX
+        .BYTE $FF   ; XXXXXXXX
+        .BYTE $FF   ; XXXXXXXX
+        .BYTE $FF   ; XXXXXXXX
+        .BYTE $DB   ; XX XX XX
+        .BYTE $49   ;  X  X  X
+        .BYTE $10   ;    X
+        .BYTE $30   ;   XX
+        .BYTE $20   ;   X
+        .BYTE $30   ;   XX
+        .BYTE $10   ;    X
+        .BYTE $08   ;     X
+        .BYTE $10   ;    X
+        .BYTE $00   ; 
+        .BYTE $00   ; 
+
 WSH_HURR
-        .BYTE $3C,$3C,$3C,$3C,$42,$42,$42,$42
-        .BYTE $99,$99,$99,$99,$A5,$A5,$A5,$A5
-        .BYTE $AD,$AD,$AD,$AD,$91,$91,$91,$91
-        .BYTE $42,$42,$42,$42,$3C,$3C,$3C,$3C
-        .BYTE $3C,$3C,$3C,$3C,$42,$42,$42,$42
-        .BYTE $99,$99,$99,$99,$A5,$A5,$A5,$A5
-        .BYTE $95,$95,$95,$95,$99,$99,$99,$99
-        .BYTE $42,$42,$42,$42,$3C,$3C,$3C,$3C
-        .BYTE $3C,$3C,$3C,$3C,$42,$42,$42,$42
-        .BYTE $89,$89,$89,$89,$B5,$B5,$B5,$B5
-        .BYTE $A5,$A5,$A5,$A5,$99,$99,$99,$99
-        .BYTE $42,$42,$42,$42,$3C,$3C,$3C,$3C
-        .BYTE $3C,$3C,$3C,$3C,$42,$42,$42,$42
-        .BYTE $99,$99,$99,$99,$A9,$A9,$A9,$A9
-        .BYTE $A5,$A5,$A5,$A5,$99,$99,$99,$99
-        .BYTE $42,$42,$42,$42,$3C,$3C,$3C,$3C
+; hurricane, frame 0: two arms round the eye, turning
+        .BYTE $00   ; 
+        .BYTE $00   ; 
+        .BYTE $00   ; 
+        .BYTE $00   ; 
+        .BYTE $00   ; 
+        .BYTE $00   ; 
+        .BYTE $20   ;   X
+        .BYTE $70   ;  XXX
+        .BYTE $78   ;  XXXX
+        .BYTE $C8   ; XX  X
+        .BYTE $CC   ; XX  XX
+        .BYTE $8C   ; X   XX
+        .BYTE $9C   ; X  XXX
+        .BYTE $BC   ; X XXXX
+        .BYTE $A4   ; X X  X
+        .BYTE $A4   ; X X  X
+        .BYTE $25   ;   X  X X
+        .BYTE $25   ;   X  X X
+        .BYTE $3D   ;   XXXX X
+        .BYTE $3D   ;   XXXX X
+        .BYTE $31   ;   XX   X
+        .BYTE $33   ;   XX  XX
+        .BYTE $13   ;    X  XX
+        .BYTE $1E   ;    XXXX
+        .BYTE $0E   ;     XXX
+        .BYTE $04   ;      X
+        .BYTE $00   ; 
+        .BYTE $00   ; 
+        .BYTE $00   ; 
+        .BYTE $00   ; 
+        .BYTE $00   ; 
+        .BYTE $00   ; 
+; frame 1: an eighth of a turn on
+        .BYTE $00   ; 
+        .BYTE $00   ; 
+        .BYTE $00   ; 
+        .BYTE $00   ; 
+        .BYTE $70   ;  XXX
+        .BYTE $78   ;  XXXX
+        .BYTE $08   ;     X
+        .BYTE $0C   ;     XX
+        .BYTE $04   ;      X
+        .BYTE $04   ;      X
+        .BYTE $06   ;      XX
+        .BYTE $06   ;      XX
+        .BYTE $1E   ;    XXXX
+        .BYTE $3E   ;   XXXXX
+        .BYTE $66   ;  XX  XX
+        .BYTE $66   ;  XX  XX
+        .BYTE $66   ;  XX  XX
+        .BYTE $66   ;  XX  XX
+        .BYTE $7C   ;  XXXXX
+        .BYTE $7C   ;  XXXXX
+        .BYTE $60   ;  XX
+        .BYTE $60   ;  XX
+        .BYTE $20   ;   X
+        .BYTE $20   ;   X
+        .BYTE $30   ;   XX
+        .BYTE $30   ;   XX
+        .BYTE $1E   ;    XXXX
+        .BYTE $0E   ;     XXX
+        .BYTE $00   ; 
+        .BYTE $00   ; 
+        .BYTE $00   ; 
+        .BYTE $00   ; 
+; frame 2: an eighth of a turn on
+        .BYTE $00   ; 
+        .BYTE $08   ;     X
+        .BYTE $08   ;     X
+        .BYTE $0C   ;     XX
+        .BYTE $04   ;      X
+        .BYTE $04   ;      X
+        .BYTE $06   ;      XX
+        .BYTE $02   ;       X
+        .BYTE $02   ;       X
+        .BYTE $02   ;       X
+        .BYTE $02   ;       X
+        .BYTE $32   ;   XX  X
+        .BYTE $7A   ;  XXXX X
+        .BYTE $7E   ;  XXXXXX
+        .BYTE $66   ;  XX  XX
+        .BYTE $66   ;  XX  XX
+        .BYTE $66   ;  XX  XX
+        .BYTE $66   ;  XX  XX
+        .BYTE $7E   ;  XXXXXX
+        .BYTE $7E   ;  XXXXXX
+        .BYTE $4C   ;  X  XX
+        .BYTE $40   ;  X
+        .BYTE $40   ;  X
+        .BYTE $40   ;  X
+        .BYTE $40   ;  X
+        .BYTE $60   ;  XX
+        .BYTE $20   ;   X
+        .BYTE $20   ;   X
+        .BYTE $30   ;   XX
+        .BYTE $10   ;    X
+        .BYTE $10   ;    X
+        .BYTE $00   ; 
+; frame 3: an eighth of a turn on
+        .BYTE $00   ; 
+        .BYTE $00   ; 
+        .BYTE $00   ; 
+        .BYTE $00   ; 
+        .BYTE $00   ; 
+        .BYTE $00   ; 
+        .BYTE $02   ;       X
+        .BYTE $03   ;       XX
+        .BYTE $03   ;       XX
+        .BYTE $31   ;   XX   X
+        .BYTE $79   ;  XXXX  X
+        .BYTE $59   ;  X XX  X
+        .BYTE $5D   ;  X XXX X
+        .BYTE $FD   ; XXXXXX X
+        .BYTE $E5   ; XXX  X X
+        .BYTE $E7   ; XXX  XXX
+        .BYTE $A7   ; X X  XXX
+        .BYTE $A7   ; X X  XXX
+        .BYTE $BF   ; X XXXXXX
+        .BYTE $BE   ; X XXXXX
+        .BYTE $9A   ; X  XX X
+        .BYTE $9E   ; X  XXXX
+        .BYTE $8C   ; X   XX
+        .BYTE $C0   ; XX
+        .BYTE $C0   ; XX
+        .BYTE $40   ;  X
+        .BYTE $00   ; 
+        .BYTE $00   ; 
+        .BYTE $00   ; 
+        .BYTE $00   ; 
+        .BYTE $00   ; 
+        .BYTE $00   ; 

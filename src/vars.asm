@@ -50,6 +50,7 @@ AP_GR   *= *+1
 VS_C    *= *+1          ; VS_LUM: work
 VS_D    *= *+1
 DL_PF0  *= *+1          ; DLI_ROW: work
+DL_NC   *= *+1          ; DLI_ROW: next square row's weather colour
 WA_F    *= *+1          ; WAVE_ANI: font index
 PD_LUM  *= *+1          ; PAL_DIM: work byte
 ROWLO   *= *+MAPROWS    ; map row addresses, low bytes
@@ -176,7 +177,7 @@ WDRAWN  *= *+2          ; missile line drawn at, $FF = none
 WDH     *= *+2          ; height drawn
 WRCNT   *= *+2          ; per player: rain-over-crop count (0-11)
 WDMG    *= *+2          ; per player: storm damage (0-124)
-WANIM   *= *+1          ; animation frame 0-3
+WANIM   *= *+1          ; animation step 0-7 (frame 0-3, twice)
 WATIC   *= *+1          ; tics into the frame
 HP2ROW  *= *+MAPROWS    ; player 2 position for each map row (DLIs)
 WCROW   *= *+MAPROWS    ; player 2 colour for each map row (DLIs)
