@@ -622,6 +622,46 @@ def quarters(a):
     return out
 
 
+# Rounded corners (D55): the top and bottom CORNER_CR character rows hold
+# no land.  There COLBK is the darker corner blue and the sea is drawn
+# in PF0 (light sea, set per row by VD_SHADE instead of grass), except
+# a quarter ellipse CORNER_RX colour clocks wide and the rows' height
+# tall in each corner of the map, left at COLBK.  So the dark corners
+# run into the screen border and the dark area under the map.
+CORNER_CR = (0, 1, 2, 19, 20, 21)
+CORNER_RX = 32
+
+
+def corner_dark(x, y):
+    """Is map pixel x (0-159), line y (0-175) in a dark corner?"""
+    ry = 8 * 3
+    if ry <= y < 176 - ry:
+        return False
+    dy = (y + 0.5 - ry) / ry if y < ry else (y + 0.5 - (176 - ry)) / ry
+    if x < CORNER_RX:
+        dx = (x + 0.5 - CORNER_RX) / CORNER_RX
+    elif x >= 160 - CORNER_RX:
+        dx = (x + 0.5 - (160 - CORNER_RX)) / CORNER_RX
+    else:
+        return False
+    return dx * dx + dy * dy > 1
+
+
+def corner_art(a, r, c):
+    """Art a of a square in row r, column c as drawn in the corner rows:
+    its sea pixels PF0 (G), but dark (sea, COLBK) in the corners."""
+    out = []
+    for y, row in enumerate(a):
+        ly = r * TH + y
+        if ly // 8 not in CORNER_CR:
+            out.append(row)
+            continue
+        out.append("".join("." if p == "." and corner_dark(c * TW + x, ly)
+                           else "G" if p == "." else p
+                           for x, p in enumerate(row)))
+    return out
+
+
 def wave_tile(r, c):
     """Decorative sea tile for open-sea square r, c."""
     h = (r * 7 + c * 13) % 18
@@ -687,11 +727,28 @@ def build_pair(name, desc, left, right):
                         index[key] = len(tiles)
                         tiles.append((None, "coast, row %d" % r, a))
                     t = index[key]
+            elif ch == "." and r in BANDS:
+                a = corner_art(FIXED[T["T_SEA"]][2], r, c)    # no waves here
+                key = (r, tuple(a))
+                if key not in index:
+                    index[key] = len(tiles)
+                    tiles.append((None, "sea, row %d" % r, a))
+                t, k = index[key], K_SEA
             elif ch == ".":
                 t, k = wave_tile(r, c), K_SEA
             else:
                 sys.exit("unknown outline character %r" % ch)
             kinds[r][c], tgrid[r][c] = k, t
+    # parked boats and wrecks in the corner rows: their sea in PF0 (the
+    # corner itself is not cut out under them); MAP_PUT picks these
+    # through BNDVAR
+    bndvar = [0] * ROWS
+    for r in BANDS:
+        bndvar[r] = len(tiles)
+        for name in ("T_PTBOAT", "T_FISHBOAT", "T_WRECK"):
+            a = [row.replace(".", "G") if (r * TH + y) // 8 in CORNER_CR else row
+                 for y, row in enumerate(FIXED[T[name]][2])]
+            tiles.append((None, "%s, row %d" % (name, r), a))
     # characters: fixed ones (deduplicated) get the same codes in every
     # font; coast ones go into the font of their character row
     fixed_code, fixed_list, anim = {}, [], []
@@ -765,7 +822,7 @@ def build_pair(name, desc, left, right):
                      % (side, len(lsq), full, len(lsq) - full, px,
                         100.0 * px / (TW * TH * len(lsq)), min(rows), max(rows),
                         ", ".join("row %d, %d from the outer edge" % h for h in harb)))
-    return dict(name=name, desc=desc, land=land, outline=outline, tiles=tiles,
+    return dict(name=name, desc=desc, land=land, outline=outline, tiles=tiles, bndvar=bndvar,
                 kinds=kinds, tgrid=tgrid, fonts=fonts, rowfont=rowfont,
                 codes=codes, fixed_chars=fixed_chars, anim=anim, stats=stats)
 
@@ -800,10 +857,11 @@ def banner(name, what):
 
 
 
-# map fonts, 1K aligned; $4C00 holds the help font.  $8800-$97FF is RAM
-# on a 48K machine below where the OS screen sits while loading; $9800
-# is the status bar font (tools/mkstat.py).
-FONT_ADDR = [0x3000, 0x4800, 0x8800, 0x8C00, 0x9000, 0x9400]
+# map fonts, 1K aligned; $4C00 holds the help font.  $8800-$8FFF is RAM
+# on a 48K machine below where the OS screen sits while loading; the
+# island data (islands.asm) follows at $9000, the status bar font
+# (tools/mkstat.py) at $9800.
+FONT_ADDR = [0x3000, 0x4800, 0x8800, 0x8C00]
 
 # ---------------------------------------------------------------------
 #  Help font (T-SCR-3): the fixed tiles at their usual codes, then 3 x 5
@@ -1055,6 +1113,9 @@ def main():
     out.append("WVSRCH  .BYTE " + ",".join(">[WVDATA+%d]" % (ph * 8 * len(an)) for ph in range(WV_PH)))
     out.append("WV_N    = %d" % len(an))
     out.append("WV_PH   = %d" % WV_PH)
+    out.append("; BNDVAR: per square row, the tile drawn for a PT boat there (+1 a")
+    out.append("; fishing boat, +2 a wreck), 0 for the usual ones (corner rows, D55)")
+    out.append("BNDVAR  .BYTE " + hexes(p["bndvar"]))
     out.append("N_TILES = %d" % len(p["tiles"]))
     out.append("N_FONTS = %d" % len(p["fonts"]))
     open("src/islands.asm", "w").write("\n".join(out) + "\n")

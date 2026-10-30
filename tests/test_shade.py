@@ -39,8 +39,10 @@ for sea, grass, sh, msk in ((0x94, 0xC6, 0, 0xFF), (0x90, 0xCE, 0, 0xFF),
     m.poke("DRKMSK", msk)
     m.call("VD_SHADE")
     for r in range(ROWS):
-        want = (lum(sea, signed(m.byte("SEADEL", r)), sh, msk),
-                lum(grass, signed(m.byte("GRNDEL", r)), sh, msk))
+        gd = m.byte("GRNDEL", r)
+        pf0 = (lum(sea, m.addr("SEA_LT"), sh, msk) if gd == m.addr("GR_SEA")   # D55
+               else lum(grass, signed(gd), sh, msk))
+        want = (lum(sea, signed(m.byte("SEADEL", r)), sh, msk), pf0)
         got = (m.byte("ROWBK", r), m.byte("ROWPF0", r))
         if got != want:
             fail("VD_SHADE %02X/%02X attract %02X/%02X row %d: %02X/%02X, want %02X/%02X"
@@ -58,7 +60,7 @@ for line in open(os.path.join(HERE, "..", "src", "font_map.asm")):
 n = m.addr("WV_N")
 if len(codes) != n:
     fail("%d wave characters in FONT_MAP.ASM, WV_N %d" % (len(codes), n))
-fonts = [m.addr("MAPFONT"), m.addr("MAPFNT1")]
+fonts = [m.addr("MAPFONT")] + [m.addr("MAPFNT%d" % i) for i in range(1, m.addr("N_FONTS"))]
 wv = m.addr("WVDATA")
 rate = m.addr("WV_RATE")
 for frame in range(0, 8 * rate):
@@ -79,6 +81,40 @@ for frame in range(0, 8 * rate):
 # the phases differ, so the waves do move
 if len(set(bytes(m.mem[wv + i * 8 * n:wv + (i + 1) * 8 * n]) for i in range(4))) < 3:
     fail("the wave phases are not different")
+
+# rounded corners (D55): the top and bottom 3 character rows have PF0
+# as the light sea, and their squares no waves; a boat or wreck drawn
+# there is that row's variant, elsewhere the usual tile
+GR_SEA = m.addr("GR_SEA")
+corner = [r for r in range(ROWS) if m.byte("GRNDEL", r) == GR_SEA]
+if corner != [0, 1, 2, 19, 20, 21]:
+    fail("corner rows %r" % corner)
+waves = {m.addr(n) for n in ("T_WAVE1", "T_WAVE2", "T_SPARK", "T_SEA")}
+for sr in (0, 1, 9, 10):
+    row = [m.byte("ISLTILE", sr * 20 + c) for c in range(20)]
+    if waves & set(row):
+        fail("square row %d has plain sea or wave tiles: %r" % (sr, row))
+    if not m.byte("BNDVAR", sr):
+        fail("square row %d has no boat variants" % sr)
+T_PT = m.addr("T_PTBOAT")
+for sr in range(11):
+    for k in range(4):                   # PT boat, fishing boat, wreck, other
+        m.poke("MTILE", T_PT + k)
+        _, x, y, _ = m.call("BND_TILE", x=0x5A, y=sr)
+        want = T_PT + k
+        if k < 3 and m.byte("BNDVAR", sr):
+            want = m.byte("BNDVAR", sr) + k
+        if m.byte("MTILE") != want or (x, y) != (0x5A, sr):
+            fail("BND_TILE row %d tile %d: %d, want %d" % (sr, T_PT + k, m.byte("MTILE"), want))
+# a corner square's top left character: dark (00) in the very corner,
+# light sea (01) further in
+font0 = m.addr("MAPFONT")
+code = m.byte("TILECH", m.byte("ISLTILE", 0)) & 0x7F
+top = m.mem[font0 + code * 8]
+code = m.byte("TILECH", m.byte("ISLTILE", 9)) & 0x7F
+mid = m.mem[font0 + code * 8]
+if top != 0 or mid != 0x55:
+    fail("corner character %02X, middle of the top row %02X" % (top, mid))
 
 print("shade: %d failed" % fails)
 sys.exit(1 if fails else 0)

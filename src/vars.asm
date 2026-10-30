@@ -49,7 +49,6 @@ AP_BK   *= *+1
 AP_GR   *= *+1
 VS_C    *= *+1          ; VS_LUM: work
 VS_D    *= *+1
-DL_PF0  *= *+1          ; DLI_ROW: work
 DL_NC   *= *+1          ; DLI_ROW: next square row's weather colour
 WA_F    *= *+1          ; WAVE_ANI: font index
 PD_LUM  *= *+1          ; PAL_DIM: work byte

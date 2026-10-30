@@ -86,6 +86,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 | T-GFX-1 | Map in ANTIC mode 4: 8 × 16 tiles, new art (D50) | M6 | done (colour per row and moving waves added, D51) |
 | T-GFX-2 | Weather sprites redrawn: rain and storm clouds with falling rain, storm lightning, a turning hurricane spiral (D52) | T-GFX-1 | done |
 | T-GFX-3 | Status bar in mode 4: own 3 × 7 font, isometric gold bar and two-colour person icons, a background per line (D54) | T-GFX-1 | done |
+| T-GFX-4 | Sea in one light blue with rounded dark corners instead of bands (D55) | T-GFX-1 | done |
 | T-REL-2 | Test on MiSTer and real 800XL; PAL check | M6 | todo |
 | T-REL-3 | ATR + XEX release build, README play instructions | T-INFRA-4 | todo |
 

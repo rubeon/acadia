@@ -101,8 +101,11 @@ DLI_MAP
         PHA
         TYA
         PHA
-        LDA ROWBK       ; map palette from RAM (VBI_D: MAPPAL, attract;
-        LDX ROWPF0      ; sea and grass shaded per row, D51)
+        LDX ROWPF0      ; map palette from RAM (VBI_D: MAPPAL, attract;
+        LDA HELPON      ; sea and grass shaded per row, D51)
+        BEQ DM_PF0
+        LDX MAPCOL+1    ; help: grass, not row 0's sea (D55)
+DM_PF0  LDA ROWBK
         LDY MAPCOL+2
         STA WSYNC
         STA COLBK
@@ -126,6 +129,12 @@ DLI_MAP
         JSR DLI_MSL
 DM_ROWS         LDA #1
         STA DLIROW
+        LDA ROWBK+1     ; row 1's colours and font for DLI_ROW
+        STA DL_NBK
+        LDA ROWPF0+1
+        STA DL_NPF
+        LDA ROWFONT+1
+        STA DL_NFN
         LDA #<DLI_ROW   ; the rest of this frame's DLIs are map rows
         STA VDSLST
         LDA #>DLI_ROW
@@ -183,20 +192,17 @@ PALTAB  .BYTE C_SEA,C_GRASS,C_DARK,C_LIGHT,C_WHITE
 ; ---------------------------------------------------------------------
 DLI_ROW
         PHA             ; a square's second character row starts:
-        TXA             ; its font and shades
-        PHA
-        TYA
-        PHA
-        LDX DLIROW
-        LDY ROWBK,X
-        LDA ROWPF0,X
-        STA DL_PF0
-        LDA ROWFONT,X
-        LDX DL_PF0
+        TXA             ; its font and shades, looked up by the DLI
+        PHA             ; before, so they are set before its first line
+        LDA DL_NFN      ; (a band of colour starts on such a row, D52;
+        LDX DL_NBK      ; set later, the line would keep the old ones)
         STA WSYNC
         STA CHBASE
-        STY COLBK
-        STX COLPF0
+        STX COLBK
+        LDA DL_NPF
+        STA COLPF0
+        TYA
+        PHA
         LDA #<DLI_SQ    ; the next DLI starts a square row
         STA VDSLST
         LDA #>DLI_SQ
@@ -237,6 +243,12 @@ DLI_SQ  PHA
         STA COLBK
         LDA ROWPF0,X
         STA COLPF0
+        LDA ROWBK+1,X   ; the next row's, for DLI_ROW (D55)
+        STA DL_NBK
+        LDA ROWPF0+1,X
+        STA DL_NPF
+        LDA ROWFONT+1,X
+        STA DL_NFN
         LDA #<DLI_ROW   ; the next DLI is the square's second row
         STA VDSLST
         LDA #>DLI_ROW
@@ -404,6 +416,8 @@ ROWIDX  .BYTE 0,20,40,60,80,100,120,140,160,180,200
 ;  MAP_PUTI -- the same, every character ORed with MPINV ($80: inverse,
 ;              light parts white instead of yellow)
 ;  In: A = tile, X = column (0-19), Y = row (0-10).
+;  A parked boat or wreck in a corner row (D55) is drawn as BNDVAR's
+;  tile for that row.
 ;  X kept; trashes A, Y, ZPTR, MTILE (MAP_PUT: MPINV = 0).
 ; ---------------------------------------------------------------------
 MAP_PUT
@@ -413,7 +427,8 @@ MAP_PUT
         BEQ MP_GO
 MAP_PUTI
         STA MTILE
-MP_GO   LDA ROWLO,Y
+MP_GO   JSR BND_TILE    ; boats in the corner rows: their own tiles
+        LDA ROWLO,Y
         STA ZPTR
         LDA ROWHI,Y
         STA ZPTR+1
@@ -476,8 +491,8 @@ PMY_ROW
 PR_OFF  SEC
         RTS
 
-; Tile-to-character table and island data (generated)
-        .INCLUDE "islands.asm"
+; Tile-to-character table and island data (generated): at ISLDATA,
+; see ACADIA.ASM
 
 ; Display variables (FRAME, DLIROW, ROWLO/ROWHI, MROW, GIDX, MTILE,
 ; STATUS1/2) live in VARS.ASM.
