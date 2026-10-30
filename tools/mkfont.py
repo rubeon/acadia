@@ -401,7 +401,77 @@ RIGHT = [
 
 # Island pair B was chosen (D24): this left island and a different,
 # non-mirrored right island with the same number of land squares.
-SEED_LEFT, SEED_RIGHT = 11, 29
+# It is map 1, ACADIA, on the setup screen's MAP line (D56).
+
+# Map 2, ISLES: each side three or four islets, 35 squares in all.
+ISLES_L = [
+    "..........",
+    "..........",
+    "...###.##.",
+    "..####.##.",
+    ".H####.##.",
+    "..#####...",
+    "..........",
+    "..#######.",
+    "..######..",
+    "..........",
+    "..........",
+]
+
+ISLES_R = [
+    "..........",
+    "..........",
+    ".##..####.",
+    ".###.####.",
+    ".###.###H.",
+    ".##..####.",
+    "..........",
+    "...######.",
+    "....####..",
+    "..........",
+    "..........",
+]
+
+# Map 3, LAGOON: horseshoe islands round a sheltered bay, the left one
+# open to the channel, the right one to the south.
+LAGOON_L = [
+    "..........",
+    "..........",
+    "...####...",
+    "..#######.",
+    ".H###..##.",
+    "..###.....",
+    "..###..##.",
+    "..#######.",
+    "...####...",
+    "..........",
+    "..........",
+]
+
+LAGOON_R = [
+    "..........",
+    "..........",
+    "..######..",
+    ".########.",
+    ".###..##H.",
+    ".###..###.",
+    ".##....##.",
+    ".##...##..",
+    "..#....#..",
+    "..........",
+    "..........",
+]
+
+# The maps (D56): setup name (6 characters), outlines, erosion seeds and
+# the 1K font slots their coast characters go in.  Map 1's fonts stay
+# where they were; the other maps' fonts fill free RAM above the logo.
+MAPS = [
+    ("ACADIA", LEFT, RIGHT, (11, 29), [0x3000, 0x4800, 0x8800]),
+    ("ISLES ", ISLES_L, ISLES_R, (12, 31), [0x8C00, 0x9C00, 0xA000, 0xBC00]),
+    ("LAGOON", LAGOON_L, LAGOON_R, (13, 37), [0xA400, 0xA800, 0xAC00]),
+]
+N_FONTS = 4                    # fonts per map at most (FONTPG padded to this)
+MAPSRC = 0xB000                # the maps' data blocks (MAPS0, MAPS1, ...)
 
 ROWS, COLS = 11, 20
 PW, PH = COLS * 8, ROWS * 8
@@ -507,10 +577,10 @@ def island_bitmap(outline, seed):
     return out
 
 
-def pair_map(left, right):
+def pair_map(left, right, seeds):
     """Full 160 x 88 land bitmap plus the 20-column outline."""
-    lb = island_bitmap(left, SEED_LEFT)
-    rb = island_bitmap(right, SEED_RIGHT)
+    lb = island_bitmap(left, seeds[0])
+    rb = island_bitmap(right, seeds[1])
     bm = [lb[y] + rb[y] for y in range(PH)]
     outline = [l + r for l, r in zip(left, right)]
     return bm, outline
@@ -678,10 +748,10 @@ def grass_tile(r, c):
     return (T["T_GRASS"], T["T_GRASS2"], T["T_GRASS3"], T["T_GRASS4"])[grass_pick(r, c)]
 
 
-def build_pair(name, desc, left, right):
-    bm, outline = pair_map(left, right)
+def build_pair(mapname, left, right, seeds, font_addr):
+    bm, outline = pair_map(left, right, seeds)
     for r in BANDS:
-        assert set(outline[r]) <= set(".r"), "pair %s row %d must be open sea" % (name, r)
+        assert set(outline[r]) <= set(".r"), "map %s row %d must be open sea" % (mapname, r)
     # every sea square must connect to the map edge through sea squares
     seen, stack = set(), [(r, c) for r in range(ROWS) for c in range(COLS)
                           if (r in (0, ROWS - 1) or c in (0, COLS - 1)) and outline[r][c] != "#"]
@@ -694,10 +764,10 @@ def build_pair(name, desc, left, right):
     for r in range(ROWS):
         for c in range(COLS):
             if outline[r][c] != "#" and (r, c) not in seen:
-                sys.exit("pair %s: sea square row %d col %d is enclosed by land" % (name, r, c))
+                sys.exit("map %s: sea square row %d col %d is enclosed by land" % (mapname, r, c))
     for r in range(ROWS):
         for c in CHANNEL:
-            assert outline[r][c] in ".r", "pair %s channel at row %d" % (name, r)
+            assert outline[r][c] in ".r", "map %s channel at row %d" % (mapname, r)
     land = land_176(bm, outline)
     tiles = list(FIXED)
     index = {}
@@ -791,8 +861,8 @@ def build_pair(name, desc, left, right):
         fonts[-1] += new
         rowfont += [len(fonts) - 1] * len(grp)
     assert all(rowfont[cr] == rowfont[cr - 1] or cr % 2 for cr in range(1, CROWS))
-    if len(fonts) > len(FONT_ADDR):
-        sys.exit("pair %s needs %d map fonts; only %d fit" % (name, len(fonts), len(FONT_ADDR)))
+    if len(fonts) > len(font_addr):
+        sys.exit("map %s needs %d map fonts; only %d fit" % (mapname, len(fonts), len(font_addr)))
     # the 4 codes of each tile (bit 7 = inverse: 11 pixels white)
     codes = []
     for t, td in enumerate(tiles):
@@ -822,7 +892,7 @@ def build_pair(name, desc, left, right):
                      % (side, len(lsq), full, len(lsq) - full, px,
                         100.0 * px / (TW * TH * len(lsq)), min(rows), max(rows),
                         ", ".join("row %d, %d from the outer edge" % h for h in harb)))
-    return dict(name=name, desc=desc, land=land, outline=outline, tiles=tiles, bndvar=bndvar,
+    return dict(name=mapname, font_addr=font_addr, land=land, outline=outline, tiles=tiles, bndvar=bndvar,
                 kinds=kinds, tgrid=tgrid, fonts=fonts, rowfont=rowfont,
                 codes=codes, fixed_chars=fixed_chars, anim=anim, stats=stats)
 
@@ -857,11 +927,9 @@ def banner(name, what):
 
 
 
-# map fonts, 1K aligned; $4C00 holds the help font.  $8800-$8FFF is RAM
-# on a 48K machine below where the OS screen sits while loading; the
-# island data (islands.asm) follows at $9000, the status bar font
-# (tools/mkstat.py) at $9800.
-FONT_ADDR = [0x3000, 0x4800, 0x8800, 0x8C00]
+# map fonts, 1K aligned, at the slots MAPS gives; $4C00 holds the help
+# font.  The live island data (islands.asm) is at $9000, the status bar
+# font (tools/mkstat.py) at $9800, the maps' data blocks at MAPSRC.
 
 # ---------------------------------------------------------------------
 #  Help font (T-SCR-3): the fixed tiles at their usual codes, then 3 x 5
@@ -1005,9 +1073,14 @@ def main():
     if "--preview" in sys.argv:
         prev_dir = sys.argv[sys.argv.index("--preview") + 1]
         os.makedirs(prev_dir, exist_ok=True)
-    p = build_pair("B", "the island pair (D24)", LEFT, RIGHT)
+    ps = [build_pair(*m) for m in MAPS]
+    p = ps[0]
+    for q in ps[1:]:
+        assert q["fixed_chars"] == p["fixed_chars"] and q["anim"] == p["anim"]
     if prev_dir:
-        preview(p, os.path.join(prev_dir, "islands.png"))
+        for q in ps:
+            preview(q, os.path.join(prev_dir, "map-%s.png" % q["name"].strip().lower()))
+    ntiles = max(len(q["tiles"]) for q in ps)
 
     # tiles.asm
     out = banner("TILES.ASM", "Map tile numbers and cell kinds.")
@@ -1031,14 +1104,16 @@ def main():
     out = banner("FONT_MAP.ASM", "Map fonts (ANTIC mode 4), 1K aligned.  2 bits per pixel:\n"
                  ";  00 COLBK sea, 01 PF0 grass, 10 PF1 dark, 11 PF2 yellow / PF3 white\n"
                  ";  %d fixed characters first (same codes in every font), then this\n"
-                 ";  font's coast characters." % nfc)
-    for fi, f in enumerate(p["fonts"]):
-        out.append("; font %d: character rows %s, %d coast characters"
-                   % (fi, ",".join(str(r) for r in range(CROWS) if p["rowfont"][r] == fi), len(f)))
-        out.append("        *= $%04X" % FONT_ADDR[fi])
-        out.append("MAPFONT" if fi == 0 else "MAPFNT%d" % fi)
-        for bs in p["fixed_chars"] + f:
-            out.append("        .BYTE " + hexes(bs))
+                 ";  font's coast characters.  Each map (D56) has its own fonts." % nfc)
+    for mi, q in enumerate(ps):
+        for fi, f in enumerate(q["fonts"]):
+            out.append("; map %d (%s) font %d: character rows %s, %d coast characters"
+                       % (mi + 1, q["name"].strip(), fi,
+                          ",".join(str(r) for r in range(CROWS) if q["rowfont"][r] == fi), len(f)))
+            out.append("        *= $%04X" % q["font_addr"][fi])
+            out.append("MFNT%d%d" % (mi, fi))
+            for bs in q["fixed_chars"] + f:
+                out.append("        .BYTE " + hexes(bs))
     out.append("")
     out.append("; help font (T-SCR-3, mode 5): fixed tiles at codes 2t, 2t+1 (HLPCH,")
     out.append("; HLPCHR), then 3 x 5 letters and digits at screen code + HELP_OFS")
@@ -1061,32 +1136,62 @@ def main():
     assert HELP_ADDR + 8 * (last + 1) + 8 * WV_PH * len(an) <= HELP_ADDR + 1024, "help block full"
     open("src/font_map.asm", "w").write("\n".join(out) + "\n")
 
+    def map_block(q, mi, live):
+        """A map's data block: the live one (labels used by the game,
+        RAM: MAP_LOAD copies a map's block over it) or a map's copy."""
+        o = []
+        def lab(name):
+            return name if live else "%s%d" % (name[:4], mi)
+        for qi, (name, what) in enumerate((("TILECH", "top left"), ("TILECTR", "top right"),
+                                          ("TILECBL", "bottom left"), ("TILECBR", "bottom right"))):
+            codes = [cs[qi] for cs in q["codes"]] + [0] * (ntiles - len(q["codes"]))
+            if live:
+                o.append("; %s: character code of each tile's %s quarter (bit 7 = white)" % (name, what))
+                o.append(name)
+            elif qi == 0:
+                o.append("MAPS%d" % mi)
+            for i in range(0, len(codes), 16):
+                o.append("        .BYTE " + hexes(codes[i:i + 16]))
+        if live:
+            o.append("; ROWFONT: font page (CHBASE) for each character row (2 per square row)")
+            o.append("ROWFONT")
+        names = [">MFNT%d%d" % (mi, f) for f in q["rowfont"]]
+        o.append("        .BYTE " + ",".join(names[:11]))
+        o.append("        .BYTE " + ",".join(names[11:]))
+        if live:
+            o.append("; ISLKIND: cell kind per square (K_ values, bit 7 = player 1)")
+            o.append("ISLKIND")
+        for r in range(ROWS):
+            o.append("        .BYTE " + hexes(q["kinds"][r]) + "   ; " + q["outline"][r])
+        if live:
+            o.append("; ISLTILE: terrain tile per square, drawn by MAP_DRAW")
+            o.append("ISLTILE")
+        for r in range(ROWS):
+            o.append("        .BYTE " + hexes(q["tgrid"][r]))
+        if live:
+            o.append("; BNDVAR: per square row, the tile drawn for a PT boat there (+1 a")
+            o.append("; fishing boat, +2 a wreck), 0 for the usual ones (corner rows, D55)")
+            o.append("BNDVAR")
+        o.append("        .BYTE " + hexes(q["bndvar"]))
+        if live:
+            o.append("; FONTPG: each map font's page, for WAVE_ANI")
+            o.append("FONTPG")
+        fp = list(range(len(q["fonts"])))
+        fp += [fp[-1]] * (N_FONTS - len(fp))
+        o.append("        .BYTE " + ",".join(">MFNT%d%d" % (mi, f) for f in fp))
+        if live:
+            o.append("MAPBLK  = *-TILECH  ; bytes MAP_LOAD copies")
+        return o
+
     # islands.asm
-    out = banner("ISLANDS.ASM", "Island data, tile codes and font per character row (20 x 11).")
-    for q, (lab, what) in enumerate((("TILECH", "top left"), ("TILECTR", "top right"),
-                                     ("TILECBL", "bottom left"), ("TILECBR", "bottom right"))):
-        codes = [cs[q] for cs in p["codes"]]
-        out.append("; %s: character code of each tile's %s quarter (bit 7 = white)" % (lab, what))
-        out.append(lab)
-        for i in range(0, len(codes), 16):
-            out.append("        .BYTE " + hexes(codes[i:i + 16]))
-    out.append("; HLPCH, HLPCHR: help font codes of each fixed tile's left / right half")
-    out.append("HLPCH   .BYTE " + hexes(hl))
-    out.append("HLPCHR  .BYTE " + hexes(hr))
-    out.append("; ROWFONT: font page (CHBASE) for each character row (2 per square row)")
-    names = [">MAPFONT" if f == 0 else ">MAPFNT%d" % f for f in p["rowfont"]]
-    out.append("ROWFONT .BYTE " + ",".join(names[:11]))
-    out.append("        .BYTE " + ",".join(names[11:]))
-    out.append("; ISLKIND: cell kind per square (K_ values, bit 7 = player 1)")
-    out.append("ISLKIND")
-    for r in range(ROWS):
-        out.append("        .BYTE " + hexes(p["kinds"][r]) + "   ; " + p["outline"][r])
-    out.append("; ISLTILE: terrain tile per square, drawn by MAP_DRAW")
-    out.append("ISLTILE")
-    for r in range(ROWS):
-        out.append("        .BYTE " + hexes(p["tgrid"][r]))
+    out = banner("ISLANDS.ASM", "Island data, tile codes and font per character row (20 x 11).\n"
+                 ";  The block from TILECH to FONTPG and the AI_ tables are RAM: they\n"
+                 ";  start as map 1's, and MAP_LOAD copies a map's block (MAPS0 ...)\n"
+                 ";  over them and works out the AI_ tables again (D56).")
+    out += map_block(p, 0, True)
     out.append("; AI_HD: steps by sea (4 ways, not over land) from each square to")
-    out.append("; player 2's harbour, the CPU's way home (AI.ASM); $FF: land or none")
+    out.append("; player 2's harbour, the CPU's way home (AI.ASM); $FF: land or none.")
+    out.append("; MAP_LOAD works these out for each map; map 1's are here for tests.")
     out.append("AI_HD")
     steps = sea_steps(p["kinds"], lambda r, c: p["kinds"][r][c] == K_HARB | K_P1)
     for r in range(ROWS):
@@ -1098,13 +1203,13 @@ def main():
         steps = sea_steps(p["kinds"], goal)
         for r in range(ROWS):
             out.append("        .BYTE " + hexes(steps[r]))
+    out.append("; HLPCH, HLPCHR: help font codes of each fixed tile's left / right half")
+    out.append("HLPCH   .BYTE " + hexes(hl))
+    out.append("HLPCHR  .BYTE " + hexes(hr))
     out.append("; Wave animation (WAVE_ANI, D51): WV_N characters, WV_PH phases.")
-    out.append("; FONTPG: each map font's page.  WVDL / WVDH: a character's offset")
-    out.append("; in its font (code x 8) less 8 x its index, so one Y indexes both")
-    out.append("; WVDATA (in FONT_MAP.ASM) and the font.  WVSRCL / WVSRCH: each")
-    out.append("; phase's WVDATA.")
-    out.append("FONTPG  .BYTE " + ",".join(">MAPFONT" if f == 0 else ">MAPFNT%d" % f
-                                           for f in range(len(p["fonts"]))))
+    out.append("; WVDL / WVDH: a character's offset in its font (code x 8) less")
+    out.append("; 8 x its index, so one Y indexes both WVDATA (in FONT_MAP.ASM) and")
+    out.append("; the font.  WVSRCL / WVSRCH: each phase's WVDATA.")
     offs = [code * 8 - i * 8 for i, (t, q, code, fr) in enumerate(an)]
     assert all(o >= 0 for o in offs)
     out.append("WVDL    .BYTE " + hexes([o & 255 for o in offs]))
@@ -1113,18 +1218,29 @@ def main():
     out.append("WVSRCH  .BYTE " + ",".join(">[WVDATA+%d]" % (ph * 8 * len(an)) for ph in range(WV_PH)))
     out.append("WV_N    = %d" % len(an))
     out.append("WV_PH   = %d" % WV_PH)
-    out.append("; BNDVAR: per square row, the tile drawn for a PT boat there (+1 a")
-    out.append("; fishing boat, +2 a wreck), 0 for the usual ones (corner rows, D55)")
-    out.append("BNDVAR  .BYTE " + hexes(p["bndvar"]))
-    out.append("N_TILES = %d" % len(p["tiles"]))
-    out.append("N_FONTS = %d" % len(p["fonts"]))
+    out.append("N_TILES = %d" % ntiles)
+    out.append("N_FONTS = %d" % N_FONTS)
+    out.append("N_MAPS  = %d" % len(ps))
+    out.append("")
+    out.append("; The maps' data blocks (D56), each laid out as TILECH ... FONTPG")
+    out.append("        *= $%04X" % MAPSRC)
+    out.append("MAPSL   .BYTE " + ",".join("<MAPS%d" % i for i in range(len(ps))))
+    out.append("MAPSH   .BYTE " + ",".join(">MAPS%d" % i for i in range(len(ps))))
+    for mi, q in enumerate(ps):
+        out.append("; map %d: %s" % (mi + 1, q["name"].strip()))
+        out += map_block(q, mi, False)
+    out.append("MAPSEND")
+    out.append("; MAPNAME: each map's name on the setup screen, then RANDOM")
+    out.append("MAPNAME")
+    for q in ps:
+        out.append('        .SBYTE "%s"' % q["name"])
+    out.append('        .SBYTE "RANDOM"')
     open("src/islands.asm", "w").write("\n".join(out) + "\n")
 
-    print("%d tiles, %d fixed characters, %d fonts (coast characters per font %s), "
-          "character rows -> font %s"
-          % (len(p["tiles"]), nfc, len(p["fonts"]),
-             "/".join(str(len(f)) for f in p["fonts"]), "".join(map(str, p["rowfont"]))))
-    print("\n".join(p["stats"]))
-
+    for q in ps:
+        print("map %s: %d tiles, %d fonts (coast characters per font %s), character rows -> font %s"
+              % (q["name"].strip(), len(q["tiles"]), len(q["fonts"]),
+                 "/".join(str(len(f)) for f in q["fonts"]), "".join(map(str, q["rowfont"]))))
+        print("\n".join(q["stats"]))
 
 main()

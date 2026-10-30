@@ -76,6 +76,8 @@ GN_SC   STA SCORE,X
         STA CURTRN
         STA GSTATE
         STA INFOK
+        LDA MAPNO       ; the chosen map's islands (D56)
+        JSR MAP_LOAD
         JSR MAP_INIT    ; empty islands
         JSR MAP_DRAW
         JSR ECO_INIT    ; 1000 people, 100 gold each

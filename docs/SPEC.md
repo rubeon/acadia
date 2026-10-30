@@ -17,7 +17,7 @@ on the Atari. Requirement IDs (`R-...`) are referenced from PLAN.md.
 |---|---|
 | R-MODE-1 | Two players, one joystick each, sharing the keyboard. Matches the original. |
 | R-MODE-2 | One player against a CPU governor on the other island. |
-| R-MODE-3 | Setup screen: number of rounds (1-50), round length (30-120 s), mode (1P/2P), CPU difficulty (1P only). Keyboard driven. |
+| R-MODE-3 | Setup screen: number of rounds (1-50), round length (30-120 s), mode (1P/2P), CPU difficulty (1P only), map (three island pairs or random, D56). Keyboard driven. |
 | R-MODE-4 | End-of-game screen showing final scores and winner; any key/fire returns to setup. |
 
 ## 3. Rules

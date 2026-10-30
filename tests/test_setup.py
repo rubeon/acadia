@@ -16,7 +16,7 @@ START, SELECT = 1, 2
 GS_PLAY, GS_OVER, GS_SETUP = 0, 3, 4
 KC = {"0": 0x32, "1": 0x1F, "2": 0x1E, "3": 0x1A, "4": 0x18,
       "5": 0x1D, "6": 0x1B, "7": 0x33, "8": 0x35, "9": 0x30}
-ROUNDS, SECS, PLAYERS, LEVEL, KEYPAD = range(5)
+ROUNDS, SECS, PLAYERS, LEVEL, KEYPAD, MAP = range(6)
 m = Machine()
 fails = 0
 
@@ -131,11 +131,17 @@ if m.byte("SU_FLD") != SECS:
     fail("SELECT did not move to the next line")
 tap(stick=DOWN)
 tap(stick=DOWN)
-if m.byte("SU_FLD") != ROUNDS:
+if m.byte("SU_FLD") != MAP:
     fail("2 players: down from PLAYERS went to %d" % m.byte("SU_FLD"))
+tap(stick=DOWN)
+if m.byte("SU_FLD") != ROUNDS:
+    fail("2 players: down from MAP went to %d" % m.byte("SU_FLD"))
+tap(stick=UP)
+if m.byte("SU_FLD") != MAP:
+    fail("2 players: up from ROUNDS went to %d" % m.byte("SU_FLD"))
 tap(stick=UP)
 if m.byte("SU_FLD") != PLAYERS:
-    fail("2 players: up from ROUNDS went to %d" % m.byte("SU_FLD"))
+    fail("2 players: up from MAP went to %d" % m.byte("SU_FLD"))
 if not row(7).startswith("  >"):
     fail("marker not on PLAYERS: %r" % row(7))
 
@@ -158,14 +164,38 @@ typ("1")
 if m.byte("SU_VAL", KEYPAD) != 1 or row(11)[32:35] != "YES":
     fail("keypad 1 (5 ignored): %d, %r" % (m.byte("SU_VAL", KEYPAD), row(11)))
 tap(stick=DOWN)
+if m.byte("SU_FLD") != MAP or row(13)[29:35] != "ACADIA":
+    fail("1 player: down from KEYPAD: field %d, %r" % (m.byte("SU_FLD"), row(13)))
+box = m.addr("MAPSCR") + 20 + 40 * 13
+if [m.mem[box + i] >> 7 for i in range(27, 37)] != [0, 1, 1, 1, 1, 1, 1, 1, 1, 0]:
+    fail("map line: inverse box not over columns 28-35")
+# the map line: names, digits 1-4, RANDOM last
+for d, name in (("2", " ISLES"), ("3", "LAGOON"), ("4", "RANDOM"), ("7", "RANDOM"), ("1", "ACADIA")):
+    typ(d)
+    if row(13)[29:35] != name:
+        fail("map %s: %r" % (d, row(13)))
+tap(stick=RIGHT)
+tap(stick=RIGHT)
+tap(stick=RIGHT)
+tap(stick=RIGHT)
+if m.byte("SU_VAL", MAP) != 4:
+    fail("map right x 4: %d" % m.byte("SU_VAL", MAP))
+tap(stick=LEFT)
+tap(stick=LEFT)
+tap(stick=LEFT)
+tap(stick=LEFT)
+if m.byte("SU_VAL", MAP) != 1:
+    fail("map left x 4: %d" % m.byte("SU_VAL", MAP))
+tap(stick=DOWN)
 if m.byte("SU_FLD") != ROUNDS:
-    fail("1 player: down from KEYPAD went to %d" % m.byte("SU_FLD"))
+    fail("1 player: down from MAP went to %d" % m.byte("SU_FLD"))
 tap(stick=RIGHT)
 tap(stick=RIGHT)
 check([3, 120, 1, 3], "rounds 3")
 tap(stick=UP)                             # 1 player: up from ROUNDS
-if m.byte("SU_FLD") != KEYPAD:
+if m.byte("SU_FLD") != MAP:
     fail("1 player: up from ROUNDS went to %d" % m.byte("SU_FLD"))
+tap(stick=UP)
 tap(stick=UP)
 tap(stick=UP)
 tap(stick=RIGHT)                          # back to 2 players

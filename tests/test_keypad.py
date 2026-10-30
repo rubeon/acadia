@@ -172,7 +172,7 @@ if m.byte("KPMODE") or pia["ddr"]:
     fail("SETUP_ENTER left the keypad on")
 
 # setup: the KEYPAD line follows CPU LEVEL with 1 player, is skipped with 2
-for players, want in ((1, [1, 2, 3, 4, 0]), (2, [1, 2, 0, 1, 2])):
+for players, want in ((1, [1, 2, 3, 4, 5]), (2, [1, 2, 5, 0, 1])):
     m.poke("SU_VAL", 10, 30, players, 2)
     m.poke("SU_FLD", 0)
     seen = []
@@ -183,6 +183,7 @@ for players, want in ((1, [1, 2, 3, 4, 0]), (2, [1, 2, 0, 1, 2])):
         fail("SU_NEXT, %d players: %r" % (players, seen))
 m.poke("SU_VAL", 10, 30, 2, 2)
 m.poke("SU_FLD", 0)
+m.call("SU_PREV")
 m.call("SU_PREV")
 if m.byte("SU_FLD") != 2:
     fail("SU_PREV from rounds, 2 players: %d" % m.byte("SU_FLD"))
