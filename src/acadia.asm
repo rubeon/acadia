@@ -161,6 +161,7 @@ CODE2   =  $5000
         .INCLUDE "title.asm"
         .INCLUDE "demo.asm"
         .INCLUDE "shade.asm"
+        .INCLUDE "status.asm"
         .INCLUDE "vars.asm"
         .INCLUDE "title_gfx.asm"
 

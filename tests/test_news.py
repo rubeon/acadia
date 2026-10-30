@@ -27,11 +27,7 @@ TEXT = {"LAND": "NOT YOUR LAND",
 
 
 def line2():
-    out = ""
-    for i in range(40):
-        c = m.byte("STATUS2", i)
-        out += chr(c + 0x20) if c < 0x40 else chr(c - 0x40)
-    return out
+    return m.status(40, 40)
 
 
 def slot():
@@ -62,7 +58,7 @@ for players, prefixes in ((2, ("P1 ", "P2 ")), (1, ("P1 ", "CPU "))):
             want = centred(pre + TEXT[name])
             if len(pre + TEXT[name]) > 20 or slot() != want:
                 fail("NEWS %s, player %02X: %r, want %r" % (name, x, slot(), want))
-    if line2()[:10] != "POP  1000 " or line2()[30:] != " POP  1000":
+    if line2()[:10] != "  @@ 1000 " or line2()[30:] != "   @@ 1000":
         fail("populations disturbed: %r" % line2())
 print("line 2: %r" % line2())
 

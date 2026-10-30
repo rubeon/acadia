@@ -859,7 +859,8 @@ def banner(name, what):
 
 # map fonts, 1K aligned; $4C00 holds the help font.  $8800-$8FFF is RAM
 # on a 48K machine below where the OS screen sits while loading; the
-# island data (islands.asm) follows at $9000.
+# island data (islands.asm) follows at $9000, the status bar font
+# (tools/mkstat.py) at $9800.
 FONT_ADDR = [0x3000, 0x4800, 0x8800, 0x8C00]
 
 # ---------------------------------------------------------------------
