@@ -104,8 +104,8 @@ DLI_MAP
         PHA
         TYA
         PHA
-        LDA MAPCOL      ; map palette from RAM (VBI_D: MAPPAL, attract)
-        LDX MAPCOL+1
+        LDA ROWBK       ; map palette from RAM (VBI_D: MAPPAL, attract;
+        LDX ROWPF0      ; sea and grass shaded per row, D51)
         LDY MAPCOL+2
         STA WSYNC
         STA COLBK
@@ -188,10 +188,19 @@ DLI_ROW
         PHA
         TXA
         PHA
+        TYA
+        PHA
         LDX DLIROW
+        LDY ROWBK,X     ; this row's sea and grass shades (D51)
+        LDA ROWPF0,X
+        STA DL_PF0
         LDA ROWFONT,X
+        LDX DL_PF0
         STA WSYNC
         STA CHBASE
+        STY COLBK
+        STX COLPF0
+        LDX DLIROW
         INC DLIROW
         TXA
         LSR A           ; square row; C set: its second character row
@@ -213,6 +222,8 @@ DLI_ROW
         ADC #2
         STA HPOSM0
 DL_RDONE PLA
+        TAY
+        PLA
         TAX
         PLA
         RTI
@@ -251,6 +262,20 @@ VD_COL  LDA MAPPAL,X
         STA MAPCOL,X
         DEX
         BPL VD_COL
+        LDA COLRSH      ; the shades per row again if the palette or
+        CMP AP_SH       ; attract mode changed
+        BNE VD_SH
+        LDA DRKMSK
+        CMP AP_MSK
+        BNE VD_SH
+        LDA MAPPAL
+        CMP AP_BK
+        BNE VD_SH
+        LDA MAPPAL+1
+        CMP AP_GR
+        BEQ VD_NSH
+VD_SH   JSR VD_SHADE
+VD_NSH
         LDA #<DLI_MAP   ; first DLI of the next frame
         STA VDSLST
         LDA #>DLI_MAP

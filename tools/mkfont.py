@@ -263,42 +263,32 @@ PIER_W = [
     "........",
     "........"]
 
-# Wave glints on the open sea (white: inverse characters)
-WAVE1 = [
-    "........",
-    "........",
-    "........",
-    "........",
-    "..WW....",
-    ".W..W...",
-    "........",
-    "........",
-    "........",
-    "........",
-    "........",
-    "........",
-    ".....WW.",
-    "....W..W",
-    "........",
-    "........"]
+# Wave glints on the open sea (white: inverse characters), animated by
+# WAVE_ANI: WV_PH phases, each a crest (row, column) drawn by phase.
+# Both tiles use the same phases; WAVE2 runs WV_PH / 2 behind.
+WV_PH = 4
+CREST = [[".WW.", "W..W"],          # phase 0: a crest
+         [".WW.", "W..W"],          # 1: the same, 1 pixel right
+         ["..W.", ".W.W"],          # 2: breaking up, 2 right
+         []]                        # 3: calm
+WAVE_GLINTS = {"T_WAVE1": [(4, 0), (12, 2)], "T_WAVE2": [(1, 2), (9, 0)]}
+WAVE_LAG = {"T_WAVE1": 0, "T_WAVE2": WV_PH // 2}
 
-WAVE2 = [
-    "........",
-    ".WW.....",
-    "W..W....",
-    "........",
-    "........",
-    "........",
-    "........",
-    "........",
-    "......WW",
-    ".....W..",
-    "........",
-    "........",
-    "........",
-    "........",
-    "........",
-    "........"]
+
+def wave_frame(name, phase):
+    """8 x 16 art of wave tile name in animation phase 0-3."""
+    a = [list("........") for _ in range(TH)]
+    p = (phase + WAVE_LAG[name]) % WV_PH
+    for row, col in WAVE_GLINTS[name]:
+        for dy, line in enumerate(CREST[p]):
+            for dx, ch in enumerate(line):
+                if ch == "W":
+                    a[row + dy][col + min(p, 2) + dx] = "W"
+    return ["".join(x) for x in a]
+
+
+WAVE1 = wave_frame("T_WAVE1", 0)
+WAVE2 = wave_frame("T_WAVE2", 0)
 
 # Grass texture: dark tufts on green, repeated every square
 GRASS = [
@@ -641,12 +631,20 @@ def build_pair(name, desc, left, right):
             kinds[r][c], tgrid[r][c] = k, t
     # characters: fixed ones (deduplicated) get the same codes in every
     # font; coast ones go into the font of their character row
-    fixed_code = {}
+    fixed_code, fixed_list, anim = {}, [], []
     for t in range(NFIX):
-        for bs, inv in quarters(tiles[t][2]):
-            if bs not in fixed_code:
-                fixed_code[bs] = len(fixed_code)
-    nfc = len(fixed_code)
+        name = tiles[t][0]
+        frames = [quarters(wave_frame(name, ph)) for ph in range(WV_PH)] if name in WAVE_LAG else None
+        for q, (bs, inv) in enumerate(quarters(tiles[t][2])):
+            if frames and any(any(f[q][0]) for f in frames):
+                # an animated character: its own code, its bytes per phase
+                anim.append((t, q, len(fixed_list), [f[q][0] for f in frames]))
+                fixed_list.append(bs)
+            elif bs not in fixed_code:
+                fixed_code[bs] = len(fixed_list)
+                fixed_list.append(bs)
+    nfc = len(fixed_list)
+    acode = {(t, q): code for t, q, code, fr in anim}
     rowchars = [[] for _ in range(CROWS)]          # coast chars per char row
     for t in range(NFIX, len(tiles)):
         r = int(tiles[t][1].split()[-1])
@@ -672,7 +670,9 @@ def build_pair(name, desc, left, right):
     for t, td in enumerate(tiles):
         cs = []
         for q, (bs, inv) in enumerate(quarters(td[2])):
-            if bs in fixed_code:
+            if (t, q) in acode:
+                code, inv = acode[(t, q)], True
+            elif bs in fixed_code:
                 code = fixed_code[bs]
             else:
                 r = int(td[1].split()[-1])
@@ -680,7 +680,7 @@ def build_pair(name, desc, left, right):
                 code = nfc + f.index(bs)
             cs.append(code | (0x80 if inv else 0))
         codes.append(cs)
-    fixed_chars = sorted(fixed_code, key=fixed_code.get)
+    fixed_chars = fixed_list
     stats = []
     for side, cols in (("left", range(0, 10)), ("right", range(10, 20))):
         lsq = [(r, c) for r in range(ROWS) for c in cols if outline[r][c] == "#"]
@@ -696,7 +696,7 @@ def build_pair(name, desc, left, right):
                         ", ".join("row %d, %d from the outer edge" % h for h in harb)))
     return dict(name=name, desc=desc, land=land, outline=outline, tiles=tiles,
                 kinds=kinds, tgrid=tgrid, fonts=fonts, rowfont=rowfont,
-                codes=codes, fixed_chars=fixed_chars, stats=stats)
+                codes=codes, fixed_chars=fixed_chars, anim=anim, stats=stats)
 
 def sea_steps(kinds, goal):
     """Steps by sea from each square to the nearest square where
@@ -919,6 +919,16 @@ def main():
     for i in range(0, 8 * (last + 1), 8):
         out.append("        .BYTE " + hexes(hf[i:i + 8]))
     out.append("HELP_OFS = %d" % HELP_OFS)
+    an = p["anim"]
+    out.append("")
+    out.append("; WVDATA: the wave characters' frames, WV_PH phases of WV_N characters")
+    out.append("; (WAVE_ANI, D51); it fills the help font's 1K block up to CODE2")
+    out.append("WVDATA")
+    for ph in range(WV_PH):
+        for t, q, code, fr in an:
+            out.append("        .BYTE " + hexes(fr[ph]) + "   ; phase %d, tile %d quarter %d, code $%02X"
+                       % (ph, t, q, code))
+    assert HELP_ADDR + 8 * (last + 1) + 8 * WV_PH * len(an) <= HELP_ADDR + 1024, "help block full"
     open("src/font_map.asm", "w").write("\n".join(out) + "\n")
 
     # islands.asm
@@ -958,6 +968,21 @@ def main():
         steps = sea_steps(p["kinds"], goal)
         for r in range(ROWS):
             out.append("        .BYTE " + hexes(steps[r]))
+    out.append("; Wave animation (WAVE_ANI, D51): WV_N characters, WV_PH phases.")
+    out.append("; FONTPG: each map font's page.  WVDL / WVDH: a character's offset")
+    out.append("; in its font (code x 8) less 8 x its index, so one Y indexes both")
+    out.append("; WVDATA (in FONT_MAP.ASM) and the font.  WVSRCL / WVSRCH: each")
+    out.append("; phase's WVDATA.")
+    out.append("FONTPG  .BYTE " + ",".join(">MAPFONT" if f == 0 else ">MAPFNT%d" % f
+                                           for f in range(len(p["fonts"]))))
+    offs = [code * 8 - i * 8 for i, (t, q, code, fr) in enumerate(an)]
+    assert all(o >= 0 for o in offs)
+    out.append("WVDL    .BYTE " + hexes([o & 255 for o in offs]))
+    out.append("WVDH    .BYTE " + hexes([o >> 8 for o in offs]))
+    out.append("WVSRCL  .BYTE " + ",".join("<[WVDATA+%d]" % (ph * 8 * len(an)) for ph in range(WV_PH)))
+    out.append("WVSRCH  .BYTE " + ",".join(">[WVDATA+%d]" % (ph * 8 * len(an)) for ph in range(WV_PH)))
+    out.append("WV_N    = %d" % len(an))
+    out.append("WV_PH   = %d" % WV_PH)
     out.append("N_TILES = %d" % len(p["tiles"]))
     out.append("N_FONTS = %d" % len(p["fonts"]))
     open("src/islands.asm", "w").write("\n".join(out) + "\n")
