@@ -51,9 +51,9 @@ VL_OK   AND #$0E
         AND DRKMSK
         RTS
 
-; Luminance change per character row: the open sea darker at the top
-; and bottom, lighter round the islands; the grass lit from the north
-SEADEL  .BYTE $FE,$FE,0,0,2,2,2,2,2,2,2,2,2,2,2,2,2,2,0,0,$FE,$FE
+; Luminance change per character row: the open sea lighter round the
+; islands, as is at the top and bottom; the grass lit from the north
+SEADEL  .BYTE 0,0,0,0,2,2,2,2,2,2,2,2,2,2,2,2,2,2,0,0,0,0
 GRNDEL  .BYTE 2,2,2,2,2,2,2,2,0,0,0,0,0,0,$FE,$FE,$FE,$FE,$FE,$FE,$FE,$FE
 
 ; ---------------------------------------------------------------------
