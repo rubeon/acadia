@@ -52,8 +52,9 @@ VL_OK   AND #$0E
         RTS
 
 ; Luminance change per character row: the open sea lighter round the
-; islands, as is at the top and bottom; the grass lit from the north
-SEADEL  .BYTE 0,0,0,0,2,2,2,2,2,2,2,2,2,2,2,2,2,2,0,0,0,0
+; islands (one character row past the land), as is at the top and
+; bottom; the grass lit from the north
+SEADEL  .BYTE 0,0,0,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,0,0,0
 GRNDEL  .BYTE 2,2,2,2,2,2,2,2,0,0,0,0,0,0,$FE,$FE,$FE,$FE,$FE,$FE,$FE,$FE
 
 ; ---------------------------------------------------------------------
