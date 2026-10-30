@@ -403,73 +403,41 @@ RIGHT = [
 # non-mirrored right island with the same number of land squares.
 # It is map 1, ACADIA, on the setup screen's MAP line (D56).
 
-# Map 2, ISLES: each side three or four islets, 35 squares in all.
-ISLES_L = [
-    "..........",
-    "..........",
-    "...###.##.",
-    "..####.##.",
-    ".H####.##.",
-    "..#####...",
-    "..........",
-    "..#######.",
-    "..######..",
-    "..........",
-    "..........",
+# Map 2, CLASSIC: the original's island squares (`$512F`, `$514C`) and
+# harbours (`$5924`) on its 20 x 12 grid, whose rows 9-11 are sea; only
+# the square positions are the original's, the art is ours (D56).
+# There is no channel: the left island's tail reaches column 11 and the
+# right island starts at column 10, so each square's owner comes from
+# its island's list ('#' / 'H' player 0, 'o' / 'h' player 1), not from
+# its side of the map.
+CLASSIC = [
+    "....................",
+    "....................",
+    "..#.......oo.o..o...",
+    ".###......ooooooo...",
+    ".###......oo..ooooh.",
+    ".#####.........oooo.",
+    "..H####.........ooo.",
+    "....#####......oooo.",
+    "...###.#####.....o..",
+    "....................",
+    "....................",
 ]
 
-ISLES_R = [
-    "..........",
-    "..........",
-    ".##..####.",
-    ".###.####.",
-    ".###.###H.",
-    ".##..####.",
-    "..........",
-    "...######.",
-    "....####..",
-    "..........",
-    "..........",
-]
+# Map 3, RANDOM: the open sea only.  MAP_LOAD draws a new pair of
+# islands on it for every game, from the coast pieces (generic_art).
+SEA = ["." * 20] * 11
 
-# Map 3, LAGOON: horseshoe islands round a sheltered bay, the left one
-# open to the channel, the right one to the south.
-LAGOON_L = [
-    "..........",
-    "..........",
-    "...####...",
-    "..#######.",
-    ".H###..##.",
-    "..###.....",
-    "..###..##.",
-    "..#######.",
-    "...####...",
-    "..........",
-    "..........",
-]
-
-LAGOON_R = [
-    "..........",
-    "..........",
-    "..######..",
-    ".########.",
-    ".###..##H.",
-    ".###..###.",
-    ".##....##.",
-    ".##...##..",
-    "..#....#..",
-    "..........",
-    "..........",
-]
-
-# The maps (D56): setup name (6 characters), outlines, erosion seeds and
-# the 1K font slots their coast characters go in.  Map 1's fonts stay
-# where they were; the other maps' fonts fill free RAM above the logo.
+# The maps (D56): setup name (8 characters, ending where the setup
+# screen's numbers do), outline, erosion seeds (two: each half alone)
+# and the 1K font slots their coast characters go in.
 MAPS = [
-    ("ACADIA", LEFT, RIGHT, (11, 29), [0x3000, 0x4800, 0x8800]),
-    (" ISLES", ISLES_L, ISLES_R, (12, 31), [0x8C00, 0x9C00, 0xA000, 0xBC00]),
-    ("LAGOON", LAGOON_L, LAGOON_R, (13, 37), [0xA400, 0xA800, 0xAC00]),
+    ("STANDARD", [l + r.replace("#", "o").replace("H", "h") for l, r in zip(LEFT, RIGHT)],
+     (11, 29), [0x3000, 0x4800, 0x8800], False),
+    (" CLASSIC", CLASSIC, (17,), [0x8C00, 0x9C00, 0xA000, 0xBC00], False),
+    ("  RANDOM", SEA, (11, 29), [0xA400, 0xA800, 0xAC00], True),
 ]
+MAP_RND = 2                    # the map MAP_LOAD makes up afresh
 N_FONTS = 4                    # fonts per map at most (FONTPG padded to this)
 MAPSRC = 0xB000                # the maps' data blocks (MAPS0, MAPS1, ...)
 
@@ -480,6 +448,7 @@ CHANNEL = (9, 10)
 
 # Cell kinds (ISLKIND); bit 7 = owned by player 1 (right island)
 K_SEA, K_LAND, K_HARB, K_ROCK, K_P1 = 0, 1, 3, 4, 0x80
+LAND, HARB = "#o", "Hh"        # outline: land, harbour ('o' 'h' player 1)
 
 
 def value_noise(rng, w, h, step):
@@ -498,9 +467,11 @@ def value_noise(rng, w, h, step):
 
 
 def island_bitmap(outline, seed):
-    """Ragged land bitmap (10 squares = 80 px wide) for one island."""
-    w, h = 80, PH
-    land = [[outline[y // 8][x // 8] == "#" for x in range(w)] for y in range(h)]
+    """Ragged land bitmap (8 px per square of the outline) for the
+    islands of an outline."""
+    nc = len(outline[0])
+    w, h = 8 * nc, PH
+    land = [[outline[y // 8][x // 8] in LAND for x in range(w)] for y in range(h)]
     # distance (in pixels, 4-neighbour) to the nearest sea pixel
     INF = 99
     dist = [[INF if land[y][x] else 0 for x in range(w)] for y in range(h)]
@@ -536,10 +507,10 @@ def island_bitmap(outline, seed):
     # that link land on opposite sides (so necks and arms stay solid),
     # and the square behind a harbour
     def isl(sy, sx):
-        return 0 <= sy < ROWS and 0 <= sx < 10 and outline[sy][sx] == "#"
+        return 0 <= sy < ROWS and 0 <= sx < nc and outline[sy][sx] in LAND
     for sy in range(ROWS):
-        for sx in range(10):
-            if outline[sy][sx] != "#":
+        for sx in range(nc):
+            if outline[sy][sx] not in LAND:
                 continue
             for y in range(sy * 8 + 3, sy * 8 + 5):
                 for x in range(sx * 8 + 3, sx * 8 + 5):
@@ -553,7 +524,7 @@ def island_bitmap(outline, seed):
                     for x in range(sx * 8 + 2, sx * 8 + 6):
                         out[y][x] = True
             for dx in (-1, 1):
-                if 0 <= sx + dx < 10 and outline[sy][sx + dx] == "H":
+                if 0 <= sx + dx < nc and outline[sy][sx + dx] in HARB:
                     for y in range(sy * 8, sy * 8 + 8):
                         for x in range(sx * 8, sx * 8 + 8):
                             out[y][x] = True
@@ -572,18 +543,19 @@ def island_bitmap(outline, seed):
                 stack.append((nx, ny))
     for y in range(h):
         for x in range(w):
-            if not out[y][x] and not seen[y][x] and outline[y // 8][x // 8] == "#":
+            if not out[y][x] and not seen[y][x] and outline[y // 8][x // 8] in LAND:
                 out[y][x] = True
     return out
 
 
-def pair_map(left, right, seeds):
-    """Full 160 x 88 land bitmap plus the 20-column outline."""
-    lb = island_bitmap(left, seeds[0])
-    rb = island_bitmap(right, seeds[1])
-    bm = [lb[y] + rb[y] for y in range(PH)]
-    outline = [l + r for l, r in zip(left, right)]
-    return bm, outline
+def pair_map(outline, seeds):
+    """Full 160 x 88 land bitmap of a 20-column outline: each half
+    eroded with its own seed, or (one seed) the whole map at once."""
+    if len(seeds) == 1:
+        return island_bitmap(outline, seeds[0])
+    lb = island_bitmap([r[:10] for r in outline], seeds[0])
+    rb = island_bitmap([r[10:] for r in outline], seeds[1])
+    return [lb[y] + rb[y] for y in range(PH)]
 
 
 
@@ -606,11 +578,11 @@ def land_176(bm, outline):
         land = nl
     for y in range(H2):
         for x in range(PW):
-            if outline[y // TH][x // TW] != "#":
+            if outline[y // TH][x // TW] not in LAND:
                 land[y][x] = False
     for r in range(ROWS):
         for c in range(COLS):
-            if outline[r][c] == "#":
+            if outline[r][c] in LAND:
                 for y in range(r * TH + 5, r * TH + 11):
                     for x in range(c * TW + 2, c * TW + 6):
                         land[y][x] = True
@@ -748,26 +720,88 @@ def grass_tile(r, c):
     return (T["T_GRASS"], T["T_GRASS2"], T["T_GRASS3"], T["T_GRASS4"])[grass_pick(r, c)]
 
 
-def build_pair(mapname, left, right, seeds, font_addr):
-    bm, outline = pair_map(left, right, seeds)
+def generic_art(mask):
+    """RANDOM's coast piece for a land square whose land neighbours are
+    mask (1 north, 2 east, 4 south, 8 west): drawn as the middle square
+    of a small island of those squares, the corners between two land
+    neighbours filled in, so pieces meet at any square of a random
+    island (D56)."""
+    o = [["."] * 10 for _ in range(ROWS)]
+    r, c = 5, 4
+    o[r][c] = "#"
+    for bit, (dr, dc) in ((1, (-1, 0)), (2, (0, 1)), (4, (1, 0)), (8, (0, -1))):
+        if mask & bit:
+            o[r + dr][c + dc] = "#"
+    for b1, b2, dr, dc in ((1, 2, -1, 1), (2, 4, 1, 1), (4, 8, 1, -1), (8, 1, -1, -1)):
+        if mask & b1 and mask & b2:
+            o[r + dr][c + dc] = "#"
+    o = ["".join(row) + "." * 10 for row in o]
+    bm = [b + [False] * 80 for b in island_bitmap([row[:10] for row in o], 40 + mask)]
+    return coast_art(land_176(bm, o), r, c)
+
+
+RND_N = 32                     # RANDOM: land squares a side (MAPS.ASM RM_N)
+
+
+def random_pair(q, seed):
+    """A pair of islands as MAP_LOAD makes them for RANDOM (MAPS.ASM),
+    for the preview: q's tile grid with the islands drawn in."""
+    rng = random.Random(seed)
+    while True:
+        land = {}
+        for side, (lo, start) in enumerate(((1, (5, 4)), (11, (5, 15)))):
+            land[start] = side
+            n = 1
+            while n < RND_N:
+                r, c = 2 + rng.randrange(7), lo + rng.randrange(8)
+                if (r, c) not in land and any((r + dr, c + dc) in land
+                                              for dr, dc in ((1, 0), (-1, 0), (0, 1), (0, -1))):
+                    land[(r, c)] = side
+                    n += 1
+        seen, st = set(), [(0, 0)]
+        while st:
+            r, c = st.pop()
+            if (r, c) in seen or (r, c) in land or not (0 <= r < ROWS and 0 <= c < COLS):
+                continue
+            seen.add((r, c))
+            st += [(r + 1, c), (r - 1, c), (r, c + 1), (r, c - 1)]
+        if len(seen) + len(land) == ROWS * COLS:
+            break
+    tg = [row[:] for row in q["tgrid"]]
+    for (r, c), side in land.items():
+        m = sum(b for b, (dr, dc) in ((1, (-1, 0)), (2, (0, 1)), (4, (1, 0)), (8, (0, -1)))
+                if (r + dr, c + dc) in land)
+        tg[r][c] = grass_tile(r, c) if m == 15 else q["gentile"][m]
+    for side, rows in ((0, (5, 4, 6, 3, 7)), (1, (5, 4, 6, 3, 7))):
+        for r in rows:
+            cs = [c for (rr, c), s_ in land.items() if rr == r and s_ == side]
+            if cs:
+                c = min(cs) - 1 if side == 0 else max(cs) + 1
+                tg[r][c] = T["T_PIER_E"] if side == 0 else T["T_PIER_W"]
+                break
+    return dict(q, tgrid=tg)
+
+
+def build_pair(mapname, outline, seeds, font_addr, generic=False):
+    bm = pair_map(outline, seeds)
     for r in BANDS:
         assert set(outline[r]) <= set(".r"), "map %s row %d must be open sea" % (mapname, r)
     # every sea square must connect to the map edge through sea squares
     seen, stack = set(), [(r, c) for r in range(ROWS) for c in range(COLS)
-                          if (r in (0, ROWS - 1) or c in (0, COLS - 1)) and outline[r][c] != "#"]
+                          if (r in (0, ROWS - 1) or c in (0, COLS - 1)) and outline[r][c] not in LAND]
     while stack:
         r, c = stack.pop()
-        if (r, c) in seen or not (0 <= r < ROWS and 0 <= c < COLS) or outline[r][c] == "#":
+        if (r, c) in seen or not (0 <= r < ROWS and 0 <= c < COLS) or outline[r][c] in LAND:
             continue
         seen.add((r, c))
         stack += [(r + 1, c), (r - 1, c), (r, c + 1), (r, c - 1)]
     for r in range(ROWS):
         for c in range(COLS):
-            if outline[r][c] != "#" and (r, c) not in seen:
+            if outline[r][c] not in LAND and (r, c) not in seen:
                 sys.exit("map %s: sea square row %d col %d is enclosed by land" % (mapname, r, c))
     for r in range(ROWS):
-        for c in CHANNEL:
-            assert outline[r][c] in ".r", "map %s channel at row %d" % (mapname, r)
+        for c in CHANNEL:              # the original has no channel
+            assert len(seeds) == 1 or outline[r][c] in ".r", "map %s channel at row %d" % (mapname, r)
     land = land_176(bm, outline)
     tiles = list(FIXED)
     index = {}
@@ -776,17 +810,17 @@ def build_pair(mapname, left, right, seeds, font_addr):
     for r in range(ROWS):
         for c in range(COLS):
             ch = outline[r][c]
-            p1 = K_P1 if c >= 10 else 0
-            if ch == "H":
-                if c > 0 and outline[r][c - 1] == "#":
+            p1 = K_P1 if ch in "oh" else 0
+            if ch in HARB:
+                if c > 0 and outline[r][c - 1] in LAND:
                     t, k = T["T_PIER_W"], K_HARB | p1
-                elif c < COLS - 1 and outline[r][c + 1] == "#":
+                elif c < COLS - 1 and outline[r][c + 1] in LAND:
                     t, k = T["T_PIER_E"], K_HARB | p1
                 else:
                     sys.exit("harbour at row %d col %d needs land beside it" % (r, c))
             elif ch == "r":
                 t, k = T["T_ROCK"], K_ROCK
-            elif ch == "#":
+            elif ch in LAND:
                 a = coast_art(land, r, c)
                 k = K_LAND | p1
                 if a == GRASS_ART[grass_pick(r, c)]:
@@ -809,6 +843,13 @@ def build_pair(mapname, left, right, seeds, font_addr):
             else:
                 sys.exit("unknown outline character %r" % ch)
             kinds[r][c], tgrid[r][c] = k, t
+    # RANDOM: a coast piece for each mask of land neighbours but all
+    # four, whose characters every land row's font must hold
+    gentile = []
+    if generic:
+        for mask in range(15):
+            gentile.append(len(tiles))
+            tiles.append((None, "generic %d, row 5" % mask, generic_art(mask)))
     # parked boats and wrecks in the corner rows: their sea in PF0 (the
     # corner itself is not cut out under them); MAP_PUT picks these
     # through BNDVAR
@@ -839,9 +880,10 @@ def build_pair(mapname, left, right, seeds, font_addr):
     for t in range(NFIX, len(tiles)):
         r = int(tiles[t][1].split()[-1])
         for q, (bs, inv) in enumerate(quarters(tiles[t][2])):
-            cr = 2 * r + q // 2
-            if bs not in fixed_code and bs not in rowchars[cr]:
-                rowchars[cr].append(bs)
+            crs = range(4, 18) if tiles[t][1].startswith("generic") else [2 * r + q // 2]
+            for cr in crs:
+                if bs not in fixed_code and bs not in rowchars[cr]:
+                    rowchars[cr].append(bs)
     # a new font only starts on an odd character row (a square's second),
     # whose DLI sets CHBASE; DLI_SQ has no time for it (D52).  So rows
     # are taken in groups: 0, then 1-2, 3-4, ... 21.
@@ -880,19 +922,22 @@ def build_pair(mapname, left, right, seeds, font_addr):
         codes.append(cs)
     fixed_chars = fixed_list
     stats = []
-    for side, cols in (("left", range(0, 10)), ("right", range(10, 20))):
-        lsq = [(r, c) for r in range(ROWS) for c in cols if outline[r][c] == "#"]
+    for side, own in (("left", "#H"), ("right", "oh")):
+        lsq = [(r, c) for r in range(ROWS) for c in range(COLS) if outline[r][c] == own[0]]
+        if not lsq:
+            continue
         full = sum(1 for r, c in lsq if tgrid[r][c] in (T["T_GRASS"], T["T_GRASS2"], T["T_GRASS3"], T["T_GRASS4"]))
-        px = sum(1 for y in range(H2) for x in range(cols.start * TW, cols.stop * TW) if land[y][x])
+        px = sum(1 for r, c in lsq for y in range(r * TH, r * TH + TH)
+                 for x in range(c * TW, c * TW + TW) if land[y][x])
         rows = [r for r, c in lsq]
         harb = [(r, c if side == "left" else COLS - 1 - c)
-                for r in range(ROWS) for c in cols if outline[r][c] == "H"]
+                for r in range(ROWS) for c in range(COLS) if outline[r][c] == own[1]]
         stats.append("  %-5s land squares %d (%d full, %d coast), land pixels %d "
                      "(%.0f%% of its squares), land rows %d-%d, harbour %s"
                      % (side, len(lsq), full, len(lsq) - full, px,
                         100.0 * px / (TW * TH * len(lsq)), min(rows), max(rows),
                         ", ".join("row %d, %d from the outer edge" % h for h in harb)))
-    return dict(name=mapname, font_addr=font_addr, land=land, outline=outline, tiles=tiles, bndvar=bndvar,
+    return dict(name=mapname, font_addr=font_addr, gentile=gentile, land=land, outline=outline, tiles=tiles, bndvar=bndvar,
                 kinds=kinds, tgrid=tgrid, fonts=fonts, rowfont=rowfont,
                 codes=codes, fixed_chars=fixed_chars, anim=anim, stats=stats)
 
@@ -1080,6 +1125,8 @@ def main():
     if prev_dir:
         for q in ps:
             preview(q, os.path.join(prev_dir, "map-%s.png" % q["name"].strip().lower()))
+        for seed in range(3):
+            preview(random_pair(ps[MAP_RND], seed), os.path.join(prev_dir, "random-%d.png" % seed))
     ntiles = max(len(q["tiles"]) for q in ps)
 
     # tiles.asm

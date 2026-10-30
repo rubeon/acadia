@@ -164,26 +164,22 @@ typ("1")
 if m.byte("SU_VAL", KEYPAD) != 1 or row(11)[32:35] != "YES":
     fail("keypad 1 (5 ignored): %d, %r" % (m.byte("SU_VAL", KEYPAD), row(11)))
 tap(stick=DOWN)
-if m.byte("SU_FLD") != MAP or row(13)[29:35] != "ACADIA":
+if m.byte("SU_FLD") != MAP or row(13)[27:35] != "STANDARD":
     fail("1 player: down from KEYPAD: field %d, %r" % (m.byte("SU_FLD"), row(13)))
 box = m.addr("MAPSCR") + 20 + 40 * 13
-if [m.mem[box + i] >> 7 for i in range(27, 37)] != [0, 1, 1, 1, 1, 1, 1, 1, 1, 0]:
-    fail("map line: inverse box not over columns 28-35")
-# the map line: names, digits 1-4, RANDOM last
-for d, name in (("2", " ISLES"), ("3", "LAGOON"), ("4", "RANDOM"), ("7", "RANDOM"), ("1", "ACADIA")):
+if [m.mem[box + i] >> 7 for i in range(25, 37)] != [0] + [1] * 10 + [0]:
+    fail("map line: inverse box not over columns 26-35")
+# the map line: names, digits 1-3
+for d, name in (("2", " CLASSIC"), ("3", "  RANDOM"), ("4", "  RANDOM"), ("1", "STANDARD")):
     typ(d)
-    if row(13)[29:35] != name:
+    if row(13)[27:35] != name:
         fail("map %s: %r" % (d, row(13)))
-tap(stick=RIGHT)
-tap(stick=RIGHT)
-tap(stick=RIGHT)
-tap(stick=RIGHT)
-if m.byte("SU_VAL", MAP) != 4:
+for _ in range(4):
+    tap(stick=RIGHT)
+if m.byte("SU_VAL", MAP) != 3:
     fail("map right x 4: %d" % m.byte("SU_VAL", MAP))
-tap(stick=LEFT)
-tap(stick=LEFT)
-tap(stick=LEFT)
-tap(stick=LEFT)
+for _ in range(4):
+    tap(stick=LEFT)
 if m.byte("SU_VAL", MAP) != 1:
     fail("map left x 4: %d" % m.byte("SU_VAL", MAP))
 tap(stick=DOWN)

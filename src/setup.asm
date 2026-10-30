@@ -7,7 +7,7 @@
 ;    PLAYERS             1-2
 ;    CPU LEVEL           1-3      (1 player only; skipped with 2)
 ;    KEYPAD IN PORT 2    NO/YES   (1 player only; skipped with 2; D49)
-;    MAP                 1-4      (a map by name, or RANDOM; D56)
+;    MAP                 1-3      (STANDARD, CLASSIC, RANDOM; D56)
 ;  Stick up/down or SELECT picks a line; stick left/right changes it
 ;  (held: repeats), or digits type a number.  START or fire begins.
 ;  Typed numbers are brought into range when the line is left or the
@@ -25,8 +25,8 @@ SU_NF   =  6            ; number of lines (fields)
 SU_FPLY =  2            ; PLAYERS field
 SU_FLVL =  3            ; CPU LEVEL field; this and the next: 1 player
 SU_FKP  =  4            ; KEYPAD field: 0 no, 1 yes
-SU_FMAP =  5            ; MAP field: map 1 to N_MAPS, N_MAPS+1 random
-SU_MAPW =  6            ; characters in a map's name (MAPNAME)
+SU_FMAP =  5            ; MAP field: map 1 to N_MAPS
+SU_MAPW =  8            ; characters in a map's name (MAPNAME)
 SU_DEFP =  2            ; default: 2 players
 SU_DEFL =  2            ; default CPU level
 SU_DELAY = 20           ; frames before a held left/right repeats
@@ -204,8 +204,7 @@ SF_DONE LDA SU_J
         JMP SU_DRAW
 
 ; ---------------------------------------------------------------------
-;  SU_GO -- leave setup: every value into range, the map (RANDOM:
-;  one of them, again for every game), then a new game
+;  SU_GO -- leave setup: every value into range, then a new game
 ; ---------------------------------------------------------------------
 SU_GO   LDX #SU_NF-1
 SG_CLMP JSR SU_CLX
@@ -215,14 +214,9 @@ SG_CLMP JSR SU_CLX
         STA NUMTRN
         LDA SU_VAL+1
         STA TRNLEN
-        LDA SU_VAL+SU_FMAP ; map 1 to N_MAPS: map number 0 up
-        SEC
-        SBC #1
-        CMP #N_MAPS
-        BCC SG_MAP
-        LDA #N_MAPS     ; RANDOM
-        JSR RAND_N
-SG_MAP  STA MAPNO
+        LDX SU_VAL+SU_FMAP ; map 1 to N_MAPS: map number 0 up
+        DEX
+        STX MAPNO
         LDA #<DLIST     ; back to the map display list
         STA SDLSTL
         JMP GAME_START
@@ -391,10 +385,9 @@ SW_ONE  CPX #SU_FKP
 SW_MAP  LDA SU_VAL+SU_FMAP ; name number 1 up, ending where numbers do
         SEC
         SBC #1
-        STA SU_T
         ASL A
-        ADC SU_T        ; x 3 (carry clear: small)
-        ASL A           ; x 6 = SU_MAPW
+        ASL A
+        ASL A           ; x 8 = SU_MAPW
         TAX
         LDY #0
 SW_MCH  LDA MAPNAME,X
@@ -465,7 +458,7 @@ SU_ROWADR
 
 ; Field ranges (original: $504C, $50F3) and stick steps
 SU_MIN  .BYTE 1,30,1,1,0,1
-SU_MAX  .BYTE 50,120,2,3,1,N_MAPS+1
+SU_MAX  .BYTE 50,120,2,3,1,N_MAPS
 SU_STP  .BYTE 1,5,1,1,1,1
 SUF_ROW .BYTE 3,5,7,9,11,13     ; mode 2 line of each field
 
@@ -481,7 +474,7 @@ SUL_LVL .SBYTE "CPU LEVEL (1-3)"
         .BYTE TX_END
 SUL_KP  .SBYTE "KEYPAD IN PORT 2 (0-1)"
         .BYTE TX_END
-SUL_MAP .SBYTE "MAP (1-4)"
+SUL_MAP .SBYTE "MAP (1-3)"
         .BYTE TX_END
 SUKP_L  .BYTE <SUK_NO,<SUK_YES
 SUKP_H  .BYTE >SUK_NO,>SUK_YES

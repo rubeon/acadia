@@ -38,7 +38,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 | T-CTL-1 | Pause: `PAUSEK` edge flag in `input.asm`, freeze tic/clock/sprites/AI, mute and restore POKEY, PAUSED on status bar | R-CTL-6 | T-SVC-3, T-SVC-4 | Pausing mid-round and resuming changes nothing in game state; no keys or stick act while paused | done |
 | T-CTL-2 | Keypad controller in port 2 for 1-player games (D49) | R-CTL-8 | T-SCR-1 | Keys 0-9, * and # act as the number keys, P and H; setup line to switch it on | done (emulated; real keypad untested) |
 | T-SCR-1 | Setup screen: rounds, round length, mode | R-MODE-3 | T-SVC-4 | Values validated to original ranges | done (D31; CPU from T-AI-1) |
-| T-MAP-3 | Choice of map on the setup screen: three island pairs and RANDOM (D56) | R-MODE-3 | T-MAP-1, T-SCR-1 | Each map plays with equal islands; the CPU finds its way on each | in review (Claude) |
+| T-MAP-3 | Choice of map on the setup screen: STANDARD, CLASSIC (the original's layout), RANDOM (D56) | R-MODE-3 | T-MAP-1, T-SCR-1 | Each map plays with equal islands; the CPU finds its way on each | in review (Claude) |
 
 ## M3 — Rounds and scoring (the economic game)
 

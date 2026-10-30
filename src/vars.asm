@@ -404,6 +404,11 @@ ML_D    *= *+1          ; ML_STEPS: steps of this pass
 ML_CH   *= *+1          ; ML_STEPS: not 0 when this pass changed a square
 ML_C    *= *+1          ; ML_STEPS: column of square Y
 ML_I    *= *+1          ; ML_STEPS: the square whose neighbours are done
+RM_S    *= *+1          ; RM_GEN: the side (player) being grown
+RM_R    *= *+1          ; RM_GEN: a row
+RM_C    *= *+1          ; RM_GEN: a column
+RM_K    *= *+1          ; RM_GEN: a count, or the land neighbours
+RM_I    *= *+1          ; RM_GEN: a square or harbour row kept
 
 ; ---------------------------------------------------------------------
 VAREND
