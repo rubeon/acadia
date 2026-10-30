@@ -434,12 +434,15 @@ SEA = ["." * 20] * 11
 MAPS = [
     ("STANDARD", [l + r.replace("#", "o").replace("H", "h") for l, r in zip(LEFT, RIGHT)],
      (11, 29), [0x3000, 0x4800, 0x8800], False),
-    (" CLASSIC", CLASSIC, (17,), [0x8C00, 0x9C00, 0xA000, 0xBC00], False),
-    ("  RANDOM", SEA, (11, 29), [0xA400, 0xA800, 0xAC00], True),
+    (" CLASSIC", CLASSIC, (17,), [0x8C00, 0xA000, 0xA400], False),
+    ("  RANDOM", SEA, (11, 29), [0xA800], True),
 ]
 MAP_RND = 2                    # the map MAP_LOAD makes up afresh
-N_FONTS = 4                    # fonts per map at most (FONTPG padded to this)
-MAPSRC = 0xB000                # the maps' data blocks (MAPS0, MAPS1, ...)
+N_FONTS = 3                    # fonts per map at most (FONTPG padded to this)
+MAPSRC = 0xAC00                # the maps' data blocks (MAPS0, MAPS1, ...)
+# Nothing loads at $9C00-$9FFF or $BC00-$BFFF: an XL's screen while the
+# file loads is there (BASIC in or out), and the MiSTer core's loader
+# stops if it is loaded over (D57).
 
 ROWS, COLS = 11, 20
 PW, PH = COLS * 8, ROWS * 8
@@ -782,7 +785,7 @@ def random_pair(q, seed):
     return dict(q, tgrid=tg)
 
 
-def build_pair(mapname, outline, seeds, font_addr, generic=False):
+def build_pair(mapname, outline, seeds, font_addr, generic=False, base=None):
     bm = pair_map(outline, seeds)
     for r in BANDS:
         assert set(outline[r]) <= set(".r"), "map %s row %d must be open sea" % (mapname, r)
@@ -887,8 +890,15 @@ def build_pair(mapname, outline, seeds, font_addr, generic=False):
     # a new font only starts on an odd character row (a square's second),
     # whose DLI sets CHBASE; DLI_SQ has no time for it (D52).  So rows
     # are taken in groups: 0, then 1-2, 3-4, ... 21.
+    # With a base map (D57), the corner rows' characters (the same on
+    # every map) are taken from its fonts: rowfont -1 - f is its font f.
     fonts, rowfont = [[]], []
     groups = [[0]] + [[cr, cr + 1] if cr + 1 < CROWS else [cr] for cr in range(1, CROWS, 2)]
+    if base:
+        groups = [[cr, cr + 1] for cr in range(3, 19, 2)]
+        for cr in CORNER_CR:
+            f = base["fonts"][base["rowfont"][cr]]
+            assert all(bs in f for bs in rowchars[cr]), "corner row %d not in the base font" % cr
     for grp in groups:
         need = []
         for cr in grp:
@@ -902,6 +912,10 @@ def build_pair(mapname, outline, seeds, font_addr, generic=False):
                      % (grp, len(need), 128 - nfc))
         fonts[-1] += new
         rowfont += [len(fonts) - 1] * len(grp)
+    if base:
+        rowfont = [-1 - base["rowfont"][cr] for cr in CORNER_CR[:3]] + rowfont + \
+                  [-1 - base["rowfont"][cr] for cr in CORNER_CR[3:]]
+    assert len(rowfont) == CROWS
     assert all(rowfont[cr] == rowfont[cr - 1] or cr % 2 for cr in range(1, CROWS))
     if len(fonts) > len(font_addr):
         sys.exit("map %s needs %d map fonts; only %d fit" % (mapname, len(fonts), len(font_addr)))
@@ -916,7 +930,8 @@ def build_pair(mapname, outline, seeds, font_addr, generic=False):
                 code = fixed_code[bs]
             else:
                 r = int(td[1].split()[-1])
-                f = fonts[rowfont[2 * r + q // 2]]
+                rf = rowfont[2 * r + q // 2]
+                f = fonts[rf] if rf >= 0 else base["fonts"][-1 - rf]
                 code = nfc + f.index(bs)
             cs.append(code | (0x80 if inv else 0))
         codes.append(cs)
@@ -1118,7 +1133,8 @@ def main():
     if "--preview" in sys.argv:
         prev_dir = sys.argv[sys.argv.index("--preview") + 1]
         os.makedirs(prev_dir, exist_ok=True)
-    ps = [build_pair(*m) for m in MAPS]
+    ps = [build_pair(*MAPS[0])]
+    ps += [build_pair(*m, base=ps[0]) for m in MAPS[1:]]
     p = ps[0]
     for q in ps[1:]:
         assert q["fixed_chars"] == p["fixed_chars"] and q["anim"] == p["anim"]
@@ -1202,7 +1218,7 @@ def main():
         if live:
             o.append("; ROWFONT: font page (CHBASE) for each character row (2 per square row)")
             o.append("ROWFONT")
-        names = [">MFNT%d%d" % (mi, f) for f in q["rowfont"]]
+        names = [">MFNT%d%d" % (mi, f) if f >= 0 else ">MFNT0%d" % (-1 - f) for f in q["rowfont"]]
         o.append("        .BYTE " + ",".join(names[:11]))
         o.append("        .BYTE " + ",".join(names[11:]))
         if live:

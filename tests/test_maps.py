@@ -80,8 +80,12 @@ def check_map(m, mp, what):
     if any(k & K_KIND != K_LAND and up[i] == 255 for i, k in enumerate(kinds)):
         fail("%s: sea shut in by land" % what)
     fp = [m.byte("FONTPG", i) for i in range(m.addr("N_FONTS"))]
+    fp += [m.addr("MFNT00") >> 8, m.addr("MFNT02") >> 8]   # corner rows (D57)
     if any(m.byte("ROWFONT", r) not in fp for r in range(22)):
         fail("%s: ROWFONT uses a font not in FONTPG" % what)
+    for seg, hi in (("$9C00", 0x9C), ("$BC00", 0xBC)):
+        if any(f >> 2 == hi >> 2 for f in fp):
+            fail("%s: a font at %s, under the screen while loading" % (what, seg))
     return kinds
 
 
