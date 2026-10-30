@@ -1269,6 +1269,7 @@ def main():
     out.append("N_TILES = %d" % ntiles)
     out.append("N_FONTS = %d" % N_FONTS)
     out.append("N_MAPS  = %d" % len(ps))
+    out.append("MAP_RND = %d" % MAP_RND)
     out.append("")
     out.append("; The maps' data blocks (D56), each laid out as TILECH ... FONTPG")
     out.append("        *= $%04X" % MAPSRC)
@@ -1278,11 +1279,15 @@ def main():
         out.append("; map %d: %s" % (mi + 1, q["name"].strip()))
         out += map_block(q, mi, False)
     out.append("MAPSEND")
-    out.append("; MAPNAME: each map's name on the setup screen, then RANDOM")
+    out.append("; MAPNAME: each map's name on the setup screen")
     out.append("MAPNAME")
     for q in ps:
         out.append('        .SBYTE "%s"' % q["name"])
-    out.append('        .SBYTE "RANDOM"')
+    out.append("; RNDTILE: RANDOM's coast piece for each mask of land neighbours")
+    out.append("; (1 N, 2 E, 4 S, 8 W) but 15; GRSTL: its grass tile by row AND 3")
+    out.append("; x 4 + column AND 3 (grass_pick); for RM_GEN")
+    out.append("RNDTILE .BYTE " + hexes(ps[MAP_RND]["gentile"]))
+    out.append("GRSTL   .BYTE " + hexes([grass_tile(r, c) for r in range(4) for c in range(4)]))
     open("src/islands.asm", "w").write("\n".join(out) + "\n")
 
     for q in ps:

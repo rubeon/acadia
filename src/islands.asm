@@ -142,6 +142,7 @@ WV_PH   = 4
 N_TILES = 114
 N_FONTS = 4
 N_MAPS  = 3
+MAP_RND = 2
 
 ; The maps' data blocks (D56), each laid out as TILECH ... FONTPG
         *= $B000
@@ -328,9 +329,13 @@ MAPS2
         .BYTE $3D,$40,$00,$00,$00,$00,$00,$00,$00,$43,$46
         .BYTE >MFNT20,>MFNT21,>MFNT22,>MFNT22
 MAPSEND
-; MAPNAME: each map's name on the setup screen, then RANDOM
+; MAPNAME: each map's name on the setup screen
 MAPNAME
         .SBYTE "STANDARD"
         .SBYTE " CLASSIC"
         .SBYTE "  RANDOM"
-        .SBYTE "RANDOM"
+; RNDTILE: RANDOM's coast piece for each mask of land neighbours
+; (1 N, 2 E, 4 S, 8 W) but 15; GRSTL: its grass tile by row AND 3
+; x 4 + column AND 3 (grass_pick); for RM_GEN
+RNDTILE .BYTE $2E,$2F,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$3A,$3B,$3C
+GRSTL   .BYTE $01,$15,$14,$13,$13,$13,$13,$13,$14,$15,$01,$13,$15,$13,$15,$13
