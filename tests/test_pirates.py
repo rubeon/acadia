@@ -144,7 +144,10 @@ if item(10, 1) != I_FSBT or m.byte("PTCH") != 19:
 tic(1)
 if item(10, 1) or count(0, I_FSBT) != 1 or m.byte("PTCH"):
     fail("20th tic: item %d boats %d count %d" % (item(10, 1), count(0, I_FSBT), m.byte("PTCH")))
-if chars(10, 1) != m.byte("TILECH", T_WRECK) or not m.byte("SNKT"):
+wreck = T_WRECK
+if m.byte("BNDVAR", 1):                  # a corner row: its own wreck (D55)
+    wreck = m.byte("BNDVAR", 1) + T_WRECK - m.addr("T_PTBOAT")
+if chars(10, 1) != m.byte("TILECH", wreck) or not m.byte("SNKT"):
     fail("no wreck after a pirate sank a boat")
 if not m.byte("FACT", P):
     fail("the pirate went down with the boat")

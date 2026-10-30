@@ -5,7 +5,8 @@
 ; ---------------------------------------------------------------------
 ;  VD_SHADE -- ROWBK / ROWPF0: the sea and grass colours of each
 ;  character row (D51): MAPPAL's, luminance + SEADEL / GRNDEL (kept
-;  0-14), attract mode applied.  Notes what it was built from in AP_SH,
+;  0-14), attract mode applied.  In the corner rows (GRNDEL = GR_SEA,
+;  D55) PF0 is the light sea instead of grass.  Notes what it was built from in AP_SH,
 ;  AP_MSK, AP_BK, AP_GR.  Trashes A, X, Y.
 ; ---------------------------------------------------------------------
 VD_SHADE
@@ -24,7 +25,11 @@ VS_ROW  LDA MAPPAL      ; sea
         STA ROWBK,X
         LDA MAPPAL+1    ; grass
         LDY GRNDEL,X
-        JSR VS_LUM
+        CPY #GR_SEA
+        BNE VS_GR
+        LDA MAPPAL      ; a corner row: PF0 is the light sea (D55)
+        LDY #SEA_LT
+VS_GR   JSR VS_LUM
         STA ROWPF0,X
         DEX
         BPL VS_ROW
@@ -51,12 +56,17 @@ VL_OK   AND #$0E
         AND DRKMSK
         RTS
 
-; Luminance change per character row: the open sea lighter round the
-; islands (one character row past the land), as is at the top and
-; bottom; the grass lit from the north.  Every band starts on an odd
-; (mid-square) row, where DLI_ROW sets the shades first (D52)
+; Luminance change per character row.  The sea is the light blue
+; (MAPPAL + SEA_LT) everywhere; the top and bottom 3 rows (D55) have
+; MAPPAL's blue as COLBK for the rounded corners and the light sea in
+; PF0 (GRNDEL = GR_SEA), since they hold no land.  The grass is lit
+; from the north.  Every band starts on an odd (mid-square) row, where
+; DLI_ROW sets the shades first (D52)
+SEA_LT  =  2            ; the light sea: MAPPAL's sea, 2 lighter
+GR_SEA  =  $80          ; GRNDEL: PF0 is the light sea
 SEADEL  .BYTE 0,0,0,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,0,0,0
-GRNDEL  .BYTE 2,2,2,2,2,2,2,0,0,0,0,0,0,0,0,$FE,$FE,$FE,$FE,$FE,$FE,$FE
+GRNDEL  .BYTE GR_SEA,GR_SEA,GR_SEA,2,2,2,2,0,0,0,0,0,0,0,0,$FE,$FE,$FE,$FE
+        .BYTE GR_SEA,GR_SEA,GR_SEA
 
 ; ---------------------------------------------------------------------
 ;  WAVE_ANI -- every WV_RATE frames, the next phase of the wave glints:
@@ -108,3 +118,21 @@ WA_CPY  LDA (TPTR),Y
 WA_RTS  RTS
 
 WV_RATE =  16           ; frames per wave phase (power of 2)
+
+; ---------------------------------------------------------------------
+;  BND_TILE -- MAP_PUT: a PT boat, fishing boat or wreck in a corner
+;  row (D55) is drawn as that row's variant (BNDVAR), whose sea is in
+;  PF0 like the rest of the row.  In: MTILE, Y = row.  Out: MTILE.
+;  Keeps X, Y; trashes A.
+; ---------------------------------------------------------------------
+BND_TILE
+        LDA BNDVAR,Y
+        BEQ BT_DONE     ; not a corner row
+        LDA MTILE
+        SEC
+        SBC #T_PTBOAT   ; T_PTBOAT, T_FISHBOAT, T_WRECK in a row
+        CMP #3
+        BCS BT_DONE
+        ADC BNDVAR,Y    ; carry clear
+        STA MTILE
+BT_DONE RTS
