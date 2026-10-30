@@ -42,6 +42,7 @@ TE_TXT  LDA TT_SUB,X
         STA TT_SCR+20,X
         DEX
         BPL TE_TXT
+        JSR TI_COLS     ; the ROM font
         LDA #C_SEA      ; the map's palette (D16)
         STA COLOR4
         LDA #C_GRASS
@@ -94,11 +95,13 @@ TF_DONE RTS
 TF_ARMED
         CMP #0
         BEQ TF_DONE
-        JSR TI_COLS
         JMP SETUP_ENTER
 
-; TI_COLS -- status bar colours back for the other screens.  Trashes A.
-TI_COLS LDA #C_STXT
+; TI_COLS -- the ROM font and the text colours for the title and setup
+; screens.  Trashes A.
+TI_COLS LDA #ROMFONT
+        STA CHBAS
+        LDA #C_STXT
         STA COLOR1
         LDA #C_SBAR
         STA COLOR2

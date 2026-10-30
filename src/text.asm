@@ -4,6 +4,8 @@
 ;  Positions are offsets into the status lines: 0-39 is line 1
 ;  (STATUS1), 40-79 is line 2 (STATUS2, which follows it in RAM).
 ;  Text is in screen codes (MAC/65 .SBYTE): "0" = $10, space = 0.
+;  The status font (STFONT, D54) shows them white; TXCOL picks the
+;  digits' colour.
 ; =====================================================================
 
 TX_END  =  $FF          ; string terminator
@@ -32,7 +34,8 @@ TS_DONE RTS
 ; ---------------------------------------------------------------------
 ;  TXT_DEC -- print a number in decimal, right-aligned in a field
 ;  In: M_NUM = value (24 bits; see NUM16), A = field width (1-5),
-;      X = status offset of the field's first character.
+;      X = status offset of the field's first character, TXCOL = ORed
+;      into each digit and "*" (0 white, TX_RED, TX_TURQ; ST_DEC).
 ;  Leading zeros become spaces (a zero value prints "0").  A value too
 ;  wide for the field prints as all "*".  The digits are worked out in
 ;  TBUF first, so each screen byte is written once, with its final
@@ -67,6 +70,7 @@ TD_LZ   INY
 TD_REST LDA TBUF-1,Y
         CLC
         ADC #SC_0
+        ORA TXCOL       ; its colour
         STA STATUS1,X
         INX
         INY
@@ -77,6 +81,7 @@ TD_REST LDA TBUF-1,Y
 TD_OVF  LDX TOFS
         LDY TCNT
         LDA #SC_STAR
+        ORA TXCOL
 TD_STAR STA STATUS1,X
         INX
         DEY

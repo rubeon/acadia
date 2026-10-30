@@ -18,12 +18,8 @@ def fail(msg):
 
 
 def screen_text(start, n):
-    """Status-line screen codes back to ASCII (digits, letters, space, *)."""
-    out = ""
-    for i in range(n):
-        c = m.byte("STATUS1", start + i)
-        out += chr(c + 0x20) if c < 0x40 else chr(c - 0x40)
-    return out
+    """Status-line screen codes back to ASCII, colour dropped."""
+    return m.status(start, n)
 
 
 def dec(value, width, offset=10):
@@ -53,41 +49,63 @@ m.call("VARS_INIT")
 for i in range(80):
     m.mem[m.addr("STATUS1") + i] = m.mem[tpl + i]
 line = screen_text(40, 40)                       # template is exactly 2 x 40
-want = "POP                            POP      "
+want = "  @@                             @@     "
 if line != want:
     fail("status line 2 template %r, want %r" % (line, want))
 m.call("GAME_NEW")
 line = screen_text(0, 40)
-want = "GOLD  100  TURNS 10  TIME  30  GOLD  100"
+want = "  $$  100  TURNS 10  TIME  30    $$  100"
 if line != want:
     fail("status line 1 %r, want %r" % (line, want))
 else:
     print("status line 1: %r" % line)
 line = screen_text(40, 40)
-want = "POP  1000                      POP  1000"
+want = "  @@ 1000                        @@ 1000"
 if line != want:
     fail("status line 2 %r, want %r" % (line, want))
 for _ in range(30):                              # one full round
     m.call("GAME_SEC")
 line = screen_text(0, 40)
 want = "P1    0       ROUND SCORES       P2    0"
+if (m.byte("STATUS1") & 0xC0 != 0x40 or m.byte("STATUS1", 39) & 0xC0 != 0x80
+        or m.byte("ST_L1") != m.addr("C_SRED")):
+    fail("round summary colours %02X %02X" % (m.byte("STATUS1"), m.byte("STATUS1", 39)))
 if line != want:
     fail("round summary %r, want %r" % (line, want))
 for _ in range(120):                             # both summary pages
     m.call("GAME_TIC")
 line = screen_text(0, 40)
-want = "GOLD  110  TURNS  9  TIME  30  GOLD  110"
+want = "  $$  110  TURNS  9  TIME  30    $$  110"
 if line != want:
     fail("after a round %r, want %r" % (line, want))
 else:
     print("after a round: %r" % line)
 line = screen_text(40, 40)
 pops = [m.byte("POP", 2 * p) + 256 * m.byte("POP", 2 * p + 1) for p in (0, 1)]
-want = "POP %5d                      POP %5d" % tuple(pops)
+want = "  @@%5d                        @@%5d" % tuple(pops)
 if line != want:
     fail("line 2 after a round %r, want %r" % (line, want))
 else:
     print("line 2 after a round: %r" % line)
+
+# colours (D54): the numbers white; the icons in place, player 2's
+# person inverse
+m.call("STAT_LINE")
+raw = [m.byte("STATUS1", i) for i in range(80)]
+for i, c in enumerate(raw):
+    want = 0
+    if (c & 0x7F) >= 0x60:
+        continue                                 # icons: checked below
+    if c & 0xC0 != want:
+        fail("status offset %d: code %02X, colour bits want %02X" % (i, c, want))
+icons = {i: c for i, c in enumerate(raw) if (c & 0x7F) >= 0x60}
+want = {2: 0x60, 3: 0x61, 33: 0x60, 34: 0x61, 42: 0x62, 43: 0x63, 73: 0xE4, 74: 0xE5}
+if icons != want:
+    fail("status icons %r, want %r" % (icons, want))
+if m.byte("TXCOL"):
+    fail("TXCOL %02X after STAT_DRAW, want 0" % m.byte("TXCOL"))
+if m.byte("ST_L1") != m.addr("C_SDKG"):
+    fail("ST_L1 %02X with the gold bars showing" % m.byte("ST_L1"))
 
 # each screen byte of a field is written once, with its final value: a
 # leading zero must never show, even for a moment (no flicker)

@@ -43,7 +43,6 @@ DG_SAV  LDA SU_VAL,X
         LDA #0
         STA DM_POS
         STA DM_J
-        JSR TI_COLS     ; status bar colours
         LDA #<DLIST     ; same page as TDLIST: one store switches
         STA SDLSTL
         JMP GAME_START

@@ -800,9 +800,10 @@ def banner(name, what):
 
 
 
-# map fonts, 1K aligned; $4C00 holds the help font.  $8800-$9BFF is RAM
-# on a 48K machine below where the OS screen sits while loading.
-FONT_ADDR = [0x3000, 0x4800, 0x8800, 0x8C00, 0x9000, 0x9400, 0x9800]
+# map fonts, 1K aligned; $4C00 holds the help font.  $8800-$97FF is RAM
+# on a 48K machine below where the OS screen sits while loading; $9800
+# is the status bar font (tools/mkstat.py).
+FONT_ADDR = [0x3000, 0x4800, 0x8800, 0x8C00, 0x9000, 0x9400]
 
 # ---------------------------------------------------------------------
 #  Help font (T-SCR-3): the fixed tiles at their usual codes, then 3 x 5
