@@ -50,6 +50,7 @@ GAME_NEW
         STA TRNLEN
 GAME_START
         JSR MUS_STOP    ; the title tune ends
+        JSR ST_COLS     ; the status bar's font and colours (D54)
         JSR KP_OFF      ; port 2: a stick, or the keypad in a 1-player
         LDA SU_VAL+SU_FPLY ; game with KEYPAD set (D49)
         CMP #1
@@ -115,7 +116,8 @@ STAT_DRAW
         JSR NUM16
         LDA #4
         LDX #ST_G0
-        JSR TXT_DEC
+        LDY #TX_RED     ; player 1's numbers in red
+        JSR ST_DEC
         LDA NUMTRN      ; rounds left
         SEC
         SBC CURTRN
@@ -135,19 +137,22 @@ STAT_DRAW
         JSR NUM16
         LDA #4
         LDX #ST_G1
-        JSR TXT_DEC
+        LDY #TX_TURQ    ; player 2's in turquoise
+        JSR ST_DEC
         LDA POP         ; line 2: populations (D44)
         LDX POP+1
         JSR NUM16
         LDA #5
         LDX #ST_P0
-        JSR TXT_DEC
+        LDY #TX_RED
+        JSR ST_DEC
         LDA POP+2
         LDX POP+3
         JSR NUM16
         LDA #5
         LDX #ST_P1
-        JMP TXT_DEC
+        LDY #TX_TURQ
+        JMP ST_DEC
 
 ; ---------------------------------------------------------------------
 ;  GAME_SEC -- a new second: during a round, count TIME down and end
@@ -372,19 +377,19 @@ SH_CLR  STA STATUS1,X
         JSR NUM16
         LDA #4
         LDX #SP_V0
-        JSR TXT_DEC
+        LDY #TX_RED
+        JSR ST_DEC
         LDA SV1
         LDX SV1+1
         JSR NUM16
         LDA #4
         LDX #SP_V1
-        JMP TXT_DEC
+        LDY #TX_TURQ
+        JMP ST_DEC
 
 ; Texts (screen codes); titles are 22 characters, centred
-TX_P1   .SBYTE "P1"
-        .BYTE TX_END
-TX_P2   .SBYTE "P2"
-        .BYTE TX_END
+TX_P1   .BYTE $30+TX_RED,$11+TX_RED,TX_END     ; "P1" in red (STFONT)
+TX_P2   .BYTE $30+TX_TURQ,$12+TX_TURQ,TX_END   ; "P2" in turquoise
 TX_RND  .SBYTE "     ROUND SCORES     "
         .BYTE TX_END
 TX_TOT  .SBYTE "     TOTAL SCORES     "

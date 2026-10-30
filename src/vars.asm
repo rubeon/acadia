@@ -233,6 +233,8 @@ TCNT    *= *+1          ; TXT_DEC: field width
 TOFS    *= *+1          ; TXT_DEC: field start
 TPOS    *= *+1          ; TXT_DEC: current digit position
 TBUF    *= *+5          ; TXT_DEC: the digits, before they go on screen
+TXCOL   *= *+1          ; TXT_DEC: colour bits ORed into the digits (D54)
+STBK    *= *+2          ; status lines' backgrounds, attract applied (VBI_D)
 
 ; ---------------------------------------------------------------------
 ;  Game state (ARCHITECTURE section 7 names).  For now only the test

@@ -104,6 +104,7 @@ SE_NXT  LDX SU_I
         DEX
         BPL SE_STA
         JSR SU_DRAW
+        JSR TI_COLS     ; ROM font, text colours
         LDA #C_TITLE
         STA COLOR0
         LDA #<SUDLIST   ; same page as DLIST: one store switches

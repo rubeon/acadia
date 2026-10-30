@@ -96,8 +96,8 @@ expect_buy("16-bit gold", 0, 6, 6, 5, True)
 if gold(0) != 240:
     fail("gold %d after 300 - 60" % gold(0))
 
-# the status bar shows the new gold: "GOLD  240" at offset 5
-txt = "".join(chr(m.byte("STATUS1", 5 + i) + 0x20) for i in range(4))
+# the status bar shows the new gold at offset 5
+txt = m.status(5, 4)
 if txt != " 240":
     fail("status bar gold %r" % txt)
 

@@ -40,8 +40,7 @@ def frame(kb=None, fire0=False, console=0):
 
 
 def line(n):
-    base = "STATUS1" if n == 1 else "STATUS2"
-    return "".join(chr(m.byte(base, i) + 0x20) for i in range(40))
+    return m.status(0 if n == 1 else 40, 40)
 
 
 def frames_until(cond, limit):
@@ -78,7 +77,7 @@ for key, title, src in ((START, "TOTAL SCORE", "SCORE"), (SELECT, "POPULATION", 
     if src == "POP" and ("%4d" % m.word("POP")) not in line(1)[:8]:
         fail("population page %r, pop %d" % (line(1), m.word("POP")))
 frame()
-if "GOLD" not in line(1) or "TURNS" not in line(1):
+if "$$" not in line(1) or "TURNS" not in line(1):
     fail("status line not restored: %r" % line(1))
 
 # round 1 ends after 2 s: round scores for 3 s, then totals for 3 s
