@@ -263,23 +263,28 @@ PIER_W = [
     "........",
     "........"]
 
-# Wave glints on the open sea (white: inverse characters), animated by
-# WAVE_ANI: WV_PH phases, each a crest (row, column) drawn by phase.
-# Both tiles use the same phases; WAVE2 runs WV_PH / 2 behind.
+# Wave glints and sparkles on the open sea (white: inverse characters),
+# animated by WAVE_ANI in WV_PH phases.  A wave tile has one crest at
+# (row, column) that rolls right and breaks; WAVE2 runs WV_PH / 2
+# behind.  The sparkle tile has two dots that twinkle in turn.
 WV_PH = 4
 CREST = [[".WW.", "W..W"],          # phase 0: a crest
          [".WW.", "W..W"],          # 1: the same, 1 pixel right
          ["..W.", ".W.W"],          # 2: breaking up, 2 right
          []]                        # 3: calm
-WAVE_GLINTS = {"T_WAVE1": [(4, 0), (12, 2)], "T_WAVE2": [(1, 2), (9, 0)]}
-WAVE_LAG = {"T_WAVE1": 0, "T_WAVE2": WV_PH // 2}
+WAVE_GLINTS = {"T_WAVE1": [(4, 1)], "T_WAVE2": [(10, 1)]}
+WAVE_LAG = {"T_WAVE1": 0, "T_WAVE2": WV_PH // 2, "T_SPARK": 0}
+SPARKS = [[(3, 1)], [(3, 1)], [(6, 3)], []]     # dots (row, column) by phase
 
 
 def wave_frame(name, phase):
-    """8 x 16 art of wave tile name in animation phase 0-3."""
+    """8 x 16 art of animated sea tile name in phase 0-3."""
     a = [list("........") for _ in range(TH)]
     p = (phase + WAVE_LAG[name]) % WV_PH
-    for row, col in WAVE_GLINTS[name]:
+    if name == "T_SPARK":
+        for row, col in SPARKS[p]:
+            a[row][col] = "W"
+    for row, col in WAVE_GLINTS.get(name, []):
         for dy, line in enumerate(CREST[p]):
             for dx, ch in enumerate(line):
                 if ch == "W":
@@ -289,6 +294,7 @@ def wave_frame(name, phase):
 
 WAVE1 = wave_frame("T_WAVE1", 0)
 WAVE2 = wave_frame("T_WAVE2", 0)
+SPARK = wave_frame("T_SPARK", 0)
 
 # Grass texture: dark tufts on green, repeated every square
 GRASS = [
@@ -549,8 +555,9 @@ FIXED += [("T_WRECK", "wreck of a parked boat", WRECK),
           ("T_ROCK", "rock (decorative)", ROCK),
           ("T_PIER_W", "harbour pier, land to the west", pier_art(True)),
           ("T_PIER_E", "harbour pier, land to the east", pier_art(False)),
-          ("T_WAVE1", "open sea, wave glints", WAVE1),
-          ("T_WAVE2", "open sea, other wave glints", WAVE2)]
+          ("T_WAVE1", "open sea, a wave", WAVE1),
+          ("T_WAVE2", "open sea, another wave", WAVE2),
+          ("T_SPARK", "open sea, sparkles", SPARK)]
 T = {t[0]: n for n, t in enumerate(FIXED)}
 NFIX = len(FIXED)
 
@@ -572,7 +579,7 @@ def quarters(a):
 def wave_tile(r, c):
     """Decorative sea tile for open-sea square r, c."""
     h = (r * 7 + c * 13) % 9
-    return T["T_WAVE1"] if h in (0, 4) else T["T_WAVE2"] if h == 2 else T["T_SEA"]
+    return {0: T["T_WAVE1"], 4: T["T_WAVE2"], 2: T["T_SPARK"], 7: T["T_SPARK"]}.get(h, T["T_SEA"])
 
 
 def build_pair(name, desc, left, right):
