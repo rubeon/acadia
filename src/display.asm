@@ -364,10 +364,10 @@ MD_COL  LDY GIDX
 ;  Status bar template (screen codes), 2 lines of 40.  Copied into the
 ;  RAM status lines STATUS1/STATUS2 (VARS.ASM) by DISP_INIT.
 ; ---------------------------------------------------------------------
-STATTPL .SBYTE "  "                   ; line 1: coin, gold, TURNS,
-        .BYTE IC_COIN,IC_COIN+1         ; TIME, coin, gold (D54)
+STATTPL .SBYTE "  "                   ; line 1: gold bar, gold, TURNS,
+        .BYTE IC_BAR,IC_BAR+1           ; TIME, gold bar, gold (D54)
         .SBYTE "       TURNS     TIME        "
-        .BYTE IC_COIN,IC_COIN+1
+        .BYTE IC_BAR,IC_BAR+1
         .SBYTE "     "
         .SBYTE "  "                   ; line 2: a person and the
         .BYTE IC_PER1,IC_PER1+1         ; population for each player

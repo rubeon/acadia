@@ -10,7 +10,7 @@ clock by one scan line, so letters are 3 x 7 pixels in a 4 x 8 cell.
                  with bit 7 set the same pixels show PF3 (turquoise)
   codes $40-$7F  the same glyphs in red (10: PF1): a number printed
                  with TXCOL = $40 (player 1's colour)
-  codes $60-$65  icons, 2 characters each: the coin, player 1's person
+  codes $60-$65  icons, 2 characters each: the gold bar, player 1's person
                  (red body), player 2's person (11 body: print it with
                  bit 7 set for turquoise).  They replace red signs no
                  number uses.
@@ -77,17 +77,17 @@ G = {
 }
 
 # icons, two characters (8 x 8 pixels) each.  A pixel is about 1.6
-# times as wide as it is tall, so the coin is 5 pixels by 6.  The coin
-# sits at the top of line 1 and the person at the bottom of line 2, so
-# the two don't read as one shape.
-COIN = ["...YYY..",
-        "..YWYYY.",
-        "..WYYYY.",
-        "..WYYYY.",
-        "..YYYYY.",
-        "...YYY..",
-        "........",
-        "........"]
+# times as wide as it is tall.  The gold bar sits at the top of line 1
+# and the person at the bottom of line 2, so the two don't read as one
+# shape.
+BAR = ["...WWWW.",          # a gold bar seen from the front: the top
+       "..WYYYY.",          # face's edges catch the light
+       ".YYYYYYY",
+       ".YYYYYYY",
+       ".YYYYYYY",
+       "........",
+       "........",
+       "........"]
 PERSON = ["........",       # a board-game pawn: round head, collar,
           "...YY...",       # narrow waist, wide foot
           "...YY...",
@@ -96,7 +96,7 @@ PERSON = ["........",       # a board-game pawn: round head, collar,
           "..BBBB..",
           ".BBBBBB.",
           ".BBBBBB."]
-IC_COIN, IC_PER1, IC_PER2 = 0x60, 0x62, 0x64
+IC_BAR, IC_PER1, IC_PER2 = 0x60, 0x62, 0x64
 
 
 def screen_code(ch):
@@ -133,7 +133,7 @@ def build():
         c = screen_code(ch)
         font[c] = glyph(rows, 3)            # white (PF2 / PF3)
         font[c + 0x40] = glyph(rows, 2)     # red (PF1)
-    icons = ((IC_COIN, COIN, {"Y": 1, "W": 3}),
+    icons = ((IC_BAR, BAR, {"Y": 1, "W": 3}),
              (IC_PER1, PERSON, {"Y": 1, "B": 2}),
              (IC_PER2, PERSON, {"Y": 1, "B": 3}))
     for code, art, col in icons:
@@ -148,7 +148,7 @@ def main():
            ";  Status bar font STFONT (ANTIC mode 4, D54): white letters at their",
            ";  screen codes, the same in red at +$40, icons at $60-$65",
            "; " + "=" * 69, "",
-           "IC_COIN =  $%02X          ; coin, 2 characters" % IC_COIN,
+           "IC_BAR  =  $%02X          ; gold bar, 2 characters" % IC_BAR,
            "IC_PER1 =  $%02X          ; player 1's person (red)" % IC_PER1,
            "IC_PER2 =  $%02X          ; player 2's person (print with bit 7: turquoise)" % IC_PER2,
            "TX_RED  =  $40          ; TXCOL: red digits (player 1)",

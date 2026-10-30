@@ -122,7 +122,7 @@ class Machine:
 
     def status(self, start=0, n=80):
         """The status lines (STATUS1, then STATUS2) as ASCII, colour bits
-        dropped: the coin shows as "$$", a person as "@@" (STFONT, D54)."""
+        dropped: the gold bar shows as "$$", a person as "@@" (STFONT, D54)."""
         out = ""
         for i in range(n):
             c = self.byte("STATUS1", start + i) & 0x7F

@@ -293,7 +293,7 @@ missiles at 0 for the status bar. The deferred VBI resets
 `VDSLST` to `DLI_ST` each frame.
 
 **Status bar** (D54): two ANTIC mode 4 lines in `STFONT`, colours
-from the OS shadows (`ST_COLS`: PF0 gold `$2C` for the coin and the
+from the OS shadows (`ST_COLS`: PF0 gold `$2C` for the gold bar and the
 heads, PF1 red `$48` for player 1, PF2 white `$0C` for text, PF3
 turquoise `$AC` for player 2 through inverse characters; COLBK black
 for the blank lines above). A DLI on the last blank line (`DLI_ST`)

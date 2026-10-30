@@ -4,7 +4,7 @@
 ;  screen codes, the same in red at +$40, icons at $60-$65
 ; =====================================================================
 
-IC_COIN =  $60          ; coin, 2 characters
+IC_BAR  =  $60          ; gold bar, 2 characters
 IC_PER1 =  $62          ; player 1's person (red)
 IC_PER2 =  $64          ; player 2's person (print with bit 7: turquoise)
 TX_RED  =  $40          ; TXCOL: red digits (player 1)
@@ -108,8 +108,8 @@ STFONT
         .BYTE $00,$00,$00,$00,$00,$00,$00,$00   ; $5D
         .BYTE $00,$00,$00,$00,$00,$00,$00,$00   ; $5E
         .BYTE $A0,$08,$08,$20,$20,$00,$20,$00   ; $5F
-        .BYTE $01,$07,$0D,$0D,$05,$01,$00,$00   ; $60
-        .BYTE $50,$54,$54,$54,$54,$50,$00,$00   ; $61
+        .BYTE $03,$0D,$15,$15,$15,$00,$00,$00   ; $60
+        .BYTE $FC,$54,$55,$55,$55,$00,$00,$00   ; $61
         .BYTE $00,$01,$01,$0A,$02,$0A,$2A,$2A   ; $62
         .BYTE $00,$40,$40,$A0,$80,$A0,$A8,$A8   ; $63
         .BYTE $00,$01,$01,$0F,$03,$0F,$3F,$3F   ; $64
