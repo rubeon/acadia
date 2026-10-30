@@ -116,8 +116,8 @@ STAT_DRAW
         LDA GOLD
         LDX GOLD+1
         JSR NUM16
-        LDA #4          ; line 1's numbers white: its PF1 is the gold
-        LDX #ST_G0      ; bars' dark gold
+        LDA #4          ; the numbers are white (D54)
+        LDX #ST_G0
         JSR TXT_DEC
         LDA NUMTRN      ; rounds left
         SEC
@@ -144,15 +144,13 @@ STAT_DRAW
         JSR NUM16
         LDA #5
         LDX #ST_P0
-        LDY #TX_RED     ; line 2: player 1's in red, player 2's in
-        JSR ST_DEC      ; turquoise, like the people
+        JSR TXT_DEC
         LDA POP+2
         LDX POP+3
         JSR NUM16
         LDA #5
         LDX #ST_P1
-        LDY #TX_TURQ
-        JMP ST_DEC
+        JMP TXT_DEC
 
 ; ---------------------------------------------------------------------
 ;  GAME_SEC -- a new second: during a round, count TIME down and end

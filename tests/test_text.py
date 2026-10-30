@@ -88,17 +88,12 @@ if line != want:
 else:
     print("line 2 after a round: %r" % line)
 
-# colours (D54): on line 2 player 1's numbers red, player 2's
-# turquoise, the rest white (line 1's PF1 is the gold bars' dark gold);
-# the icons in place, player 2's person inverse
+# colours (D54): the numbers white; the icons in place, player 2's
+# person inverse
 m.call("STAT_LINE")
 raw = [m.byte("STATUS1", i) for i in range(80)]
 for i, c in enumerate(raw):
     want = 0
-    if c & 0x3F and 44 <= i < 49:
-        want = 0x40
-    elif c & 0x3F and 75 <= i < 80:
-        want = 0x80
     if (c & 0x7F) >= 0x60:
         continue                                 # icons: checked below
     if c & 0xC0 != want:
