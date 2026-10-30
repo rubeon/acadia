@@ -7,7 +7,7 @@
 ;
 ;  In a 1-player game, an Atari keypad controller (CX21 Video Touch
 ;  Pad or CX50 Keyboard Controller, 12 keys) plugged into port 2 is
-;  found by KP_AUTO at the start of the game (D49, D57).  KP_ON then
+;  found by KP_AUTO at the start of the game (D49, D58).  KP_ON then
 ;  makes its stick lines outputs that select a row of keys, JOY1 and
 ;  FIRE1 stay 0, and its keys come in as KEY (player 1), * as PAUSEK
 ;  and # as HELPK.  Atari computers only: the 5200 has its own keypads.
@@ -164,7 +164,7 @@ KP_DDR  PHA
         RTS
 
 ; ---------------------------------------------------------------------
-;  KP_AUTO -- KP_ON if a keypad is plugged into port 2 (D57).  Call
+;  KP_AUTO -- KP_ON if a keypad is plugged into port 2 (D58).  Call
 ;  with port 2 a stick port (KP_OFF).  A keypad's three columns are
 ;  pulled up inside it, so with no row driven low its paddle lines
 ;  charge at once; a joystick or an empty port leaves pots 2 and 3
@@ -192,7 +192,7 @@ KP_W2   CMP VCOUNT
 ; ---------------------------------------------------------------------
 ;  KP_SCAN -- read one row of the keypad each poll; after all four,
 ;  report a newly pressed key.  The row's line goes low; a key down in
-;  it holds its column low, the others are pulled up.  Columns (D57,
+;  it holds its column low, the others are pulled up.  Columns (D58,
 ;  as Atari's own CX21 reader): left on pot 3, middle on pot 2, read
 ;  after POTGO and KP_WAIT steps through ALLPOT (1 = still low); right
 ;  on the trigger (0 = low).  A row with more than one column down (or no
@@ -253,7 +253,7 @@ KS_HASH STX HELPK       ; #: help (D34)
 PA_DATA =  $04          ; PACTL bit 2: 1 = PORTA data, 0 = direction
 KP_OUT  =  $F0          ; port 2's lines out, port 1's in
 KP_WAIT =  8            ; VCOUNT steps (~15 lines) before reading the
-                        ; columns; a free line charges in under 10 (D57)
+                        ; columns; a free line charges in under 10 (D58)
 KP_NONE =  $FF
 KP_STAR =  $80          ; KPKEY codes for * and #
 KP_HASH =  $81
@@ -261,7 +261,7 @@ KP_HASH =  $81
 KPROWS  .BYTE $EF,$DF,$BF,$7F   ; row 1-2-3, 4-5-6, 7-8-9, *-0-#
 KPR3    .BYTE 0,3,6,9
 KPCOL   .BYTE KP_NONE,1,0,KP_NONE,2,KP_NONE,KP_NONE,KP_NONE ; b0 pot 2,
-                        ; b1 pot 3, b2 trigger -> column 0-2 (D57)
+                        ; b1 pot 3, b2 trigger -> column 0-2 (D58)
 KPKEY   .BYTE 1,2,3,4,5,6,7,8,9,KP_STAR,0,KP_HASH
 
 ; Input variables (JOY0/1, FIRE0/1, KEY, KEYPL, PAUSEK, HELPK, KEYDOWN,

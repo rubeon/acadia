@@ -124,12 +124,12 @@ provide the same symbols.
 | `PAUSEK` | 1 on the poll where the pause key was pressed (P on the 800, PAUSE on a 5200 keypad), D19 |
 | `HELPK` | 1 on the poll where H or the XL/XE HELP key was pressed (help screen, D34) |
 
-Keypad controller (D49, D57; CX21 Video Touch Pad or CX50): `KP_ON` / `KP_OFF` switch port 2 between a
+Keypad controller (D49, D58; CX21 Video Touch Pad or CX50): `KP_ON` / `KP_OFF` switch port 2 between a
 stick and a keypad (`KPMODE`). With the keypad on, `JOY1` and `FIRE1`
 stay 0, its digits come in as `KEY` with `KEYPL` 0, * as `PAUSEK`
 and # as `HELPK`. In a 1-player game `GAME_START` calls `KP_AUTO`,
 which turns it on if a keypad is plugged into port 2 (its pulled-up
-columns charge pots 2 and 3 at once, D57); `SETUP_ENTER` turns it off.
+columns charge pots 2 and 3 at once, D58); `SETUP_ENTER` turns it off.
 
 5200 mapping (later): analog sticks thresholded into `JOY*`; keypad
 0-9 → `KEY` (per controller); second fire button → mode toggle (key 0)
