@@ -99,6 +99,8 @@ GN_L2   LDA STATTPL+40,X
 ;  STAT_LINE -- status line 1 back to its template, then the numbers
 ; ---------------------------------------------------------------------
 STAT_LINE
+        LDA #C_SDKG     ; line 1's PF1: the gold bars' dark gold
+        STA ST_L1
         LDX #39
 SL_COPY LDA STATTPL,X
         STA STATUS1,X
@@ -114,10 +116,9 @@ STAT_DRAW
         LDA GOLD
         LDX GOLD+1
         JSR NUM16
-        LDA #4
-        LDX #ST_G0
-        LDY #TX_RED     ; player 1's numbers in red
-        JSR ST_DEC
+        LDA #4          ; line 1's numbers white: its PF1 is the gold
+        LDX #ST_G0      ; bars' dark gold
+        JSR TXT_DEC
         LDA NUMTRN      ; rounds left
         SEC
         SBC CURTRN
@@ -137,15 +138,14 @@ STAT_DRAW
         JSR NUM16
         LDA #4
         LDX #ST_G1
-        LDY #TX_TURQ    ; player 2's in turquoise
-        JSR ST_DEC
+        JSR TXT_DEC
         LDA POP         ; line 2: populations (D44)
         LDX POP+1
         JSR NUM16
         LDA #5
         LDX #ST_P0
-        LDY #TX_RED
-        JSR ST_DEC
+        LDY #TX_RED     ; line 2: player 1's in red, player 2's in
+        JSR ST_DEC      ; turquoise, like the people
         LDA POP+2
         LDX POP+3
         JSR NUM16
@@ -356,6 +356,8 @@ ID_LAST LDA RSCORE      ; OPTION: last round's scores
 ; ---------------------------------------------------------------------
 SHOW_PAIR
         PHA
+        LDA #C_SRED     ; line 1's PF1: player 1's red again
+        STA ST_L1
         LDA #0
         LDX #39
 SH_CLR  STA STATUS1,X

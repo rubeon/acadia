@@ -15,7 +15,8 @@ clock by one scan line, so letters are 3 x 7 pixels in a 4 x 8 cell.
                  bit 7 set for turquoise).  They replace red signs no
                  number uses.
 
-Pixel letters in the icons: . COLBK  Y PF0 gold  R PF1 red  W PF2 white.
+Pixel letters in the icons: . COLBK  Y PF0 gold  B, D PF1 (red, or dark
+gold on line 1)  W PF2 white.
 All art here is new; nothing comes from the original game.
 
 Run from the repo root:  python3 -I tools/mkstat.py [--preview FILE]
@@ -80,11 +81,11 @@ G = {
 # times as wide as it is tall.  The gold bar sits at the top of line 1
 # and the person at the bottom of line 2, so the two don't read as one
 # shape.
-BAR = ["...WWWW.",          # a gold bar seen from the front: the top
-       "..WYYYY.",          # face's edges catch the light
-       ".YYYYYYY",
-       ".YYYYYYY",
-       ".YYYYYYY",
+BAR = ["...WYYYY",          # an isometric gold bar: light top with a
+       "..WYYYYD",          # white edge, dark gold front and end
+       ".WWWWWDD",          # (D: PF1, dark gold while line 1 shows it)
+       ".YYYYYD.",
+       ".DDDDD..",
        "........",
        "........",
        "........"]
@@ -133,7 +134,7 @@ def build():
         c = screen_code(ch)
         font[c] = glyph(rows, 3)            # white (PF2 / PF3)
         font[c + 0x40] = glyph(rows, 2)     # red (PF1)
-    icons = ((IC_BAR, BAR, {"Y": 1, "W": 3}),
+    icons = ((IC_BAR, BAR, {"Y": 1, "D": 2, "W": 3}),
              (IC_PER1, PERSON, {"Y": 1, "B": 2}),
              (IC_PER2, PERSON, {"Y": 1, "B": 3}))
     for code, art, col in icons:

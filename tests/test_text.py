@@ -67,7 +67,8 @@ for _ in range(30):                              # one full round
     m.call("GAME_SEC")
 line = screen_text(0, 40)
 want = "P1    0       ROUND SCORES       P2    0"
-if m.byte("STATUS1") & 0xC0 != 0x40 or m.byte("STATUS1", 39) & 0xC0 != 0x80:
+if (m.byte("STATUS1") & 0xC0 != 0x40 or m.byte("STATUS1", 39) & 0xC0 != 0x80
+        or m.byte("ST_L1") != m.addr("C_SRED")):
     fail("round summary colours %02X %02X" % (m.byte("STATUS1"), m.byte("STATUS1", 39)))
 if line != want:
     fail("round summary %r, want %r" % (line, want))
@@ -87,15 +88,16 @@ if line != want:
 else:
     print("line 2 after a round: %r" % line)
 
-# colours (D54): player 1's numbers red, player 2's turquoise, the
-# rest white; the icons in place, player 2's person inverse
+# colours (D54): on line 2 player 1's numbers red, player 2's
+# turquoise, the rest white (line 1's PF1 is the gold bars' dark gold);
+# the icons in place, player 2's person inverse
 m.call("STAT_LINE")
 raw = [m.byte("STATUS1", i) for i in range(80)]
 for i, c in enumerate(raw):
     want = 0
-    if c & 0x3F and (5 <= i < 9 or 44 <= i < 49):
+    if c & 0x3F and 44 <= i < 49:
         want = 0x40
-    elif c & 0x3F and (36 <= i < 40 or 75 <= i < 80):
+    elif c & 0x3F and 75 <= i < 80:
         want = 0x80
     if (c & 0x7F) >= 0x60:
         continue                                 # icons: checked below
@@ -107,6 +109,8 @@ if icons != want:
     fail("status icons %r, want %r" % (icons, want))
 if m.byte("TXCOL"):
     fail("TXCOL %02X after STAT_DRAW, want 0" % m.byte("TXCOL"))
+if m.byte("ST_L1") != m.addr("C_SDKG"):
+    fail("ST_L1 %02X with the gold bars showing" % m.byte("ST_L1"))
 
 # each screen byte of a field is written once, with its final value: a
 # leading zero must never show, even for a moment (no flicker)

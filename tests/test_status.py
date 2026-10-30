@@ -49,16 +49,16 @@ for sh, msk in ((0, 0xFF), (0x30, 0xF6)):
     m.poke("DRKMSK", msk)
     m.poke("VDSLST", 0, 0)
     m.call("ST_VBI")
-    want = [(0x84 ^ sh) & msk, (0x80 ^ sh) & msk]
-    if [m.byte("STBK"), m.byte("STBK", 1)] != want or vdslst() != m.addr("DLI_ST"):
-        fail("ST_VBI attract %02X/%02X: %02X %02X, VDSLST %04X"
-             % (sh, msk, m.byte("STBK"), m.byte("STBK", 1), vdslst()))
+    want = [(c ^ sh) & msk for c in (0x84, 0x80, 0x26, 0x48)]
+    got = [m.byte("STBK", i) for i in range(4)]
+    if got != want or vdslst() != m.addr("DLI_ST"):
+        fail("ST_VBI attract %02X/%02X: %r, VDSLST %04X" % (sh, msk, got, vdslst()))
     m.interrupt("DLI_ST")
-    if m.byte("COLBK") != want[0] or vdslst() != m.addr("DLI_ST2"):
-        fail("DLI_ST: COLBK %02X, VDSLST %04X" % (m.byte("COLBK"), vdslst()))
+    if (m.byte("COLBK"), m.byte("COLPF1")) != (want[0], want[2]) or vdslst() != m.addr("DLI_ST2"):
+        fail("DLI_ST: COLBK %02X PF1 %02X, VDSLST %04X" % (m.byte("COLBK"), m.byte("COLPF1"), vdslst()))
     m.interrupt("DLI_ST2")
-    if m.byte("COLBK") != want[1] or vdslst() != m.addr("DLI_MAP"):
-        fail("DLI_ST2: COLBK %02X, VDSLST %04X" % (m.byte("COLBK"), vdslst()))
+    if (m.byte("COLBK"), m.byte("COLPF1")) != (want[1], want[3]) or vdslst() != m.addr("DLI_MAP"):
+        fail("DLI_ST2: COLBK %02X PF1 %02X, VDSLST %04X" % (m.byte("COLBK"), m.byte("COLPF1"), vdslst()))
 m.poke("COLRSH", 0)
 m.poke("DRKMSK", 0xFF)
 for r in ("TIC_INIT", "SETUP_INIT"):

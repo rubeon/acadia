@@ -234,7 +234,10 @@ TOFS    *= *+1          ; TXT_DEC: field start
 TPOS    *= *+1          ; TXT_DEC: current digit position
 TBUF    *= *+5          ; TXT_DEC: the digits, before they go on screen
 TXCOL   *= *+1          ; TXT_DEC: colour bits ORed into the digits (D54)
-STBK    *= *+2          ; status lines' backgrounds, attract applied (VBI_D)
+STBK    *= *+4          ; status lines' backgrounds, then their PF1, attract
+                        ; applied (ST_VBI)
+ST_L1   *= *+1          ; status line 1's PF1: C_SDKG with the gold bars,
+                        ; C_SRED with the score pages (D54)
 
 ; ---------------------------------------------------------------------
 ;  Game state (ARCHITECTURE section 7 names).  For now only the test

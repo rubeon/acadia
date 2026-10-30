@@ -6,7 +6,9 @@
 ;  and a person for population, and each player's numbers in that
 ;  player's cursor colour.  Mode 4 shows COLBK behind the text, so a
 ;  DLI on the blank line above sets line 1's background and one on
-;  line 1 sets line 2's; the border above stays black.
+;  line 1 sets line 2's; the border above stays black.  The gold bar
+;  needs a third gold, so while line 1 shows the bars (ST_L1) its PF1
+;  is dark gold instead of player 1's red.
 ; =====================================================================
 
 C_SGOLD =  $2C          ; COLPF0: the gold bar, the people's heads
@@ -15,6 +17,9 @@ C_SWHT  =  $0C          ; COLPF2: text
 C_STURQ =  $AC          ; COLPF3: player 2 (C_CUR1), inverse characters
 C_SBK1  =  $84          ; line 1 background
 C_SBK2  =  $80          ; line 2 background, a shade darker
+C_SDKG  =  $26          ; COLPF1 on line 1 while it shows the gold bars:
+                        ; their dark gold (ST_L1; the numbers there are
+                        ; white, line 2 keeps the players' colours)
 
 ; ---------------------------------------------------------------------
 ;  ST_COLS -- the status bar's font and colours into the OS shadows
@@ -33,11 +38,14 @@ ST_COLS
         STA COLOR4
         LDA #>STFONT
         STA CHBAS
+        LDA #C_SDKG     ; line 1 shows the gold bars
+        STA ST_L1
         RTS
 
 ; ---------------------------------------------------------------------
-;  ST_VBI -- each frame (VBI_D): the two backgrounds with attract mode
-;  applied, and VDSLST back at the first DLI.  Trashes A.
+;  ST_VBI -- each frame (VBI_D): the two backgrounds and each line's
+;  PF1 (STBK; attract mode applied), and VDSLST back at the first DLI.
+;  Trashes A.
 ; ---------------------------------------------------------------------
 ST_VBI
         LDA #C_SBK1
@@ -48,6 +56,14 @@ ST_VBI
         EOR COLRSH
         AND DRKMSK
         STA STBK+1
+        LDA ST_L1
+        EOR COLRSH
+        AND DRKMSK
+        STA STBK+2
+        LDA #C_SRED
+        EOR COLRSH
+        AND DRKMSK
+        STA STBK+3
         LDA #<DLI_ST
         STA VDSLST
         LDA #>DLI_ST
@@ -55,31 +71,43 @@ ST_VBI
         RTS
 
 ; ---------------------------------------------------------------------
-;  DLI_ST  -- last blank line: status line 1's background
-;  DLI_ST2 -- end of status line 1: line 2's background
+;  DLI_ST  -- last blank line: status line 1's background and PF1
+;  DLI_ST2 -- end of status line 1: line 2's
 ;  Each points VDSLST at the next DLI.  Keep all registers.
 ; ---------------------------------------------------------------------
 DLI_ST
         PHA
+        TXA
+        PHA
         LDA STBK
+        LDX STBK+2
         STA WSYNC
         STA COLBK
+        STX COLPF1
         LDA #<DLI_ST2
         STA VDSLST
         LDA #>DLI_ST2
         STA VDSLST+1
         PLA
+        TAX
+        PLA
         RTI
 
 DLI_ST2
         PHA
+        TXA
+        PHA
         LDA STBK+1
+        LDX STBK+3
         STA WSYNC
         STA COLBK
+        STX COLPF1
         LDA #<DLI_MAP
         STA VDSLST
         LDA #>DLI_MAP
         STA VDSLST+1
+        PLA
+        TAX
         PLA
         RTI
 
