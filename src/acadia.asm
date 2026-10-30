@@ -21,7 +21,6 @@
 
         .INCLUDE "hw_a800.asm"
         .INCLUDE "tiles.asm"
-        .INCLUDE "loader.asm"   ; first segment: BASIC out while loading
 
 ; ---------------------------------------------------------------------
 ;  Zero page
