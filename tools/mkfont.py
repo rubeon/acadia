@@ -578,8 +578,8 @@ def quarters(a):
 
 def wave_tile(r, c):
     """Decorative sea tile for open-sea square r, c."""
-    h = (r * 7 + c * 13) % 9
-    return {0: T["T_WAVE1"], 4: T["T_WAVE2"], 2: T["T_SPARK"], 7: T["T_SPARK"]}.get(h, T["T_SEA"])
+    h = (r * 7 + c * 13) % 18
+    return {0: T["T_WAVE1"], 9: T["T_WAVE2"], 5: T["T_SPARK"]}.get(h, T["T_SEA"])
 
 
 def build_pair(name, desc, left, right):
