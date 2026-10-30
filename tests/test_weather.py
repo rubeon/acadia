@@ -236,23 +236,38 @@ if m.byte("BOATK") or count(0, I_FSBT) or m.byte("SPRSHP"):
 
 # WTH_SHOW: positions and colours per row, shapes in player 2 memory
 clear()
-put(0, WT_RAIN, 40, 40)                 # lines 32-39: row 4
-put(1, WT_HURR, 120, 64)                # lines 56-87: rows 7-10
+put(0, WT_RAIN, 40, 40)                 # box lines 32-39: row 4; drawn
+put(1, WT_HURR, 120, 64)                # from line 24 (D52); 56-87: rows 7-10
 m.call("WTH_SHOW")
 hp = [m.byte("HP2ROW", r) for r in range(11)]
-want = [0] * 4 + [40 + HP_MAP - 8] + [0, 0] + [120 + HP_MAP - 8] * 4
+want = [0] * 3 + [40 + HP_MAP - 8] * 2 + [0, 0] + [120 + HP_MAP - 8] * 4
 if hp != want:
     fail("HP2ROW %r, want %r" % (hp, want))
-cols = [m.byte("WCROW", r) for r in (4, 7, 10)]
-if cols != [0x0C, 0x0E, 0x0E]:
+cols = [m.byte("WCROW", r) for r in (3, 4, 7, 10)]
+if cols != [0x0C, 0x0C, 0x0E, 0x0E]:
     fail("WCROW %r" % cols)
 pm = m.addr("PMAREA") + 0x300
-for i, (wy, h) in enumerate(((40, 8), (64, 32))):
-    line = wy - 8 + PM_MAP
-    if not all(m.mem[pm + line:pm + line + h][k] or k % 4 for k in range(0, h, 8)):
+frame = m.byte("WANIM") & 3
+for i, (wy, top, h, shape) in enumerate(((40, 8, 16, "WSH_RAIN"), (64, 0, 32, "WSH_HURR"))):
+    line = wy - 8 + PM_MAP - top
+    want = [m.byte(shape, frame * h + k) for k in range(h)]
+    if list(m.mem[pm + line:pm + line + h]) != want:
         fail("weather %d not drawn at P2 line %d" % (i, line))
     if m.mem[pm + line - 1] or (line + h < 128 and m.mem[pm + line + h]):
         fail("weather %d: stray lines around it" % i)
+# a storm's lightning: frame 4 at W_BOLT, lit up
+m.poke("WANIM", m.addr("W_BOLT"))
+put(1, WT_STRM, 120, 64)
+m.call("WTH_SHOW")
+line = 64 - 8 + PM_MAP - 8
+if list(m.mem[pm + line:pm + line + 16]) != [m.byte("WSH_STRM", 64 + k) for k in range(16)]:
+    fail("storm lightning frame not drawn")
+if m.byte("WCROW", 6) != m.addr("C_FLASH"):
+    fail("storm lightning colour %02X" % m.byte("WCROW", 6))
+m.poke("WANIM", 3)
+m.call("WTH_SHOW")
+if m.byte("WCROW", 6) != m.addr("C_STRM"):
+    fail("storm frame 3: colour %02X" % m.byte("WCROW", 6))
 # sharing rows: they take turns
 put(1, WT_STRM, 120, 44)
 shown = []
@@ -283,6 +298,22 @@ m.poke("WDMG", 7, 8)
 m.call("GAME_START")
 if m.byte("WACT") or m.byte("WACT", 1) or m.byte("WDMG") or m.byte("WRCNT", 1):
     fail("GAME_START left weather or damage")
+
+# the DLIs: DLI_ROW (a square's second character row) looks up the next
+# square row's weather and fish; DLI_SQ sets them first (D52)
+m.poke("HP2ROW", 0, 0, 0, 0, 91)
+m.poke("HP3ROW", 0, 0, 0, 0, 77)
+m.poke("WCROW", 0, 0, 0, 0, 0x1C)
+m.poke("DLIROW", 7)
+m.interrupt("DLI_ROW")
+if m.byte("VDSLST") | m.byte("VDSLST", 1) << 8 != m.addr("DLI_SQ") or m.byte("DLIROW") != 8:
+    fail("DLI_ROW: next DLI %04X, row %d" % (m.byte("VDSLST") | m.byte("VDSLST", 1) << 8, m.byte("DLIROW")))
+m.interrupt("DLI_SQ")
+got = (m.byte("HPOSP2"), m.byte("HPOSP3"), m.byte("COLPM2"), m.byte("DLIROW"))
+if got != (91, 77, 0x1C, 9):
+    fail("DLI_SQ for square row 4: HPOSP2, HPOSP3, COLPM2, DLIROW %r" % (got,))
+if m.byte("VDSLST") | m.byte("VDSLST", 1) << 8 != m.addr("DLI_ROW"):
+    fail("DLI_SQ: next DLI is not DLI_ROW")
 
 print("weather: %d failed" % fails)
 sys.exit(1 if fails else 0)

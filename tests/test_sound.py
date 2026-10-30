@@ -9,7 +9,7 @@ from run6502 import Machine  # noqa: E402
 
 AUDF1, AUDCTL = 0xD200, 0xD208
 HOOKS = ["SND_BUY", "SND_REFUSE", "SND_FISH", "SND_RAIN", "SND_SMITE",
-         "SND_SINK", "SND_REBEL", "SND_STORM"]
+         "SND_SINK", "SND_REBEL", "SND_STORM", "SND_THNDR", "SND_ROAR"]
 fails = 0
 
 
@@ -198,6 +198,51 @@ m.on_read("RANDOM", lambda: 9)          # rain: no rumble
 m.call("WTH_NEW", x=0)
 if m.byte("WACT") != 1 or any(playing()):
     fail("rain: WACT %d, playing %r" % (m.byte("WACT"), playing()))
+
+# the hurricane's roar: called every tic, one voice, unbroken but for a
+# frame or two between rounds of it; it stops soon after the calls do
+m.call("SND_INIT")
+quiet, ch_used = 0, set()
+for f in range(240):
+    if f % 3 == 0:
+        m.call("SND_ROAR")
+    ch_used |= {c for c in range(4) if playing()[c]}
+    v = run(1)[0]
+    if not any(v[c][1] & 0x0F for c in range(4)):
+        quiet += 1
+if len(ch_used) != 1 or quiet > 12:
+    fail("roar: voices %r, %d quiet frames in 240" % (sorted(ch_used), quiet))
+run(80)
+if any(playing()):
+    fail("roar still on after the calls stopped")
+
+# the storm's lightning step brings thunder; a hurricane, its roar
+for r in ("VARS_INIT", "DISP_INIT", "TIC_INIT", "SETUP_INIT", "GAME_NEW"):
+    m.call(r)
+m.on_read("RANDOM", lambda: 50)         # no new weather, no kicks
+for kind, want in ((WT_STRM, 1), (WT_HURR, 0)):
+    m.call("WTH_INIT")
+    m.call("SND_INIT")
+    m.mem[m.addr("WACT")] = kind
+    m.mem[m.addr("WXH")] = 80
+    m.mem[m.addr("WYH")] = 40
+    m.poke("WANIM", m.addr("W_BOLT") - 1)
+    m.poke("WATIC", m.addr("W_ANIM") - 1)
+    m.call("WTH_TIC")
+    pri = [m.byte("SN_PRI", c) for c in range(4) if playing()[c]]
+    if want not in pri:
+        fail("WTH_TIC, weather %d at the lightning step: priorities %r" % (kind, pri))
+m.call("WTH_INIT")
+m.call("SND_INIT")
+m.mem[m.addr("WACT")] = 1               # rain at the lightning step: quiet
+m.mem[m.addr("WXH")] = 80
+m.mem[m.addr("WYH")] = 40
+m.poke("WANIM", m.addr("W_BOLT") - 1)
+m.poke("WATIC", m.addr("W_ANIM") - 1)
+m.call("WTH_TIC")
+if any(playing()):
+    fail("rain at the lightning step made a sound")
+m.on_read("RANDOM", lambda: 9)
 
 for r in ("SND_INIT", "SETUP_ENTER"):
     m.call(r)

@@ -53,9 +53,10 @@ VL_OK   AND #$0E
 
 ; Luminance change per character row: the open sea lighter round the
 ; islands (one character row past the land), as is at the top and
-; bottom; the grass lit from the north
+; bottom; the grass lit from the north.  Every band starts on an odd
+; (mid-square) row, where DLI_ROW sets the shades first (D52)
 SEADEL  .BYTE 0,0,0,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,0,0,0
-GRNDEL  .BYTE 2,2,2,2,2,2,2,2,0,0,0,0,0,0,$FE,$FE,$FE,$FE,$FE,$FE,$FE,$FE
+GRNDEL  .BYTE 2,2,2,2,2,2,2,0,0,0,0,0,0,0,0,$FE,$FE,$FE,$FE,$FE,$FE,$FE
 
 ; ---------------------------------------------------------------------
 ;  WAVE_ANI -- every WV_RATE frames, the next phase of the wave glints:
