@@ -5,12 +5,12 @@
 ;  hardware.  A 5200 build replaces this file (analog sticks, two fire
 ;  buttons, keypad) and keeps the same variable meanings.
 ;
-;  In a 1-player game with KEYPAD set on the setup screen (D49), port 2
-;  has an Atari keypad controller (CX21 Video Touch Pad or CX50
-;  Keyboard Controller, 12 keys) instead of a stick: KP_ON makes its
-;  stick lines outputs that select a row of keys, JOY1 and FIRE1 stay
-;  0, and its keys come in as KEY (player 1), * as PAUSEK and # as
-;  HELPK.
+;  In a 1-player game, an Atari keypad controller (CX21 Video Touch
+;  Pad or CX50 Keyboard Controller, 12 keys) plugged into port 2 is
+;  found by KP_AUTO at the start of the game (D49, D56).  KP_ON then
+;  makes its stick lines outputs that select a row of keys, JOY1 and
+;  FIRE1 stay 0, and its keys come in as KEY (player 1), * as PAUSEK
+;  and # as HELPK.  Atari computers only: the 5200 has its own keypads.
 ;
 ;    JOY0, JOY1    direction bits, 1 = pressed:
 ;                  bit 0 up, bit 1 down, bit 2 left, bit 3 right
@@ -151,6 +151,32 @@ KP_OFF  LDA #0
         STA KPMODE
         ; A = 0: every line an input, falls through
 
+; ---------------------------------------------------------------------
+;  KP_AUTO -- KP_ON if a keypad is plugged into port 2 (D56).  Call
+;  with port 2 a stick port (KP_OFF).  A keypad's three columns are
+;  pulled up inside it, so with no row driven low its paddle lines
+;  charge at once; a joystick or an empty port leaves pots 2 and 3
+;  low.  Both have to charge, so a paddle at full turn doesn't count.
+;  Trashes A, X, Y.
+; ---------------------------------------------------------------------
+KP_AUTO JSR KP_POT
+        AND #$0C        ; pots 2, 3: 1 = still low
+        BNE KA_RTS      ; no keypad
+        JMP KP_ON
+KA_RTS  RTS
+
+; KP_POT -- start a pot scan, wait KP_WAIT steps of VCOUNT (2 lines
+; each), A = ALLPOT.  Trashes Y.
+KP_POT  STA POTGO       ; the pot lines start charging from 0
+        LDY #KP_WAIT
+KP_W1   LDA VCOUNT
+KP_W2   CMP VCOUNT
+        BEQ KP_W2
+        DEY
+        BNE KP_W1
+        LDA ALLPOT
+        RTS
+
 ; KP_DDR -- PORTA's data direction = A (1 = output).  Trashes A.
 KP_DDR  PHA
         LDA PACTL
@@ -176,14 +202,7 @@ KP_DDR  PHA
 KP_SCAN LDX KPROW
         LDA KPROWS,X    ; this row's line low, the others high
         STA PORTA
-        STA POTGO       ; the pot lines start charging from 0
-        LDY #KP_WAIT
-KS_W1   LDA VCOUNT      ; wait KP_WAIT steps of VCOUNT (2 lines each)
-KS_W2   CMP VCOUNT
-        BEQ KS_W2
-        DEY
-        BNE KS_W1
-        LDA ALLPOT
+        JSR KP_POT      ; the columns after KP_WAIT
         LSR A           ; pot 2 (middle) to bit 0, pot 3 (left) to 1
         LSR A
         AND #$03

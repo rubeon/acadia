@@ -372,15 +372,15 @@ NW_GX   *= *+1          ; NEWSG: X kept
 ; ---------------------------------------------------------------------
 ;  Setup screen (SETUP.ASM)
 ; ---------------------------------------------------------------------
-SU_VAL  *= *+5          ; rounds, seconds per round, players, CPU level, keypad
-SU_FLD  *= *+1          ; current line, 0-4
+SU_VAL  *= *+4          ; rounds, seconds per round, players, CPU level
+SU_FLD  *= *+1          ; current line, 0-3
 SU_TYPD *= *+1          ; 1 while digits are being typed on this line
 SU_RPT  *= *+1          ; frames until a held left/right repeats
 SU_ARM  *= *+1          ; 1 once everything has been let go
 TI_ARM  *= *+1          ; title screen: 1 once everything is let go
 TI_SEC  *= *+1          ; title screen: seconds with nothing touched
 DEMO    *= *+1          ; 1 while the demo plays (DEMO.ASM)
-DM_SAV  *= *+5          ; the setup values (SU_VAL) during the demo
+DM_SAV  *= *+4          ; the setup values (SU_VAL) during the demo
 DM_POS  *= *+1          ; next step in DEMOSCR
 DM_CNT  *= *+1          ; frames left in this step
 DM_J    *= *+1          ; this step's stick

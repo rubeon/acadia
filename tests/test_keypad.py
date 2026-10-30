@@ -156,46 +156,41 @@ if pia["ddr"] or m.byte("KPMODE") or m.byte("JOY1") != 1:
     fail("KP_OFF: DDR %02X KPMODE %d JOY1 %02X" % (pia["ddr"], m.byte("KPMODE"), m.byte("JOY1")))
 held["stick2"] = 0xF0
 
-# GAME_START turns the keypad on for 1 player with KEYPAD set only;
-# the setup screen turns it off
+# GAME_START finds a keypad in port 2 by itself (D56): only in a
+# 1-player game, and not with a stick or nothing in the port; the setup
+# screen turns it off
 for r in ("VARS_INIT", "DISP_INIT", "TIC_INIT", "SETUP_INIT"):
     m.call(r)
-fkp = m.addr("SU_VAL") + m.addr("SU_FKP")
-for players, kp, want in ((1, 0, 0), (1, 1, 1), (2, 1, 0)):
+held["key"] = None
+for players, plugged, want in ((1, True, 1), (1, False, 0), (2, True, 0)):
+    held["plugged"] = plugged
     m.poke("SU_VAL", 10, 30, players, 2)
-    m.poke(fkp, kp)
     m.call("GAME_START")
     if m.byte("KPMODE") != want or pia["ddr"] != (0xF0 if want else 0):
-        fail("GAME_START %d players, keypad %d: KPMODE %d DDR %02X"
-             % (players, kp, m.byte("KPMODE"), pia["ddr"]))
-m.call("SETUP_ENTER")
-if m.byte("KPMODE") or pia["ddr"]:
-    fail("SETUP_ENTER left the keypad on")
+        fail("GAME_START %d players, keypad %s: KPMODE %d DDR %02X"
+             % (players, plugged, m.byte("KPMODE"), pia["ddr"]))
+    m.call("SETUP_ENTER")
+    if m.byte("KPMODE") or pia["ddr"]:
+        fail("SETUP_ENTER left the keypad on")
+held["plugged"] = True
 
-# setup: the KEYPAD line follows CPU LEVEL with 1 player, is skipped with 2
-for players, want in ((1, [1, 2, 3, 4, 0]), (2, [1, 2, 0, 1, 2])):
-    m.poke("SU_VAL", 10, 30, players, 2)
-    m.poke("SU_FLD", 0)
-    seen = []
-    for _ in range(5):
-        m.call("SU_NEXT")
-        seen.append(m.byte("SU_FLD"))
-    if seen != want:
-        fail("SU_NEXT, %d players: %r" % (players, seen))
-m.poke("SU_VAL", 10, 30, 2, 2)
-m.poke("SU_FLD", 0)
-m.call("SU_PREV")
-if m.byte("SU_FLD") != 2:
-    fail("SU_PREV from rounds, 2 players: %d" % m.byte("SU_FLD"))
-for players, kp, want in ((1, 0, " NO"), (1, 1, "YES"), (2, 1, "  -")):
-    m.poke("SU_VAL", 10, 30, players, 2)
-    m.poke(fkp, kp)
-    m.poke("SU_FLD", 0)
-    m.call("SU_DRAW")
-    a = m.addr("SU_TXT") + 11 * 40 + m.addr("SU_COLV")
-    txt = "".join(chr(m.mem[a + i] + 0x20) for i in range(3))
-    if txt != want:
-        fail("KEYPAD line, %d players, %d: %r" % (players, kp, txt))
+# a key held while the game starts doesn't hide the keypad: no row is
+# driven low yet, so every column still charges
+held["key"] = (1, 1)
+m.poke("SU_VAL", 10, 30, 1, 2)
+m.call("GAME_START")
+if m.byte("KPMODE") != 1:
+    fail("GAME_START with 5 held: no keypad")
+m.call("SETUP_ENTER")
+held["key"] = None
+
+# one pot charging (a paddle) is not a keypad
+allpot_one = [0x08]
+m.mem.subscribe_to_read([m.addr("ALLPOT")], lambda a: allpot_one[0])
+m.call("GAME_START")
+if m.byte("KPMODE"):
+    fail("GAME_START with one pot charged: keypad on")
+m.call("SETUP_ENTER")
 
 print("keypad: %d failed" % fails)
 sys.exit(1 if fails else 0)
