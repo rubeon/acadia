@@ -94,10 +94,11 @@ for k in range(1, 10):
     ln = line(k)
     t = text(ln)
     price = m.byte("PRICES", k)
-    tile = m.byte("TILECH", T_ITEM + k - 1)
+    tile = m.byte("HLPCH", T_ITEM + k - 1)
+    tiler = m.byte("HLPCHR", T_ITEM + k - 1)
     if ln[2] != (0x10 + k + HELP_OFS) | WHITE:
         fail("item %d: key digit %02x" % (k, ln[2]))
-    if (ln[5], ln[6]) != (tile, tile + 1):
+    if (ln[5], ln[6]) != (tile, tiler):
         fail("item %d: tile %02x %02x, want %02x" % (k, ln[5], ln[6], tile))
     if t[9:9 + len(NAMES[k - 1])] != NAMES[k - 1]:
         fail("item %d: name %r" % (k, t[9:22]))

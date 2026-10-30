@@ -47,6 +47,8 @@ ROWHI   *= *+MAPROWS    ; map row addresses, high bytes
 MROW    *= *+1          ; MAP_DRAW: current square row
 GIDX    *= *+1          ; MAP_DRAW: index into the tile grid
 MTILE   *= *+1          ; MAP_PUT: tile being drawn
+MPINV   *= *+1          ; MAP_PUTI: ORed into every character ($80: inverse)
+MP_X    *= *+1          ; MAP_PUT: column, kept
 STATUS1 *= *+40         ; status bar line 1 (screen memory)
 STATUS2 *= *+40         ; status bar line 2 (screen memory)
 

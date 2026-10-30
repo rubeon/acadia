@@ -95,18 +95,14 @@ MAP_SET
         ADC #T_ITEM-1
         BNE MS_DRAW     ; always taken (T_ITEM > 0)
 MS_TERR LDA ISLTILE,X   ; empty: the square's own terrain
-MS_DRAW LDX MG_X
-        JSR MAP_PUT     ; A = tile, X = column, Y = row
+MS_DRAW PHA
         LDA MS_ITEM     ; player 2's boat: inverse, light parts white
-        BPL MS_DONE
-        LDA (ZPTR),Y    ; MAP_PUT left ZPTR/Y on the right character
-        ORA #$80
-        STA (ZPTR),Y
-        DEY
-        LDA (ZPTR),Y
-        ORA #$80
-        STA (ZPTR),Y
-MS_DONE CLC
+        AND #$80
+        STA MPINV
+        PLA
+        LDX MG_X
+        JSR MAP_PUTI    ; A = tile, X = column, Y = row
+        CLC
         RTS
 MS_OFF  SEC
         RTS

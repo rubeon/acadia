@@ -17,7 +17,7 @@
 ;  the help font, with player 3 (fish) off screen.
 ; =====================================================================
 
-HELPSCR =  $35C0        ; 11 x 40 help screen, after the map screen
+HELPSCR =  $4400        ; 11 x 40 help screen, after P/M memory
 HL_ROWS =  11           ; lines on the help screen
 HL_YELL =  $00          ; text colour: yellow (PF2)
 HL_WHITE = $80          ; text colour: white (PF3, inverse characters)
@@ -121,15 +121,14 @@ HD_ITEM LDA HL_K
         ORA #HL_WHITE
         LDY #HL_CKEY
         STA (ZPTR),Y
-        LDA HL_K        ; the item's map tile, 2 characters
+        LDA HL_K        ; the item's tile, 2 help font characters
         CLC
         ADC #T_ITEM-1
         TAX
-        LDA TILECH,X
+        LDA HLPCH,X
         LDY #HL_CICN
         STA (ZPTR),Y
-        CLC
-        ADC #1          ; right half (bit 7 kept: codes are even)
+        LDA HLPCHR,X    ; right half
         INY
         STA (ZPTR),Y
         LDX HL_K        ; price

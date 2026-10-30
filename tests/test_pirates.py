@@ -79,7 +79,7 @@ def set_count(p, k, v):
 
 
 def chars(col, row):
-    return m.mem[m.addr("MAPSCR") + row * 40 + col * 2]
+    return m.mem[m.addr("MAPSCR") + row * 80 + col * 2]
 
 
 def coast(p):
@@ -294,11 +294,16 @@ if any(m.mem[msl:msl + 128]):
 
 # the DLIs place M3-M0 side by side; the help screen hides them
 m.poke("HMROW", 0, 77)
-m.poke("DLIROW", 1)
+m.poke("DLIROW", 2)                  # character row 2 starts square row 1
 m.interrupt("DLI_ROW")
 pos = [m.byte("HPOSM3"), m.byte("HPOSM2"), m.byte("HPOSM1"), m.byte("HPOSM0")]
 if pos != [77, 79, 81, 83]:
     fail("DLI_ROW missile positions %r" % pos)
+m.poke("HMROW", 0, 0)
+m.poke("DLIROW", 3)                  # mid-square: only the font changes
+m.interrupt("DLI_ROW")
+if m.byte("HPOSM3") != 77 or m.byte("DLIROW") != 4:
+    fail("DLI_ROW mid-square moved the missiles: %d" % m.byte("HPOSM3"))
 m.poke("HELPON", 1)
 m.interrupt("DLI_MAP")
 if m.byte("HPOSM3") or m.byte("HPOSM0") > 6:

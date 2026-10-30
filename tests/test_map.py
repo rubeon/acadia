@@ -37,13 +37,13 @@ def put(item, col, row):
 
 
 def chars(col, row):
-    a = MAPSCR + row * 40 + col * 2
-    return m.mem[a], m.mem[a + 1]
+    """The square's 4 characters: top left, top right, bottom left, right."""
+    a = MAPSCR + row * 80 + col * 2
+    return m.mem[a], m.mem[a + 1], m.mem[a + 40], m.mem[a + 41]
 
 
 def tile_chars(t):
-    code = m.byte("TILECH", t)
-    return code, code + 1
+    return tuple(m.byte(n, t) for n in ("TILECH", "TILECTR", "TILECBL", "TILECBR"))
 
 
 def near(col, row):
