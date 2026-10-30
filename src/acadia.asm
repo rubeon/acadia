@@ -81,6 +81,7 @@ GF_RUN  JSR HELP_KEY    ; H / HELP: price list (D34)
         JSR CUR_MOVE
         JSR ECO_KEY     ; buy with digit keys (D17)
         JSR INFO_KEYS   ; console keys: info pages (D18)
+        JSR WAVE_ANI    ; the waves move (D51)
 GF_TICS JSR TIC_POLL
 GF_TIC  JSR TIC_NEXT    ; run every due tic
         BCC GF_SHOW
@@ -152,6 +153,7 @@ CODE2   =  $5000
         .INCLUDE "setup.asm"
         .INCLUDE "title.asm"
         .INCLUDE "demo.asm"
+        .INCLUDE "shade.asm"
         .INCLUDE "vars.asm"
         .INCLUDE "title_gfx.asm"
 

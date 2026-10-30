@@ -18,7 +18,7 @@ and keep your people fed and happy through storms, pirates and rebels.
 - A single-player mode against a CPU opponent, alongside the
   two-player game.
 - POKEY sound effects and music.
-- Mixed ANTIC modes: a mode 2 text status bar over a mode 5
+- Mixed ANTIC modes: a mode 2 text status bar over a mode 4
   multicolour map, split with display list interrupts.
 - Menus and item selection on the keyboard; this is a computer. In a 1-player game an Atari keypad controller in port 2 works too.
 
@@ -65,7 +65,7 @@ Output is an XEX load file for now; an ATR disk image will follow.
 | `src/sprites.asm` | Player/missile graphics |
 | `src/cursor.asm` | The players' cursors |
 | `src/map.asm` | Map grid: items on squares, fort-adjacency check |
-| `src/display.asm` | Display lists, DLI, VBI, map drawing (mode 5) |
+| `src/display.asm` | Display lists, DLI, VBI, map drawing (mode 4) |
 | `src/economy.asm` | Buying, income, population, score, crops |
 | `src/boats.asm` | Steering and parking boats |
 | `src/fish.asm`, `src/weather.asm`, `src/pirates.asm`, `src/rebels.asm` | Schools of fish, rain and storms, pirates, rebels |

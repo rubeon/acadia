@@ -4,29 +4,36 @@
 Writes three files (do not edit them by hand):
 
   src/tiles.asm     tile-number and cell-kind equates
-  src/font_map.asm  the map fonts (1K each, fixed addresses)
-  src/islands.asm   TILECH (tile -> character code),
-                    ROWFONT (font page per map row), ISLKIND (cell
-                    kinds), ISLTILE (terrain tile per square) and
+  src/font_map.asm  the map fonts (1K each, fixed addresses) and the
+                    help font
+  src/islands.asm   TILECH / TILECTR / TILECBL / TILECBR (tile ->
+                    character codes), HLPCH (help font codes),
+                    ROWFONT (font page per character row), ISLKIND
+                    (cell kinds), ISLTILE (terrain tile per square) and
                     AI_HD / AI_UP / AI_DN (steps by sea for the CPU's
                     boat: to its harbour, above, below the islands)
 
-Islands are drawn at pixel level.  Each island starts as a square
-outline (LEFT and RIGHT below); a seeded, deterministic erosion pass makes the
-coast ragged, then the bitmap is cut into 8 x 8 squares.  Every square
-holding any land is a land square (buildable, boats can't enter), as
-in the original.  Identical squares share a tile.  Fixed tiles (sea,
-grass, items, ...) have the same character codes in every font; coast
-tiles go into the font of the map row they sit on, and the display
-switches fonts per row with a DLI.
+The map is ANTIC mode 4 (D50).  Each map square is one tile = 2 x 2
+mode 4 characters = 8 x 16 pixels at 160 resolution, shown 8 colour
+clocks wide and 16 scan lines tall (the same size as the old mode 5
+squares, so sprites and grid maths are unchanged).
 
-Each map square is one tile = 2 mode 5 characters = 8 x 8 pixels at
-160 resolution, shown 8 colour clocks wide and 16 scan lines tall.
-Tiles drawn in white use inverse characters (bit 7 set).
-All art here is new; nothing comes from the original game.
+Islands are drawn at pixel level.  Each island starts as a square
+outline (LEFT and RIGHT below); a seeded, deterministic erosion pass
+makes the coast ragged at 160 x 88, which is doubled to 160 x 176 and
+smoothed.  Land pixels next to the sea are sand, the rest textured
+grass; sea pixels next to the land in a land square are surf.  Every
+square holding any land is a land square (buildable, boats can't
+enter), as in the original.  Fixed tiles (sea, waves, grass, items, ...)
+have the same character codes in every font; coast characters go into
+the font of the character row they sit on, and the display switches
+fonts per character row with a DLI.
 
 Pixel letters: . sea (COLBK)  G grass (PF0)  D dark (PF1)
-               Y light (PF2 yellow, or PF3 white on inverse tiles)
+               Y sand / yellow (PF2)  W white (PF3)
+A character (4 x 8 pixels) can't hold both Y and W: its 11 pixels are
+PF2, or PF3 when the character is inverse (bit 7 of its code).
+All art here is new; nothing comes from the original game.
 
 Run from the repo root:  python3 -I tools/mkfont.py [--preview DIR]
 """
@@ -37,114 +44,203 @@ import os
 import zlib
 import struct
 
+TW, TH = 8, 16                 # tile size in pixels
+CROWS = 22                     # character rows in the map
+
 # ---------------------------------------------------------------------
-#  Item tiles, numbered as the keypad keys (1-9).  (name, inverse, art)
+#  Item tiles, numbered as the keypad keys (1-9): (name, art)
 # ---------------------------------------------------------------------
 ITEMS = {
-    1: ("fort", False, [
-        "DGDGGDGD",
+    1: ("fort", [
+        "WGWGGWGW",
+        "WWWGGWWW",
+        "WWWGGWWW",
+        "WDWWWWDW",
+        "WWWWWWWW",
+        "WWDWWDWW",
+        "WWWWWWWW",
+        "WDWWWWDW",
+        "WWWWWWWW",
+        "WWWDDWWW",
+        "WWDDDDWW",
+        "WWDDDDWW",
+        "WWDDDDWW",
+        "WWDDDDWW",
         "DDDDDDDD",
-        "GDDDDDDG",
-        "GDDDDDDG",
-        "GDDGGDDG",
-        "GDDGGDDG",
-        "GDDDDDDG",
         "GGGGGGGG"]),
-    2: ("factory", False, [
-        "GGGGGYYG",
-        "GGGGYYGG",
+    2: ("factory", [
+        "GGGGGWWG",
+        "GGGGWWWW",
+        "GGGGGWWG",
+        "GGGGGGDG",
+        "GGGGGGDG",
+        "GDGGGDDG",
+        "DDGDDDDD",
+        "DDDDDDDD",
+        "DDDDDDDD",
+        "DYDYDYDD",
+        "DDDDDDDD",
+        "DYDYDYDD",
+        "DDDDDDDD",
+        "DDDDDDDD",
+        "GGGGGGGG",
+        "GGGGGGGG"]),
+    3: ("crop", [
+        "GGGGGGGG",
+        "GYYYYYYG",
+        "GDDDDDDG",
+        "GYYYYYYG",
+        "GDDDDDDG",
+        "GYYYYYYG",
+        "GDDDDDDG",
+        "GYYYYYYG",
+        "GDDDDDDG",
+        "GYYYYYYG",
+        "GDDDDDDG",
+        "GYYYYYYG",
+        "GDDDDDDG",
+        "GYYYYYYG",
+        "GGGGGGGG",
+        "GGGGGGGG"]),
+    4: ("school", [
+        "GGGGGDWW",
+        "GGGGGDWW",
         "GGGGGDGG",
-        "GDGDGDGG",
-        "DDDDDDDG",
-        "DDDDDDDG",
-        "DYDYDYDG",
+        "GGGDDDGG",
+        "GGDDDDDG",
+        "GDDDDDDD",
+        "DDDDDDDD",
+        "WWWWWWWW",
+        "WDWWWWDW",
+        "WDWWWWDW",
+        "WWWWWWWW",
+        "WDWDDWDW",
+        "WWWDDWWW",
+        "WWWDDWWW",
+        "DDDDDDDD",
         "GGGGGGGG"]),
-    3: ("crop", False, [
-        "GDGGDGGD",
-        "GDGGDGGD",
+    5: ("hospital", [
         "GGGGGGGG",
-        "DGGDGGDG",
-        "DGGDGGDG",
+        "WWWWWWWW",
+        "WWWDDWWW",
+        "WWWDDWWW",
+        "WDDDDDDW",
+        "WDDDDDDW",
+        "WWWDDWWW",
+        "WWWDDWWW",
+        "WWWWWWWW",
+        "WDWWWWDW",
+        "WWWWWWWW",
+        "WWWDDWWW",
+        "WWWDDWWW",
+        "WWWDDWWW",
+        "DDDDDDDD",
+        "GGGGGGGG"]),
+    6: ("house", [
         "GGGGGGGG",
-        "GDGGDGGD",
-        "GDGGDGGD"]),
-    4: ("school", True, [
-        "GGGDYYGG",
-        "GGGDGGGG",
-        "GGYYYYGG",
-        "GYYYYYYG",
-        "YYYYYYYY",
-        "GYDYYDYG",
-        "GYYDDYYG",
-        "GGGGGGGG"]),
-    5: ("hospital", True, [
         "GGGGGGGG",
-        "GYYYYYYG",
-        "GYYDDYYG",
-        "GYDDDDYG",
-        "GYDDDDYG",
-        "GYYDDYYG",
-        "GYYYYYYG",
-        "GGGGGGGG"]),
-    6: ("house", False, [
-        "GGGYYGGG",
-        "GGYYYYGG",
-        "GYYYYYYG",
-        "YYYYYYYY",
-        "GDDDDDDG",
-        "GDYDDYDG",
-        "GDDDDDDG",
-        "GGGGGGGG"]),
-    7: ("rebel", False, [
         "GGGDDGGG",
-        "GGGDDGGG",
+        "GGDDDDGG",
+        "GDDDDDDG",
+        "DDDDDDDD",
+        "DDDDDDDD",
+        "GGGGGGGG",
+        "GWWWWWWG",
+        "GWDWWDWG",
+        "GWWWWWWG",
+        "GWWDDWWG",
+        "GWWDDWWG",
+        "GWWDDWWG",
+        "GDDDDDDG",
+        "GGGGGGGG"]),
+    7: ("rebel", [
+        "GGGGGGGG",
+        "GYGGGGYG",
+        "GDGGGGDG",
+        "GDGDDGDG",
         "GDDDDDDG",
         "DGDDDDGD",
         "GGDDDDGG",
+        "GGDDDDGG",
         "GGDGGDGG",
         "GGDGGDGG",
-        "GDDGGDDG"]),
-    8: ("PT boat", False, [
+        "GDDGGDDG",
+        "GGGGGGGG",
+        "GGGGGGGG",
+        "GGGGGGGG",
+        "GGGGGGGG",
+        "GGGGGGGG"]),
+    8: ("PT boat", [
+        "........",
+        "........",
+        "........",
         "........",
         "........",
         "...YY...",
         "..YYYY..",
+        ".YYYYYY.",
+        "DDDDDDDD",
         "DDDDDDDD",
         ".DDDDDD.",
+        "..DDDD..",
+        "........",
+        "........",
         "........",
         "........"]),
-    9: ("fishing boat", False, [
+    9: ("fishing boat", [
+        "........",
         "...D....",
         "...DY...",
         "...DYY..",
         "...DYYY.",
+        "...DYYYY",
+        "...DYYY.",
+        "...D....",
         "...D....",
         "DDDDDDDD",
+        "DDDDDDDD",
         ".DDDDDD.",
+        "..DDDD..",
+        "........",
+        "........",
         "........"]),
 }
 
-
 WRECK = [
+    "........",
+    "........",
+    "........",
     "........",
     "......D.",
     ".....D..",
     "....D...",
+    "...D....",
     "..DDDDD.",
     ".D.D.D..",
     "........",
+    "..W...W.",
+    "........",
+    "........",
+    "........",
     "........"]
 
-
-BLANK = ["........"] * 8
+BLANK = ["........"] * 16
 
 ROCK = [
     "........",
     "........",
-    "...D....",
-    "..DDD...",
-    ".DDDYD..",
+    "........",
+    "........",
+    "...DD...",
+    "..DDDD..",
+    ".DDYDDD.",
     ".DDDDDD.",
+    "DDDDDDDD",
+    "DDDDDDDD",
+    ".WW..WW.",
+    "........",
+    "........",
+    "........",
     "........",
     "........"]
 
@@ -152,19 +248,119 @@ ROCK = [
 PIER_W = [
     "........",
     "........",
+    "........",
+    "........",
+    "YYYYYYY.",
     "YYYYYYY.",
     "DDDDDDD.",
     "D..D..D.",
     "D..D..D.",
+    "D..D..D.",
+    "........",
+    "........",
+    "........",
+    "........",
     "........",
     "........"]
+
+# Wave glints and sparkles on the open sea (white: inverse characters),
+# animated by WAVE_ANI in WV_PH phases.  A wave tile has one crest at
+# (row, column) that rolls right and breaks; WAVE2 runs WV_PH / 2
+# behind.  The sparkle tile has two dots that twinkle in turn.
+WV_PH = 4
+CREST = [[".WW.", "W..W"],          # phase 0: a crest
+         [".WW.", "W..W"],          # 1: the same, 1 pixel right
+         ["..W.", ".W.W"],          # 2: breaking up, 2 right
+         []]                        # 3: calm
+WAVE_GLINTS = {"T_WAVE1": [(4, 1)], "T_WAVE2": [(10, 1)]}
+WAVE_LAG = {"T_WAVE1": 0, "T_WAVE2": WV_PH // 2, "T_SPARK": 0}
+SPARKS = [[(3, 1)], [(3, 1)], [(6, 3)], []]     # dots (row, column) by phase
+
+
+def wave_frame(name, phase):
+    """8 x 16 art of animated sea tile name in phase 0-3."""
+    a = [list("........") for _ in range(TH)]
+    p = (phase + WAVE_LAG[name]) % WV_PH
+    if name == "T_SPARK":
+        for row, col in SPARKS[p]:
+            a[row][col] = "W"
+    for row, col in WAVE_GLINTS.get(name, []):
+        for dy, line in enumerate(CREST[p]):
+            for dx, ch in enumerate(line):
+                if ch == "W":
+                    a[row + dy][col + min(p, 2) + dx] = "W"
+    return ["".join(x) for x in a]
+
+
+WAVE1 = wave_frame("T_WAVE1", 0)
+WAVE2 = wave_frame("T_WAVE2", 0)
+SPARK = wave_frame("T_SPARK", 0)
+
+# Grass texture: a few dark specks on green.  Full grass squares pick
+# one of four variants (grass_tile) built from the same two speck
+# characters in different quarters, so the specks don't line up and
+# cost no extra characters; coast squares use the same variant.
+GRASS = [
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GDGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGDG",
+    "GGGGGGGG",
+    "GGGGGGGG"]
+
+GRASS2 = [
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGDGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGDGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG"]
+
+GRASS3 = [
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GDGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG",
+    "GGGGGGGG"]
+
+GRASS4 = ["GGGGGGGG"] * 16
+GRASS_ART = (GRASS, GRASS2, GRASS3, GRASS4)
 
 ITEM_EQU = ["T_FORT", "T_FACTORY", "T_CROP", "T_SCHOOL", "T_HOSPITAL",
             "T_HOUSE", "T_REBEL", "T_PTBOAT", "T_FISHBOAT"]
 
-PIX = {".": 0, "G": 1, "D": 2, "Y": 3}
-
-BEACH = True        # 1-pixel yellow beach along the coast (D16)
+PIX = {".": 0, "G": 1, "D": 2, "Y": 3, "W": 3}
 
 # ---------------------------------------------------------------------
 #  Island outlines.  One string per square row, 10 squares per island.
@@ -320,44 +516,129 @@ def pair_map(left, right):
     return bm, outline
 
 
-def square_art(bm, sy, sx, beach):
+
+H2 = ROWS * TH                 # 176 pixel rows
+
+
+def land_176(bm, outline):
+    """The land bitmap at 160 x 176: rows doubled, smoothed, kept inside
+    the land squares, every land square's centre solid."""
+    land = [[bm[y // 2][x] for x in range(PW)] for y in range(H2)]
+    for _ in range(2):
+        nl = [row[:] for row in land]
+        for y in range(1, H2 - 1):
+            for x in range(1, PW - 1):
+                n = sum(land[y + dy][x + dx] for dy in (-1, 0, 1) for dx in (-1, 0, 1))
+                if n >= 6:
+                    nl[y][x] = True
+                elif n <= 3:
+                    nl[y][x] = False
+        land = nl
+    for y in range(H2):
+        for x in range(PW):
+            if outline[y // TH][x // TW] != "#":
+                land[y][x] = False
+    for r in range(ROWS):
+        for c in range(COLS):
+            if outline[r][c] == "#":
+                for y in range(r * TH + 5, r * TH + 11):
+                    for x in range(c * TW + 2, c * TW + 6):
+                        land[y][x] = True
+    return land
+
+
+def coast_art(land, sy, sx):
+    """8 x 16 art for land square sy, sx: sand edge, textured grass,
+    surf on the sea next to the land."""
+    tex = GRASS_ART[grass_pick(sy, sx)]
+    def isl(x, y):
+        return 0 <= x < PW and 0 <= y < H2 and land[y][x]
     a = []
-    for y in range(sy * 8, sy * 8 + 8):
+    for y in range(sy * TH, sy * TH + TH):
         row = ""
-        for x in range(sx * 8, sx * 8 + 8):
-            if not bm[y][x]:
-                row += "."
-                continue
-            edge = False
-            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-                nx, ny = x + dx, y + dy
-                if 0 <= nx < PW and 0 <= ny < PH and not bm[ny][nx]:
-                    edge = True
-            row += "Y" if (beach and edge) else "G"
+        for x in range(sx * TW, sx * TW + TW):
+            if land[y][x]:
+                edge = any(not isl(x + dx, y + dy)
+                           for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1), (0, 2), (0, -2)))
+                row += "Y" if edge else tex[y % TH][x % TW]
+            else:
+                near = any(isl(x + dx, y + dy) for dx in (-1, 0, 1) for dy in (-2, -1, 0, 1, 2))
+                row += "W" if near and (x * 7 + y * 3) % 5 < 3 else "."
         a.append(row)
-    return a
+    return fix_chars(a)
+
+
+def fix_chars(a):
+    """A character can't hold both Y and W: the one with more pixels
+    in it wins."""
+    a = [list(r) for r in a]
+    for cy in (0, 8):
+        for cx in (0, 4):
+            px = [a[y][x] for y in range(cy, cy + 8) for x in range(cx, cx + 4)]
+            if "Y" in px and "W" in px:
+                win = "W" if px.count("W") > px.count("Y") else "Y"
+                for y in range(cy, cy + 8):
+                    for x in range(cx, cx + 4):
+                        if a[y][x] in "YW":
+                            a[y][x] = win
+    return ["".join(r) for r in a]
 
 
 def pier_art(land_west):
     return PIER_W if land_west else [x[::-1] for x in PIER_W]
 
 
-FIXED = [("T_SEA", "open sea", False, ["........"] * 8),
-         ("T_GRASS", "plain grass", False, ["GGGGGGGG"] * 8)]
+FIXED = [("T_SEA", "open sea", ["........"] * 16),
+         ("T_GRASS", "plain grass", GRASS)]
 for _k in range(1, 10):
-    _n, _i, _a = ITEMS[_k]
-    FIXED.append((ITEM_EQU[_k - 1], "%d %s" % (_k, _n), _i, _a))
-FIXED += [("T_WRECK", "wreck of a parked boat", False, WRECK),
-          ("T_SPARE", "spare (blank)", False, BLANK),
-          ("T_ROCK", "rock (decorative)", False, ROCK),
-          ("T_PIER_W", "harbour pier, land to the west", False, pier_art(True)),
-          ("T_PIER_E", "harbour pier, land to the east", False, pier_art(False))]
+    _n, _a = ITEMS[_k]
+    FIXED.append((ITEM_EQU[_k - 1], "%d %s" % (_k, _n), _a))
+FIXED += [("T_WRECK", "wreck of a parked boat", WRECK),
+          ("T_SPARE", "spare (blank)", BLANK),
+          ("T_ROCK", "rock (decorative)", ROCK),
+          ("T_PIER_W", "harbour pier, land to the west", pier_art(True)),
+          ("T_PIER_E", "harbour pier, land to the east", pier_art(False)),
+          ("T_WAVE1", "open sea, a wave", WAVE1),
+          ("T_WAVE2", "open sea, another wave", WAVE2),
+          ("T_SPARK", "open sea, sparkles", SPARK),
+          ("T_GRASS2", "plain grass, other specks", GRASS2),
+          ("T_GRASS3", "plain grass, one speck", GRASS3),
+          ("T_GRASS4", "plain grass, no specks", GRASS4)]
 T = {t[0]: n for n, t in enumerate(FIXED)}
 NFIX = len(FIXED)
-PER_FONT = 64 - NFIX          # coast tiles that fit in one font
 
 
-def build_pair(name, desc, left, right, beach):
+def quarters(a):
+    """The 4 characters of 8 x 16 art: (bytes, inverse) for top left,
+    top right, bottom left, bottom right."""
+    assert len(a) == TH and all(len(r) == TW for r in a), a
+    out = []
+    for cy, cx in ((0, 0), (0, 4), (8, 0), (8, 4)):
+        px = [a[y][cx:cx + 4] for y in range(cy, cy + 8)]
+        flat = "".join(px)
+        assert not ("Y" in flat and "W" in flat), "Y and W in one character: %r" % px
+        bs = tuple(PIX[r[0]] << 6 | PIX[r[1]] << 4 | PIX[r[2]] << 2 | PIX[r[3]] for r in px)
+        out.append((bs, "W" in flat))
+    return out
+
+
+def wave_tile(r, c):
+    """Decorative sea tile for open-sea square r, c."""
+    h = (r * 7 + c * 13) % 18
+    return {0: T["T_WAVE1"], 9: T["T_WAVE2"], 5: T["T_SPARK"]}.get(h, T["T_SEA"])
+
+
+def grass_pick(r, c):
+    """Which grass variant (0-3) land square r, c uses."""
+    return (r * 5 + c * 3 + r * c) % 4
+
+
+def grass_tile(r, c):
+    """Grass tile for full land square r, c."""
+    return (T["T_GRASS"], T["T_GRASS2"], T["T_GRASS3"], T["T_GRASS4"])[grass_pick(r, c)]
+
+
+def build_pair(name, desc, left, right):
     bm, outline = pair_map(left, right)
     for r in BANDS:
         assert set(outline[r]) <= set(".r"), "pair %s row %d must be open sea" % (name, r)
@@ -377,11 +658,11 @@ def build_pair(name, desc, left, right, beach):
     for r in range(ROWS):
         for c in CHANNEL:
             assert outline[r][c] in ".r", "pair %s channel at row %d" % (name, r)
+    land = land_176(bm, outline)
     tiles = list(FIXED)
     index = {}
     kinds = [[0] * COLS for _ in range(ROWS)]
     tgrid = [[0] * COLS for _ in range(ROWS)]
-    rowtiles = [[] for _ in range(ROWS)]
     for r in range(ROWS):
         for c in range(COLS):
             ch = outline[r][c]
@@ -396,79 +677,89 @@ def build_pair(name, desc, left, right, beach):
             elif ch == "r":
                 t, k = T["T_ROCK"], K_ROCK
             elif ch == "#":
-                a = square_art(bm, r, c, beach)
+                a = coast_art(land, r, c)
                 k = K_LAND | p1
-                if a == ["GGGGGGGG"] * 8:
-                    t = T["T_GRASS"]
+                if a == GRASS_ART[grass_pick(r, c)]:
+                    t = grass_tile(r, c)
                 else:
                     key = (r, tuple(a))
                     if key not in index:
                         index[key] = len(tiles)
-                        tiles.append((None, "coast, row %d" % r, False, a))
-                        rowtiles[r].append(index[key])
+                        tiles.append((None, "coast, row %d" % r, a))
                     t = index[key]
             elif ch == ".":
-                t, k = T["T_SEA"], K_SEA
+                t, k = wave_tile(r, c), K_SEA
             else:
                 sys.exit("unknown outline character %r" % ch)
             kinds[r][c], tgrid[r][c] = k, t
-    # pack rows into fonts: consecutive rows share a font while it fits
-    fonts, rowfont, cur = [[]], [], []
-    for r in range(ROWS):
-        if len(fonts[-1]) + len(rowtiles[r]) > PER_FONT:
+    # characters: fixed ones (deduplicated) get the same codes in every
+    # font; coast ones go into the font of their character row
+    fixed_code, fixed_list, anim = {}, [], []
+    for t in range(NFIX):
+        name = tiles[t][0]
+        frames = [quarters(wave_frame(name, ph)) for ph in range(WV_PH)] if name in WAVE_LAG else None
+        for q, (bs, inv) in enumerate(quarters(tiles[t][2])):
+            if frames and any(any(f[q][0]) for f in frames):
+                # an animated character: its own code, its bytes per phase
+                anim.append((t, q, len(fixed_list), [f[q][0] for f in frames]))
+                fixed_list.append(bs)
+            elif bs not in fixed_code:
+                fixed_code[bs] = len(fixed_list)
+                fixed_list.append(bs)
+    nfc = len(fixed_list)
+    acode = {(t, q): code for t, q, code, fr in anim}
+    rowchars = [[] for _ in range(CROWS)]          # coast chars per char row
+    for t in range(NFIX, len(tiles)):
+        r = int(tiles[t][1].split()[-1])
+        for q, (bs, inv) in enumerate(quarters(tiles[t][2])):
+            cr = 2 * r + q // 2
+            if bs not in fixed_code and bs not in rowchars[cr]:
+                rowchars[cr].append(bs)
+    fonts, rowfont = [[]], []
+    for cr in range(CROWS):
+        new = [bs for bs in rowchars[cr] if bs not in fonts[-1]]
+        if nfc + len(fonts[-1]) + len(new) > 128:
             fonts.append([])
-        if len(rowtiles[r]) > PER_FONT:
-            sys.exit("row %d needs %d coast tiles; max %d" % (r, len(rowtiles[r]), PER_FONT))
-        fonts[-1] += rowtiles[r]
+            new = rowchars[cr]
+        if nfc + len(rowchars[cr]) > 128:
+            sys.exit("character row %d needs %d coast characters; max %d"
+                     % (cr, len(rowchars[cr]), 128 - nfc))
+        fonts[-1] += new
         rowfont.append(len(fonts) - 1)
     if len(fonts) > len(FONT_ADDR):
         sys.exit("pair %s needs %d map fonts; only %d fit" % (name, len(fonts), len(FONT_ADDR)))
-    code = {}
-    for t in range(NFIX):
-        code[t] = 2 * t
-    for f in fonts:
-        for i, t in enumerate(f):
-            code[t] = 2 * (NFIX + i)
+    # the 4 codes of each tile (bit 7 = inverse: 11 pixels white)
+    codes = []
     for t, td in enumerate(tiles):
-        if td[2]:
-            code[t] |= 0x80
+        cs = []
+        for q, (bs, inv) in enumerate(quarters(td[2])):
+            if (t, q) in acode:
+                code, inv = acode[(t, q)], True
+            elif bs in fixed_code:
+                code = fixed_code[bs]
+            else:
+                r = int(td[1].split()[-1])
+                f = fonts[rowfont[2 * r + q // 2]]
+                code = nfc + f.index(bs)
+            cs.append(code | (0x80 if inv else 0))
+        codes.append(cs)
+    fixed_chars = fixed_list
     stats = []
     for side, cols in (("left", range(0, 10)), ("right", range(10, 20))):
-        land = [(r, c) for r in range(ROWS) for c in cols if outline[r][c] == "#"]
-        full = sum(1 for r, c in land if tgrid[r][c] == T["T_GRASS"])
-        px = sum(1 for y in range(PH) for x in range(cols.start * 8, cols.stop * 8) if bm[y][x])
-        edge = 0
-        for y in range(PH):
-            for x in range(cols.start * 8, cols.stop * 8):
-                if bm[y][x]:
-                    for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-                        nx, ny = x + dx, y + dy
-                        if not (0 <= nx < PW and 0 <= ny < PH) or not bm[ny][nx]:
-                            edge += 1
-        rows = [r for r, c in land]
+        lsq = [(r, c) for r in range(ROWS) for c in cols if outline[r][c] == "#"]
+        full = sum(1 for r, c in lsq if tgrid[r][c] in (T["T_GRASS"], T["T_GRASS2"], T["T_GRASS3"], T["T_GRASS4"]))
+        px = sum(1 for y in range(H2) for x in range(cols.start * TW, cols.stop * TW) if land[y][x])
+        rows = [r for r, c in lsq]
         harb = [(r, c if side == "left" else COLS - 1 - c)
                 for r in range(ROWS) for c in cols if outline[r][c] == "H"]
         stats.append("  %-5s land squares %d (%d full, %d coast), land pixels %d "
-                     "(%.0f%% of its squares), coastline %d px, land rows %d-%d, harbour %s"
-                     % (side, len(land), full, len(land) - full, px,
-                        100.0 * px / (64 * len(land)), edge,
-                        min(rows), max(rows),
+                     "(%.0f%% of its squares), land rows %d-%d, harbour %s"
+                     % (side, len(lsq), full, len(lsq) - full, px,
+                        100.0 * px / (TW * TH * len(lsq)), min(rows), max(rows),
                         ", ".join("row %d, %d from the outer edge" % h for h in harb)))
-    return dict(name=name, desc=desc, bm=bm, outline=outline, tiles=tiles,
+    return dict(name=name, desc=desc, land=land, outline=outline, tiles=tiles,
                 kinds=kinds, tgrid=tgrid, fonts=fonts, rowfont=rowfont,
-                code=code, stats=stats)
-
-
-def tile_bytes(a):
-    """Return (left char 8 bytes, right char 8 bytes) for 8x8 art."""
-    assert len(a) == 8 and all(len(r) == 8 for r in a), a
-    left, right = [], []
-    for row in a:
-        p = [PIX[c] for c in row]
-        left.append(p[0] << 6 | p[1] << 4 | p[2] << 2 | p[3])
-        right.append(p[4] << 6 | p[5] << 4 | p[6] << 2 | p[7])
-    return left, right
-
+                codes=codes, fixed_chars=fixed_chars, anim=anim, stats=stats)
 
 def sea_steps(kinds, goal):
     """Steps by sea from each square to the nearest square where
@@ -500,7 +791,10 @@ def banner(name, what):
             "; " + "=" * 69, ""]
 
 
-FONT_ADDR = [0x3000, 0x4800]   # map fonts; $4C00 holds the help font
+
+# map fonts, 1K aligned; $4C00 holds the help font.  $8800-$9BFF is RAM
+# on a 48K machine below where the OS screen sits while loading.
+FONT_ADDR = [0x3000, 0x4800, 0x8800, 0x8C00, 0x9000, 0x9400, 0x9800]
 
 # ---------------------------------------------------------------------
 #  Help font (T-SCR-3): the fixed tiles at their usual codes, then 3 x 5
@@ -541,20 +835,68 @@ def screen_code(ch):
     return a - 32 if 32 <= a < 96 else a
 
 
+
+
+# 8 x 8 item icons for the help screen (mode 5), in the map tiles' style
+HELP_ITEMS = {
+    1: ["WGWGGWGW", "WWWWWWWW", "WDWWWWDW", "WWWWWWWW",
+        "WWWDDWWW", "WWDDDDWW", "WWDDDDWW", "DDDDDDDD"],
+    2: ["GGGGGWWG", "GGGGWWGG", "GGGGGDGG", "GDGGDDGG",
+        "DDDDDDDD", "DDDDDDDD", "DDDDDDDD", "GGGGGGGG"],
+    3: ["GYYYYYYG", "GDDDDDDG", "GYYYYYYG", "GDDDDDDG",
+        "GYYYYYYG", "GDDDDDDG", "GYYYYYYG", "GGGGGGGG"],
+    4: ["GGGGDWWG", "GGGDDDGG", "GDDDDDDG", "DDDDDDDD",
+        "WWWWWWWW", "WDWWWWDW", "WWWDDWWW", "DDDDDDDD"],
+    5: ["WWWWWWWW", "WWWDDWWW", "WDDDDDDW", "WWWDDWWW",
+        "WWWWWWWW", "WDWDDWDW", "WWWDDWWW", "DDDDDDDD"],
+    6: ["GGGDDGGG", "GGDDDDGG", "GDDDDDDG", "DDDDDDDD",
+        "GWWWWWWG", "GWDWWDWG", "GWWDDWWG", "GWWDDWWG"],
+    7: ["GYGGGGYG", "GDGDDGDG", "GDDDDDDG", "DGDDDDGD",
+        "GGDDDDGG", "GGDGGDGG", "GDDGGDDG", "GGGGGGGG"],
+    8: ["........", "........", "...YY...", "..YYYY..",
+        "DDDDDDDD", ".DDDDDD.", "..DDDD..", "........"],
+    9: ["...D....", "...DY...", "...DYY..", "...DYYY.",
+        "...D....", "DDDDDDDD", ".DDDDDD.", "........"],
+}
+
+
+def help_art(a):
+    """8 x 8 mode 5 version of 8 x 16 art for the help screen: each pair
+    of rows merged (white / yellow over dark over grass over sea)."""
+    pri = {"W": 3, "Y": 3, "D": 2, "G": 1, ".": 0}
+    out = []
+    for y in range(0, TH, 2):
+        out.append("".join(max(a[y][x], a[y + 1][x], key=lambda p: pri[p]) for x in range(TW)))
+    for cx in (0, 4):            # a mode 5 character is 4 x 8: Y or W
+        px = [out[y][x] for y in range(8) for x in range(cx, cx + 4)]
+        if "Y" in px and "W" in px:
+            win = "W" if px.count("W") > px.count("Y") else "Y"
+            out = [r[:cx] + "".join(win if p in "YW" else p for p in r[cx:cx + 4]) + r[cx + 4:]
+                   for r in out]
+    return out
+
+
 def help_font():
-    """Return the help font's bytes (128 characters, 1K)."""
+    """Return the help font's bytes (128 characters, 1K) and each fixed
+    tile's left and right codes in it."""
     font = [0] * 1024
+    lcodes, rcodes = [], []
     for t in range(NFIX):
-        l, r = tile_bytes(FIXED[t][3])
-        font[16 * t:16 * t + 8], font[16 * t + 8:16 * t + 16] = l, r
+        k = t - T["T_ITEM" if "T_ITEM" in T else "T_FORT"] + 1
+        a = HELP_ITEMS[k] if 1 <= k <= 9 else help_art(FIXED[t][2])
+        for half in (0, 1):
+            code = 2 * t + half
+            px = [r[4 * half:4 * half + 4] for r in a]
+            font[8 * code:8 * code + 8] = [PIX[r[0]] << 6 | PIX[r[1]] << 4 | PIX[r[2]] << 2 | PIX[r[3]]
+                                           for r in px]
+            inv = 0x80 if "W" in "".join(px) else 0
+            (lcodes if half == 0 else rcodes).append(code | inv)
     for ch, g in GLYPHS.items():
         code = screen_code(ch) + HELP_OFS
         assert 2 * NFIX <= code < 128, ch
         for y, row in enumerate(g):
             font[8 * code + 2 + y] = sum(3 << (6 - 2 * x) for x, c in enumerate(row) if c == "#")
-    return font
-
-
+    return font, lcodes, rcodes
 
 def write_png(path, rgb, w, h):
     raw = b"".join(b"\x00" + bytes(v for p in rgb[y * w:(y + 1) * w] for v in p)
@@ -568,26 +910,25 @@ def write_png(path, rgb, w, h):
     open(path, "wb").write(png)
 
 
-PAL = {".": (40, 72, 176), "G": (64, 150, 40), "D": (0, 0, 0), "Y": (224, 200, 60),
+
+
+PAL = {".": (74, 104, 182), "G": (55, 136, 64), "D": (0, 37, 0), "Y": (235, 215, 126),
        "W": (236, 236, 236)}
 
 
 def preview(p, path):
-    """Render the pair as the Atari shows it (pixel = 4 x 4)."""
-    S = 4
-    w, h = PW * S, PH * S
+    """Render the pair as the Atari shows it (pixel = 4 x 2)."""
+    w, h = PW * 4, H2 * 2
     rgb = [PAL["."]] * (w * h)
-    rgb = list(rgb)
     for r in range(ROWS):
         for c in range(COLS):
-            t = p["tiles"][p["tgrid"][r][c]]
-            for y in range(8):
-                for x in range(8):
-                    ch = t[3][y][x]
-                    col = PAL["W"] if (ch == "Y" and t[2]) else PAL[ch]
-                    for dy in range(S):
-                        base = ((r * 8 + y) * S + dy) * w + (c * 8 + x) * S
-                        for dx in range(S):
+            a = p["tiles"][p["tgrid"][r][c]][2]
+            for y in range(TH):
+                for x in range(TW):
+                    col = PAL[a[y][x]]
+                    for dy in range(2):
+                        base = ((r * TH + y) * 2 + dy) * w + (c * TW + x) * 4
+                        for dx in range(4):
                             rgb[base + dx] = col
     write_png(path, rgb, w, h)
 
@@ -597,16 +938,13 @@ def main():
     if "--preview" in sys.argv:
         prev_dir = sys.argv[sys.argv.index("--preview") + 1]
         os.makedirs(prev_dir, exist_ok=True)
-    built = [build_pair("B", "the island pair (D24)", LEFT, RIGHT, BEACH)]
+    p = build_pair("B", "the island pair (D24)", LEFT, RIGHT)
     if prev_dir:
-        for beach in (True, False):
-            p = build_pair("B", "", LEFT, RIGHT, beach)
-            preview(p, os.path.join(prev_dir, "islands-%s.png"
-                                    % ("beach" if beach else "plain")))
+        preview(p, os.path.join(prev_dir, "islands.png"))
 
     # tiles.asm
     out = banner("TILES.ASM", "Map tile numbers and cell kinds.")
-    for n, (equ, comment, inv, a) in enumerate(FIXED):
+    for n, (equ, comment, a) in enumerate(FIXED):
         out.append("%-11s= %-4d ; %s" % (equ, n, comment))
     out.append("%-11s= %-4d ; item k (1-9) is tile T_ITEM+k-1" % ("T_ITEM", T["T_FORT"]))
     out.append("%-11s= %-4d ; fixed tiles, same character codes in every font" % ("N_FIXED", NFIX))
@@ -622,76 +960,101 @@ def main():
     open("src/tiles.asm", "w").write("\n".join(out) + "\n")
 
     # font_map.asm
-    out = banner("FONT_MAP.ASM", "Map fonts, 1K aligned.  2 bits per pixel:\n"
+    nfc = len(p["fixed_chars"])
+    out = banner("FONT_MAP.ASM", "Map fonts (ANTIC mode 4), 1K aligned.  2 bits per pixel:\n"
                  ";  00 COLBK sea, 01 PF0 grass, 10 PF1 dark, 11 PF2 yellow / PF3 white\n"
-                 ";  Fixed tiles first (same codes in every font), then this font's\n"
-                 ";  coast tiles.")
-    for p in built:
-        for fi, f in enumerate(p["fonts"]):
-            out.append("; font %d: rows %s, %d coast tiles"
-                       % (fi, ",".join(str(r) for r in range(ROWS)
-                                                  if p["rowfont"][r] == fi), len(f)))
-            out.append("        *= $%04X" % FONT_ADDR[fi])
-            out.append("MAPFONT" if fi == 0 else "MAPFNT%d" % fi)
-            for t in list(range(NFIX)) + f:
-                equ, comment, inv, a = p["tiles"][t]
-                l, r = tile_bytes(a)
-                out.append("; tile %d: %s%s" % (t, comment, " (inverse chars)" if inv else ""))
-                out.append("        .BYTE " + hexes(l))
-                out.append("        .BYTE " + hexes(r))
+                 ";  %d fixed characters first (same codes in every font), then this\n"
+                 ";  font's coast characters." % nfc)
+    for fi, f in enumerate(p["fonts"]):
+        out.append("; font %d: character rows %s, %d coast characters"
+                   % (fi, ",".join(str(r) for r in range(CROWS) if p["rowfont"][r] == fi), len(f)))
+        out.append("        *= $%04X" % FONT_ADDR[fi])
+        out.append("MAPFONT" if fi == 0 else "MAPFNT%d" % fi)
+        for bs in p["fixed_chars"] + f:
+            out.append("        .BYTE " + hexes(bs))
     out.append("")
-    out.append("; help font (T-SCR-3): fixed tiles, then 3 x 5 letters and digits at")
-    out.append("; screen code + HELP_OFS")
+    out.append("; help font (T-SCR-3, mode 5): fixed tiles at codes 2t, 2t+1 (HLPCH,")
+    out.append("; HLPCHR), then 3 x 5 letters and digits at screen code + HELP_OFS")
     out.append("        *= $%04X" % HELP_ADDR)
     out.append("HLPFONT")
-    hf = help_font()
+    hf, hl, hr = help_font()
     last = max(screen_code(c) for c in GLYPHS) + HELP_OFS
     for i in range(0, 8 * (last + 1), 8):
         out.append("        .BYTE " + hexes(hf[i:i + 8]))
     out.append("HELP_OFS = %d" % HELP_OFS)
+    an = p["anim"]
+    out.append("")
+    out.append("; WVDATA: the wave characters' frames, WV_PH phases of WV_N characters")
+    out.append("; (WAVE_ANI, D51); it fills the help font's 1K block up to CODE2")
+    out.append("WVDATA")
+    for ph in range(WV_PH):
+        for t, q, code, fr in an:
+            out.append("        .BYTE " + hexes(fr[ph]) + "   ; phase %d, tile %d quarter %d, code $%02X"
+                       % (ph, t, q, code))
+    assert HELP_ADDR + 8 * (last + 1) + 8 * WV_PH * len(an) <= HELP_ADDR + 1024, "help block full"
     open("src/font_map.asm", "w").write("\n".join(out) + "\n")
 
     # islands.asm
-    out = banner("ISLANDS.ASM", "Island data, tile codes and font per row (20 x 11).")
-    for p in built:
-        codes = [p["code"][t] for t in range(len(p["tiles"]))]
-        out.append("; TILECH: character code of each tile's left half (bit 7 = white)")
-        out.append("TILECH")
+    out = banner("ISLANDS.ASM", "Island data, tile codes and font per character row (20 x 11).")
+    for q, (lab, what) in enumerate((("TILECH", "top left"), ("TILECTR", "top right"),
+                                     ("TILECBL", "bottom left"), ("TILECBR", "bottom right"))):
+        codes = [cs[q] for cs in p["codes"]]
+        out.append("; %s: character code of each tile's %s quarter (bit 7 = white)" % (lab, what))
+        out.append(lab)
         for i in range(0, len(codes), 16):
             out.append("        .BYTE " + hexes(codes[i:i + 16]))
-        out.append("; ROWFONT: font page (CHBASE) for each map row")
-        out.append("ROWFONT .BYTE " + ",".join(
-            ">MAPFONT" if f == 0 else ">MAPFNT%d" % f for f in p["rowfont"]))
-        out.append("; ISLKIND: cell kind per square (K_ values, bit 7 = player 1)")
-        out.append("ISLKIND")
-        for r in range(ROWS):
-            out.append("        .BYTE " + hexes(p["kinds"][r]) + "   ; " + p["outline"][r])
-        out.append("; ISLTILE: terrain tile per square, drawn by MAP_DRAW")
-        out.append("ISLTILE")
-        for r in range(ROWS):
-            out.append("        .BYTE " + hexes(p["tgrid"][r]))
-        out.append("; AI_HD: steps by sea (4 ways, not over land) from each square to")
-        out.append("; player 2's harbour, the CPU's way home (AI.ASM); $FF: land or none")
-        out.append("AI_HD")
-        steps = sea_steps(p["kinds"], lambda r, c: p["kinds"][r][c] == K_HARB | K_P1)
+    out.append("; HLPCH, HLPCHR: help font codes of each fixed tile's left / right half")
+    out.append("HLPCH   .BYTE " + hexes(hl))
+    out.append("HLPCHR  .BYTE " + hexes(hr))
+    out.append("; ROWFONT: font page (CHBASE) for each character row (2 per square row)")
+    names = [">MAPFONT" if f == 0 else ">MAPFNT%d" % f for f in p["rowfont"]]
+    out.append("ROWFONT .BYTE " + ",".join(names[:11]))
+    out.append("        .BYTE " + ",".join(names[11:]))
+    out.append("; ISLKIND: cell kind per square (K_ values, bit 7 = player 1)")
+    out.append("ISLKIND")
+    for r in range(ROWS):
+        out.append("        .BYTE " + hexes(p["kinds"][r]) + "   ; " + p["outline"][r])
+    out.append("; ISLTILE: terrain tile per square, drawn by MAP_DRAW")
+    out.append("ISLTILE")
+    for r in range(ROWS):
+        out.append("        .BYTE " + hexes(p["tgrid"][r]))
+    out.append("; AI_HD: steps by sea (4 ways, not over land) from each square to")
+    out.append("; player 2's harbour, the CPU's way home (AI.ASM); $FF: land or none")
+    out.append("AI_HD")
+    steps = sea_steps(p["kinds"], lambda r, c: p["kinds"][r][c] == K_HARB | K_P1)
+    for r in range(ROWS):
+        out.append("        .BYTE " + hexes(steps[r]))
+    out.append("; AI_UP, AI_DN: steps by sea to the open sea above the islands")
+    out.append("; (rows 0-1) and below them (rows 9-10), the CPU's way round them")
+    for name, goal in (("AI_UP", lambda r, c: r < 2), ("AI_DN", lambda r, c: r > ROWS - 3)):
+        out.append(name)
+        steps = sea_steps(p["kinds"], goal)
         for r in range(ROWS):
             out.append("        .BYTE " + hexes(steps[r]))
-        out.append("; AI_UP, AI_DN: steps by sea to the open sea above the islands")
-        out.append("; (rows 0-1) and below them (rows 9-10), the CPU's way round them")
-        for name, goal in (("AI_UP", lambda r, c: r < 2), ("AI_DN", lambda r, c: r > ROWS - 3)):
-            out.append(name)
-            steps = sea_steps(p["kinds"], goal)
-            for r in range(ROWS):
-                out.append("        .BYTE " + hexes(steps[r]))
-        out.append("N_TILES = %d" % len(p["tiles"]))
-        out.append("N_FONTS = %d" % len(p["fonts"]))
+    out.append("; Wave animation (WAVE_ANI, D51): WV_N characters, WV_PH phases.")
+    out.append("; FONTPG: each map font's page.  WVDL / WVDH: a character's offset")
+    out.append("; in its font (code x 8) less 8 x its index, so one Y indexes both")
+    out.append("; WVDATA (in FONT_MAP.ASM) and the font.  WVSRCL / WVSRCH: each")
+    out.append("; phase's WVDATA.")
+    out.append("FONTPG  .BYTE " + ",".join(">MAPFONT" if f == 0 else ">MAPFNT%d" % f
+                                           for f in range(len(p["fonts"]))))
+    offs = [code * 8 - i * 8 for i, (t, q, code, fr) in enumerate(an)]
+    assert all(o >= 0 for o in offs)
+    out.append("WVDL    .BYTE " + hexes([o & 255 for o in offs]))
+    out.append("WVDH    .BYTE " + hexes([o >> 8 for o in offs]))
+    out.append("WVSRCL  .BYTE " + ",".join("<[WVDATA+%d]" % (ph * 8 * len(an)) for ph in range(WV_PH)))
+    out.append("WVSRCH  .BYTE " + ",".join(">[WVDATA+%d]" % (ph * 8 * len(an)) for ph in range(WV_PH)))
+    out.append("WV_N    = %d" % len(an))
+    out.append("WV_PH   = %d" % WV_PH)
+    out.append("N_TILES = %d" % len(p["tiles"]))
+    out.append("N_FONTS = %d" % len(p["fonts"]))
     open("src/islands.asm", "w").write("\n".join(out) + "\n")
 
-    for p in built:
-        print("%d tiles, %d fonts (coast tiles per font %s), rows->font %s"
-              % (len(p["tiles"]), len(p["fonts"]),
-                 "/".join(str(len(f)) for f in p["fonts"]), "".join(map(str, p["rowfont"]))))
-        print("\n".join(p["stats"]))
+    print("%d tiles, %d fixed characters, %d fonts (coast characters per font %s), "
+          "character rows -> font %s"
+          % (len(p["tiles"]), nfc, len(p["fonts"]),
+             "/".join(str(len(f)) for f in p["fonts"]), "".join(map(str, p["rowfont"]))))
+    print("\n".join(p["stats"]))
 
 
 main()

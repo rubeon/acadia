@@ -86,7 +86,7 @@ def count(p, k):
 
 
 def chars(col, row):
-    a = m.addr("MAPSCR") + row * 40 + col * 2
+    a = m.addr("MAPSCR") + row * 80 + col * 2
     return m.mem[a]
 
 

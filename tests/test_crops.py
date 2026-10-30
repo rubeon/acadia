@@ -35,7 +35,7 @@ def count(p, k):
 
 
 def chars(col, row):
-    return m.mem[m.addr("MAPSCR") + row * 40 + col * 2]
+    return m.mem[m.addr("MAPSCR") + row * 80 + col * 2]
 
 
 for r in ("VARS_INIT", "DISP_INIT", "TIC_INIT", "SETUP_INIT", "GAME_NEW"):

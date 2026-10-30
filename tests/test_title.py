@@ -64,7 +64,7 @@ if text(0, 0xC0) != " REBUILD YOUR WORLD ":
 if text(20, 0x40) != " PRESS FIRE TO PLAY ":
     fail("prompt %r" % text(20, 0x40))
 pal = [m.byte("COLOR0", i) for i in range(5)]
-if pal != [0xC6, 0x1C, 0x00, 0x0E, 0x84]:
+if pal != [0xC6, 0x2C, 0x32, 0x0E, 0x94]:
     fail("title palette %r" % ["%02X" % c for c in pal])
 if not (m.byte("MZ_ON") and m.byte("MZ_LOOP")):
     fail("no title tune")

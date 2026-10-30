@@ -19,8 +19,14 @@ T_SPARE    = 12   ; spare (blank)
 T_ROCK     = 13   ; rock (decorative)
 T_PIER_W   = 14   ; harbour pier, land to the west
 T_PIER_E   = 15   ; harbour pier, land to the east
+T_WAVE1    = 16   ; open sea, a wave
+T_WAVE2    = 17   ; open sea, another wave
+T_SPARK    = 18   ; open sea, sparkles
+T_GRASS2   = 19   ; plain grass, other specks
+T_GRASS3   = 20   ; plain grass, one speck
+T_GRASS4   = 21   ; plain grass, no specks
 T_ITEM     = 2    ; item k (1-9) is tile T_ITEM+k-1
-N_FIXED    = 16   ; fixed tiles, same character codes in every font
+N_FIXED    = 22   ; fixed tiles, same character codes in every font
 
 ; Cell kinds (ISLKIND); bit 7 set = square belongs to player 1
 K_SEA      = $00  ; open sea

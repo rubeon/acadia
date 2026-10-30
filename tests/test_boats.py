@@ -63,7 +63,7 @@ def gold(p):
 
 
 def chars(col, row):
-    a = m.addr("MAPSCR") + row * 40 + col * 2
+    a = m.addr("MAPSCR") + row * 80 + col * 2
     return m.mem[a], m.mem[a + 1]
 
 
