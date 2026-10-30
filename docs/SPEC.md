@@ -54,7 +54,7 @@ on the Atari. Requirement IDs (`R-...`) are referenced from PLAN.md.
 | R-CTL-4 | Info displays (total score, population, last round score) while START (total scores), SELECT (populations) or OPTION (previous round scores) is held (D18). |
 | R-CTL-6 | P toggles pause (5200: keypad PAUSE); either player can pause or unpause. Paused: tic, clock, events, AI and sprites frozen, sound muted, item keys and joystick ignored, PAUSED on the status bar; map colours may dim (D19). |
 | R-CTL-7 | H (or HELP on an XL/XE) during a round shows a price list over the map: each item's key, its map tile, name and price. H or HELP again returns; the game stands still while it is up (D34). |
-| R-CTL-8 | 1-player games can use an Atari keypad controller (CX21 Video Touch Pad or CX50) in port 2, found by itself when the game starts (Atari computers only): 0-9 as the number keys, * pause, # help (D49, D56). |
+| R-CTL-8 | 1-player games can use an Atari keypad controller (CX21 Video Touch Pad or CX50) in port 2, found by itself when the game starts (Atari computers only): 0-9 as the number keys, * pause, # help (D49, D57). |
 | R-CTL-5 | All input goes through the input layer (ARCHITECTURE §4). |
 
 ## 6. Timing

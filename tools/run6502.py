@@ -45,7 +45,7 @@ class Machine:
                     v = int(v[1:], 16) if v.startswith("$") else int(v)
                     self.sym.setdefault(m.group(1).upper(), v)
         # Hardware that routines wait on: VCOUNT counts lines, and ALLPOT
-        # shows every pot still low (no keypad in port 2, D56).  Tests
+        # shows every pot still low (no keypad in port 2, D57).  Tests
         # that need others subscribe their own, which take precedence.
         vc = [0]
 

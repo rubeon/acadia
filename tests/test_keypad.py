@@ -49,7 +49,7 @@ def low(col):
 
 
 def allpot(address):
-    # left column on pot 3, middle on pot 2, as Atari's CX21 reader (D56)
+    # left column on pot 3, middle on pot 2, as Atari's CX21 reader (D57)
     return (0x08 if low(0) else 0) | (0x04 if low(1) else 0)
 
 
@@ -156,7 +156,7 @@ if pia["ddr"] or m.byte("KPMODE") or m.byte("JOY1") != 1:
     fail("KP_OFF: DDR %02X KPMODE %d JOY1 %02X" % (pia["ddr"], m.byte("KPMODE"), m.byte("JOY1")))
 held["stick2"] = 0xF0
 
-# GAME_START finds a keypad in port 2 by itself (D56): only in a
+# GAME_START finds a keypad in port 2 by itself (D57): only in a
 # 1-player game, and not with a stick or nothing in the port; the setup
 # screen turns it off
 for r in ("VARS_INIT", "DISP_INIT", "TIC_INIT", "SETUP_INIT"):
