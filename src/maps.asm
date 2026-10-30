@@ -74,17 +74,22 @@ ML_RTS  RTS
 ; ---------------------------------------------------------------------
 ;  ML_STEPS -- steps by sea from each square to the nearest goal
 ;  square, 4 ways, never over land, as tools/mkfont.py's sea_steps:
-;  the goal squares get 0, then each pass gives every free sea square
-;  next to a square of D steps D + 1, until a pass changes nothing.
+;  a search outwards from the goal squares (0 steps) through a queue
+;  of squares in order of steps, each square in it once, so a free sea
+;  square next to one of D steps gets D + 1.  The queue (up to 220
+;  squares) is the help screen, which HELP_DRAW fills again each time.
 ;  In: ML_T = 0: AI_HD (goal: player 2's harbour), 1: AI_UP (rows
 ;  0-1), 2: AI_DN (rows 9-10).  Trashes A, X, Y, ZPTR.
 ; ---------------------------------------------------------------------
+MLQ     =  HELPSCR      ; the queue (MAPSIZE bytes)
+
 ML_STEPS
         LDX ML_T
         LDA MLTL,X
         STA ZPTR
         LDA MLTH,X
         STA ZPTR+1
+        LDX #0          ; queue tail
         LDY #0          ; first every square: goal 0, else none
 MS_INIT LDA ISLKIND,Y
         AND #K_KIND
@@ -105,27 +110,41 @@ MS_DN   CPY #ML_DN
         BCS MS_GOAL
 MS_NONE LDA #ML_NONE
         BNE MS_SET
-MS_GOAL LDA #0
+MS_GOAL TYA             ; a goal: into the queue
+        STA MLQ,X
+        INX
+        LDA #0
 MS_SET  STA (ZPTR),Y
         INY
         CPY #MAPSIZE
         BNE MS_INIT
+        STX ML_TL
         LDA #0
+        STA ML_HD
+MS_POP  LDX ML_HD       ; the next square out of the queue
+        CPX ML_TL
+        BEQ MS_RTS      ; none left
+        INC ML_HD
+        LDY MLQ,X
+        STY ML_I
+        LDA (ZPTR),Y    ; its neighbours: one step more
+        CLC
+        ADC #1
         STA ML_D
-MS_PASS LDA #0
-        STA ML_CH
-        STA ML_C
-        TAY
-MS_SQ   LDA (ZPTR),Y
-        CMP ML_D
-        BNE MS_NEXT
-        STY ML_I        ; a square of D steps: its neighbours
-        LDA ML_C
-        BEQ MS_E
+        TYA             ; its column (square mod 20)
+MS_MOD  SEC
+        SBC #ML_ROW
+        BCS MS_MOD
+        ADC #ML_ROW     ; 0-19
+        BEQ MS_E        ; column 0: no west
         DEY             ; west
         JSR ML_NB
-MS_E    LDA ML_C
-        CMP #ML_ROW-1
+        LDA ML_I        ; column again: 19 has no east
+MS_MOD2 SEC
+        SBC #ML_ROW
+        BCS MS_MOD2
+        ADC #ML_ROW
+MS_E    CMP #ML_ROW-1
         BEQ MS_N
         INY             ; east
         JSR ML_NB
@@ -136,27 +155,16 @@ MS_N    CPY #ML_ROW
         TAY
         JSR ML_NB
 MS_S    CPY #ML_LAST
-        BCS MS_NEXT
+        BCS MS_POP
         TYA             ; south
         ADC #ML_ROW     ; carry clear
         TAY
         JSR ML_NB
-MS_NEXT INC ML_C        ; next square
-        LDA ML_C
-        CMP #ML_ROW
-        BNE MS_COL
-        LDA #0
-        STA ML_C
-MS_COL  INY
-        CPY #MAPSIZE
-        BNE MS_SQ
-        INC ML_D
-        LDA ML_CH
-        BNE MS_PASS     ; something changed: another pass
-        RTS
+        JMP MS_POP
+MS_RTS  RTS
 
-; ML_NB -- square Y, next to square ML_I of ML_D steps: ML_D + 1 if it
-; is sea with no steps yet (ML_CH set).  Out: Y = ML_I.  Trashes A.
+; ML_NB -- square Y, next to square ML_I: ML_D steps and into the
+; queue if it is sea with no steps yet.  Out: Y = ML_I.  Trashes A, X.
 ML_NB   LDA (ZPTR),Y
         CMP #ML_NONE
         BNE MN_RTS
@@ -165,10 +173,11 @@ ML_NB   LDA (ZPTR),Y
         CMP #K_LAND
         BEQ MN_RTS
         LDA ML_D
-        CLC
-        ADC #1
         STA (ZPTR),Y
-        STA ML_CH       ; not 0
+        TYA
+        LDX ML_TL
+        STA MLQ,X
+        INC ML_TL
 MN_RTS  LDY ML_I
         RTS
 
