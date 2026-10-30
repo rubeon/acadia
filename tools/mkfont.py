@@ -467,7 +467,7 @@ LAGOON_R = [
 # where they were; the other maps' fonts fill free RAM above the logo.
 MAPS = [
     ("ACADIA", LEFT, RIGHT, (11, 29), [0x3000, 0x4800, 0x8800]),
-    ("ISLES ", ISLES_L, ISLES_R, (12, 31), [0x8C00, 0x9C00, 0xA000, 0xBC00]),
+    (" ISLES", ISLES_L, ISLES_R, (12, 31), [0x8C00, 0x9C00, 0xA000, 0xBC00]),
     ("LAGOON", LAGOON_L, LAGOON_R, (13, 37), [0xA400, 0xA800, 0xAC00]),
 ]
 N_FONTS = 4                    # fonts per map at most (FONTPG padded to this)
@@ -1180,7 +1180,8 @@ def main():
         fp += [fp[-1]] * (N_FONTS - len(fp))
         o.append("        .BYTE " + ",".join(">MFNT%d%d" % (mi, f) for f in fp))
         if live:
-            o.append("MAPBLK  = *-TILECH  ; bytes MAP_LOAD copies")
+            o.append("MAPEND")
+            o.append("MAPBLK  = MAPEND-TILECH ; bytes MAP_LOAD copies")
         return o
 
     # islands.asm

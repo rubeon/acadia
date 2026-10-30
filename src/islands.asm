@@ -83,7 +83,8 @@ BNDVAR
 ; FONTPG: each map font's page, for WAVE_ANI
 FONTPG
         .BYTE >MFNT00,>MFNT01,>MFNT02,>MFNT02
-MAPBLK  = *-TILECH  ; bytes MAP_LOAD copies
+MAPEND
+MAPBLK  = MAPEND-TILECH ; bytes MAP_LOAD copies
 ; AI_HD: steps by sea (4 ways, not over land) from each square to
 ; player 2's harbour, the CPU's way home (AI.ASM); $FF: land or none.
 ; MAP_LOAD works these out for each map; map 1's are here for tests.
@@ -330,6 +331,6 @@ MAPSEND
 ; MAPNAME: each map's name on the setup screen, then RANDOM
 MAPNAME
         .SBYTE "ACADIA"
-        .SBYTE "ISLES "
+        .SBYTE " ISLES"
         .SBYTE "LAGOON"
         .SBYTE "RANDOM"
