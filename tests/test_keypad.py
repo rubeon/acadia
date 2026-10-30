@@ -49,7 +49,8 @@ def low(col):
 
 
 def allpot(address):
-    return (0x04 if low(0) else 0) | (0x08 if low(1) else 0)
+    # left column on pot 3, middle on pot 2, as Atari's CX21 reader (D56)
+    return (0x08 if low(0) else 0) | (0x04 if low(1) else 0)
 
 
 def trig1(address):
