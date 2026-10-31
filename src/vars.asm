@@ -372,15 +372,15 @@ NW_GX   *= *+1          ; NEWSG: X kept
 ; ---------------------------------------------------------------------
 ;  Setup screen (SETUP.ASM)
 ; ---------------------------------------------------------------------
-SU_VAL  *= *+4          ; rounds, seconds per round, players, CPU level
-SU_FLD  *= *+1          ; current line, 0-3
+SU_VAL  *= *+5          ; rounds, seconds per round, players, CPU level, map
+SU_FLD  *= *+1          ; current line, 0-4
 SU_TYPD *= *+1          ; 1 while digits are being typed on this line
 SU_RPT  *= *+1          ; frames until a held left/right repeats
 SU_ARM  *= *+1          ; 1 once everything has been let go
 TI_ARM  *= *+1          ; title screen: 1 once everything is let go
 TI_SEC  *= *+1          ; title screen: seconds with nothing touched
 DEMO    *= *+1          ; 1 while the demo plays (DEMO.ASM)
-DM_SAV  *= *+4          ; the setup values (SU_VAL) during the demo
+DM_SAV  *= *+5          ; the setup values (SU_VAL) during the demo
 DM_POS  *= *+1          ; next step in DEMOSCR
 DM_CNT  *= *+1          ; frames left in this step
 DM_J    *= *+1          ; this step's stick
@@ -393,6 +393,22 @@ SU_OLDC *= *+1          ; last frame's CONKEY
 SU_I    *= *+1          ; work: line index
 SU_T    *= *+1          ; work
 SU_D    *= *+1          ; SU_DIGIT: the digit
+
+; ---------------------------------------------------------------------
+;  Maps (MAPS.ASM, D56)
+; ---------------------------------------------------------------------
+MAPNO   *= *+1          ; the map for the next game, 0 to N_MAPS-1
+MAPLD   *= *+1          ; the map in the live tables (0 at start-up)
+ML_T    *= *+1          ; MAP_LOAD: which AI_ table
+ML_D    *= *+1          ; ML_STEPS: steps of the square's neighbours
+ML_HD   *= *+1          ; ML_STEPS: queue head (next square out)
+ML_TL   *= *+1          ; ML_STEPS: queue tail (next free place)
+ML_I    *= *+1          ; ML_STEPS: the square whose neighbours are done
+RM_S    *= *+1          ; RM_GEN: the side (player) being grown
+RM_R    *= *+1          ; RM_GEN: a row
+RM_C    *= *+1          ; RM_GEN: a column
+RM_K    *= *+1          ; RM_GEN: a count, or the land neighbours
+RM_I    *= *+1          ; RM_GEN: a square or harbour row kept
 
 ; ---------------------------------------------------------------------
 VAREND

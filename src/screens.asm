@@ -74,6 +74,20 @@ GN_SC   STA SCORE,X
         STA CURTRN
         STA GSTATE
         STA INFOK
+        TAX             ; open sea on the map while MAP_LOAD works,
+GN_SEA  STA MAPSCR,X    ; not the setup screen's text in map fonts
+        STA MAPSCR+$100,X ; (22 rows x 40 = 880 bytes)
+        STA MAPSCR+$200,X
+        STA MAPSCR+$270,X
+        INX
+        BNE GN_SEA
+        LDX #39         ; and blank status lines, not the setup's text
+GN_STL  STA STATUS1,X   ; still in STATUS1 (STAT_LINE fills them after)
+        STA STATUS2,X
+        DEX
+        BPL GN_STL
+        LDA MAPNO       ; the chosen map's islands (D56)
+        JSR MAP_LOAD
         JSR MAP_INIT    ; empty islands
         JSR MAP_DRAW
         JSR ECO_INIT    ; 1000 people, 100 gold each

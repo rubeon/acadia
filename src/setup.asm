@@ -1,11 +1,12 @@
 ; =====================================================================
 ;  SETUP.ASM -- the game setup screen (T-SCR-1: R-MODE-3, R-MODE-4)
 ;
-;  Shown at start-up and after every game over.  Four lines:
+;  Shown at start-up and after every game over.  Five lines:
 ;    ROUNDS              1-50     ("term of office" in the original)
 ;    SECONDS PER ROUND   30-120   ("turn length")
 ;    PLAYERS             1-2
 ;    CPU LEVEL           1-3      (1 player only; skipped with 2)
+;    MAP                 1-3      (STANDARD, CLASSIC, RANDOM; D56)
 ;  Stick up/down or SELECT picks a line; stick left/right changes it
 ;  (held: repeats), or digits type a number.  START or fire begins.
 ;  Typed numbers are brought into range when the line is left or the
@@ -19,9 +20,11 @@
 
 GS_SETUP = 4            ; GSTATE while the setup screen is up
 
-SU_NF   =  4            ; number of lines (fields)
+SU_NF   =  5            ; number of lines (fields)
 SU_FPLY =  2            ; PLAYERS field
 SU_FLVL =  3            ; CPU LEVEL field: 1 player only
+SU_FMAP =  4            ; MAP field: map 1 to N_MAPS
+SU_MAPW =  8            ; characters in a map's name (MAPNAME)
 SU_DEFP =  2            ; default: 2 players
 SU_DEFL =  2            ; default CPU level
 SU_DELAY = 20           ; frames before a held left/right repeats
@@ -47,6 +50,8 @@ SETUP_INIT
         STA SU_VAL+SU_FPLY
         LDA #SU_DEFL
         STA SU_VAL+SU_FLVL
+        LDA #1          ; map 1
+        STA SU_VAL+SU_FMAP
         RTS
 
 ; ---------------------------------------------------------------------
@@ -205,13 +210,17 @@ SG_CLMP JSR SU_CLX
         STA NUMTRN
         LDA SU_VAL+1
         STA TRNLEN
+        LDX SU_VAL+SU_FMAP ; map 1 to N_MAPS: map number 0 up
+        DEX
+        STX MAPNO
         LDA #<DLIST     ; back to the map display list
         STA SDLSTL
         JMP GAME_START
 
 ; ---------------------------------------------------------------------
 ;  SU_NEXT / SU_PREV -- move to the next / previous line, bringing the
-;  line left into range; CPU LEVEL is skipped with 2 players.
+;  line left into range; CPU LEVEL is skipped with 2 players
+;  (PLAYERS and MAP are then next to each other).
 ;  Trashes A, X.
 ; ---------------------------------------------------------------------
 SU_NEXT JSR SU_CLAMP
@@ -222,10 +231,12 @@ SU_NEXT JSR SU_CLAMP
         LDX #0
 SN_LVL  CPX #SU_FLVL
         BCC SU_SETF
+        CPX #SU_FMAP
+        BCS SU_SETF
         LDA SU_VAL+SU_FPLY
         CMP #2
         BNE SU_SETF
-        LDX #0          ; 2 players: no CPU level
+        LDX #SU_FMAP    ; 2 players: no CPU level
 SU_SETF STX SU_FLD
         LDA #0
         STA SU_TYPD
@@ -237,6 +248,8 @@ SU_PREV JSR SU_CLAMP
         LDX #SU_NF-1
 SP_LVL  CPX #SU_FLVL
         BCC SU_SETF
+        CPX #SU_FMAP
+        BCS SU_SETF
         LDA SU_VAL+SU_FPLY
         CMP #2
         BNE SU_SETF
@@ -287,7 +300,7 @@ SD_SET  STA SU_VAL,X
 ; ---------------------------------------------------------------------
 ;  SU_DIGIT -- digit A typed on the current line.  Rounds and seconds
 ;  build a number (a new one after moving, or when it would pass 249);
-;  players and CPU level take the digit if it is in range.
+;  the other lines take the digit if it is in range.
 ;  Trashes A, X.
 ; ---------------------------------------------------------------------
 SU_DIGIT
@@ -323,8 +336,9 @@ SD_OK   STA SU_VAL,X
 SD_RTS  RTS
 
 ; ---------------------------------------------------------------------
-;  SU_DRAW -- redraw the four value lines: a ">" and an inverse value
-;  on the current one, "-" for CPU LEVEL with 2 players.
+;  SU_DRAW -- redraw the five value lines: a ">" and an inverse value
+;  on the current one, "-" for CPU LEVEL with 2 players, the map's
+;  name (MAPNAME) for MAP.
 ;  Trashes A, X, Y, ZPTR, TPTR, M_NUM.
 ; ---------------------------------------------------------------------
 SU_DRAW LDX #SU_NF-1
@@ -343,6 +357,8 @@ SW_LAB  LDA SULAB_L,X
         LDX #4
         JSR TXT_STR
         LDX SU_I
+        CPX #SU_FMAP
+        BEQ SW_MAP
         CPX #SU_FLVL
         BCC SW_NUM
         LDA SU_VAL+SU_FPLY
@@ -351,6 +367,21 @@ SW_LAB  LDA SULAB_L,X
         LDA #SC_DASH    ; no CPU in a 2-player game
         STA STATUS1+SU_COLV+2
         BNE SW_INV
+SW_MAP  LDA SU_VAL+SU_FMAP ; name number 1 up, ending where numbers do
+        SEC
+        SBC #1
+        ASL A
+        ASL A
+        ASL A           ; x 8 = SU_MAPW
+        TAX
+        LDY #0
+SW_MCH  LDA MAPNAME,X
+        STA STATUS1+SU_COLV+3-SU_MAPW,Y
+        INX
+        INY
+        CPY #SU_MAPW
+        BNE SW_MCH
+        BEQ SW_INV
 SW_NUM  LDA SU_VAL,X
         LDX #0
         JSR NUM16
@@ -360,10 +391,16 @@ SW_NUM  LDA SU_VAL,X
 SW_INV  LDX SU_I
         CPX SU_FLD
         BNE SW_COPY
-        LDX #4          ; inverse box, one space either side
-SW_INVL LDA STATUS1+SU_COLV-1,X
+        LDY #SU_COLV+3  ; inverse box, one space either side
+        LDX #4
+        LDA SU_FLD
+        CMP #SU_FMAP
+        BNE SW_INVL
+        LDX #SU_MAPW+1  ; a map's name is wider
+SW_INVL LDA STATUS1,Y
         ORA #$80
-        STA STATUS1+SU_COLV-1,X
+        STA STATUS1,Y
+        DEY
         DEX
         BPL SW_INVL
 SW_COPY LDX SU_I
@@ -405,13 +442,13 @@ SU_ROWADR
         RTS
 
 ; Field ranges (original: $504C, $50F3) and stick steps
-SU_MIN  .BYTE 1,30,1,1
-SU_MAX  .BYTE 50,120,2,3
-SU_STP  .BYTE 1,5,1,1
-SUF_ROW .BYTE 3,5,7,9           ; mode 2 line of each field
+SU_MIN  .BYTE 1,30,1,1,1
+SU_MAX  .BYTE 50,120,2,3,N_MAPS
+SU_STP  .BYTE 1,5,1,1,1
+SUF_ROW .BYTE 3,5,7,9,11        ; mode 2 line of each field
 
-SULAB_L .BYTE <SUL_RND,<SUL_SEC,<SUL_PLY,<SUL_LVL
-SULAB_H .BYTE >SUL_RND,>SUL_SEC,>SUL_PLY,>SUL_LVL
+SULAB_L .BYTE <SUL_RND,<SUL_SEC,<SUL_PLY,<SUL_LVL,<SUL_MAP
+SULAB_H .BYTE >SUL_RND,>SUL_SEC,>SUL_PLY,>SUL_LVL,>SUL_MAP
 SUL_RND .SBYTE "ROUNDS (1-50)"
         .BYTE TX_END
 SUL_SEC .SBYTE "SECONDS PER ROUND (30-120)"
@@ -420,11 +457,13 @@ SUL_PLY .SBYTE "PLAYERS (1-2)"
         .BYTE TX_END
 SUL_LVL .SBYTE "CPU LEVEL (1-3)"
         .BYTE TX_END
+SUL_MAP .SBYTE "MAP (1-3)"
+        .BYTE TX_END
 
 ; Fixed text: title (mode 7, 20 characters) and mode 2 lines
 SUS_TTL .SBYTE "       ACADIA       "
 SUS_N   =  4
-SUS_ROW .BYTE 1,13,14,16
+SUS_ROW .BYTE 1,15,16,17
 SUS_LO  .BYTE <SUS_1,<SUS_12,<SUS_13,<SUS_15
 SUS_HI  .BYTE >SUS_1,>SUS_12,>SUS_13,>SUS_15
 SUS_1   .SBYTE "      BUILD, FEED AND KEEP THE PEACE"
