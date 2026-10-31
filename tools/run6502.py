@@ -51,6 +51,17 @@ class Machine:
             for n in done:
                 self.sym.setdefault(n, self._expr(todo.pop(n)))
 
+        # Hardware that routines wait on: VCOUNT counts lines, and ALLPOT
+        # shows every pot still low (no keypad in port 2, D58).  Tests
+        # that need others subscribe their own, which take precedence.
+        vc = [0]
+
+        def vcount():
+            vc[0] = (vc[0] + 1) % 131
+            return vc[0]
+        self.on_read("VCOUNT", vcount)
+        self.on_read("ALLPOT", lambda: 0xFF)
+
     def _expr(self, e):
         """Value of a sum like MAPSCR+20 or $D000-1, None if a symbol in
         it is not known (yet)."""

@@ -51,13 +51,11 @@ GAME_NEW
 GAME_START
         JSR MUS_STOP    ; the title tune ends
         JSR ST_COLS     ; the status bar's font and colours (D54)
-        JSR KP_OFF      ; port 2: a stick, or the keypad in a 1-player
-        LDA SU_VAL+SU_FPLY ; game with KEYPAD set (D49)
+        JSR KP_OFF      ; port 2: a stick, or in a 1-player game a
+        LDA SU_VAL+SU_FPLY ; keypad if one is plugged in (D49, D58)
         CMP #1
         BNE GS_KP
-        LDA SU_VAL+SU_FKP
-        BEQ GS_KP
-        JSR KP_ON
+        JSR KP_AUTO
 GS_KP
         LDA #0
         LDX #19

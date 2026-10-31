@@ -1,12 +1,11 @@
 ; =====================================================================
 ;  SETUP.ASM -- the game setup screen (T-SCR-1: R-MODE-3, R-MODE-4)
 ;
-;  Shown at start-up and after every game over.  Six lines:
+;  Shown at start-up and after every game over.  Five lines:
 ;    ROUNDS              1-50     ("term of office" in the original)
 ;    SECONDS PER ROUND   30-120   ("turn length")
 ;    PLAYERS             1-2
 ;    CPU LEVEL           1-3      (1 player only; skipped with 2)
-;    KEYPAD IN PORT 2    NO/YES   (1 player only; skipped with 2; D49)
 ;    MAP                 1-3      (STANDARD, CLASSIC, RANDOM; D56)
 ;  Stick up/down or SELECT picks a line; stick left/right changes it
 ;  (held: repeats), or digits type a number.  START or fire begins.
@@ -21,11 +20,10 @@
 
 GS_SETUP = 4            ; GSTATE while the setup screen is up
 
-SU_NF   =  6            ; number of lines (fields)
+SU_NF   =  5            ; number of lines (fields)
 SU_FPLY =  2            ; PLAYERS field
-SU_FLVL =  3            ; CPU LEVEL field; this and the next: 1 player
-SU_FKP  =  4            ; KEYPAD field: 0 no, 1 yes
-SU_FMAP =  5            ; MAP field: map 1 to N_MAPS
+SU_FLVL =  3            ; CPU LEVEL field: 1 player only
+SU_FMAP =  4            ; MAP field: map 1 to N_MAPS
 SU_MAPW =  8            ; characters in a map's name (MAPNAME)
 SU_DEFP =  2            ; default: 2 players
 SU_DEFL =  2            ; default CPU level
@@ -52,8 +50,6 @@ SETUP_INIT
         STA SU_VAL+SU_FPLY
         LDA #SU_DEFL
         STA SU_VAL+SU_FLVL
-        LDA #0          ; no keypad
-        STA SU_VAL+SU_FKP
         LDA #1          ; map 1
         STA SU_VAL+SU_FMAP
         RTS
@@ -223,8 +219,8 @@ SG_CLMP JSR SU_CLX
 
 ; ---------------------------------------------------------------------
 ;  SU_NEXT / SU_PREV -- move to the next / previous line, bringing the
-;  line left into range; CPU LEVEL and KEYPAD are skipped with 2
-;  players (PLAYERS and MAP are then next to each other).
+;  line left into range; CPU LEVEL is skipped with 2 players
+;  (PLAYERS and MAP are then next to each other).
 ;  Trashes A, X.
 ; ---------------------------------------------------------------------
 SU_NEXT JSR SU_CLAMP
@@ -240,7 +236,7 @@ SN_LVL  CPX #SU_FLVL
         LDA SU_VAL+SU_FPLY
         CMP #2
         BNE SU_SETF
-        LDX #SU_FMAP    ; 2 players: no CPU level or keypad
+        LDX #SU_FMAP    ; 2 players: no CPU level
 SU_SETF STX SU_FLD
         LDA #0
         STA SU_TYPD
@@ -340,9 +336,9 @@ SD_OK   STA SU_VAL,X
 SD_RTS  RTS
 
 ; ---------------------------------------------------------------------
-;  SU_DRAW -- redraw the six value lines: a ">" and an inverse value
-;  on the current one, "-" for CPU LEVEL and KEYPAD with 2 players,
-;  NO / YES for KEYPAD, the map's name (MAPNAME) for MAP.
+;  SU_DRAW -- redraw the five value lines: a ">" and an inverse value
+;  on the current one, "-" for CPU LEVEL with 2 players, the map's
+;  name (MAPNAME) for MAP.
 ;  Trashes A, X, Y, ZPTR, TPTR, M_NUM.
 ; ---------------------------------------------------------------------
 SU_DRAW LDX #SU_NF-1
@@ -367,21 +363,10 @@ SW_LAB  LDA SULAB_L,X
         BCC SW_NUM
         LDA SU_VAL+SU_FPLY
         CMP #2
-        BNE SW_ONE
-        LDA #SC_DASH    ; no CPU or keypad in a 2-player game
+        BNE SW_NUM
+        LDA #SC_DASH    ; no CPU in a 2-player game
         STA STATUS1+SU_COLV+2
         BNE SW_INV
-SW_ONE  CPX #SU_FKP
-        BNE SW_NUM
-        LDY SU_VAL+SU_FKP
-        LDA SUKP_L,Y    ; NO / YES
-        PHA
-        LDA SUKP_H,Y
-        TAY
-        PLA
-        LDX #SU_COLV
-        JSR TXT_STR
-        JMP SW_INV
 SW_MAP  LDA SU_VAL+SU_FMAP ; name number 1 up, ending where numbers do
         SEC
         SBC #1
@@ -457,13 +442,13 @@ SU_ROWADR
         RTS
 
 ; Field ranges (original: $504C, $50F3) and stick steps
-SU_MIN  .BYTE 1,30,1,1,0,1
-SU_MAX  .BYTE 50,120,2,3,1,N_MAPS
-SU_STP  .BYTE 1,5,1,1,1,1
-SUF_ROW .BYTE 3,5,7,9,11,13     ; mode 2 line of each field
+SU_MIN  .BYTE 1,30,1,1,1
+SU_MAX  .BYTE 50,120,2,3,N_MAPS
+SU_STP  .BYTE 1,5,1,1,1
+SUF_ROW .BYTE 3,5,7,9,11        ; mode 2 line of each field
 
-SULAB_L .BYTE <SUL_RND,<SUL_SEC,<SUL_PLY,<SUL_LVL,<SUL_KP,<SUL_MAP
-SULAB_H .BYTE >SUL_RND,>SUL_SEC,>SUL_PLY,>SUL_LVL,>SUL_KP,>SUL_MAP
+SULAB_L .BYTE <SUL_RND,<SUL_SEC,<SUL_PLY,<SUL_LVL,<SUL_MAP
+SULAB_H .BYTE >SUL_RND,>SUL_SEC,>SUL_PLY,>SUL_LVL,>SUL_MAP
 SUL_RND .SBYTE "ROUNDS (1-50)"
         .BYTE TX_END
 SUL_SEC .SBYTE "SECONDS PER ROUND (30-120)"
@@ -472,15 +457,7 @@ SUL_PLY .SBYTE "PLAYERS (1-2)"
         .BYTE TX_END
 SUL_LVL .SBYTE "CPU LEVEL (1-3)"
         .BYTE TX_END
-SUL_KP  .SBYTE "KEYPAD IN PORT 2 (0-1)"
-        .BYTE TX_END
 SUL_MAP .SBYTE "MAP (1-3)"
-        .BYTE TX_END
-SUKP_L  .BYTE <SUK_NO,<SUK_YES
-SUKP_H  .BYTE >SUK_NO,>SUK_YES
-SUK_NO  .SBYTE " NO"
-        .BYTE TX_END
-SUK_YES .SBYTE "YES"
         .BYTE TX_END
 
 ; Fixed text: title (mode 7, 20 characters) and mode 2 lines

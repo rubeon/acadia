@@ -37,6 +37,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 | T-ECO-1 | Purchase: key 1-9 at cursor, price check, refusal sound stub, item counts | R-RULE-1,7, R-CTL-2 | T-MAP-2, T-SPR-1 | Items appear, gold decreases, illegal squares refused | done (keys 1-6, 8/9 since T-EVT-1, 7 since T-ECO-5) |
 | T-CTL-1 | Pause: `PAUSEK` edge flag in `input.asm`, freeze tic/clock/sprites/AI, mute and restore POKEY, PAUSED on status bar | R-CTL-6 | T-SVC-3, T-SVC-4 | Pausing mid-round and resuming changes nothing in game state; no keys or stick act while paused | done |
 | T-CTL-2 | Keypad controller in port 2 for 1-player games (D49) | R-CTL-8 | T-SCR-1 | Keys 0-9, * and # act as the number keys, P and H; setup line to switch it on | done (emulated; real keypad untested) |
+| T-CTL-3 | CX21 Video Touch Pad: found by itself in port 2 in 1-player games; column order and settle time from Atari's own reader (D58) | R-CTL-8 | T-CTL-2 | A pad plugged into port 2 works with no setup; each key gives its own number | done (per Atari's reader; real pad untested) |
 | T-SCR-1 | Setup screen: rounds, round length, mode | R-MODE-3 | T-SVC-4 | Values validated to original ranges | done (D31; CPU from T-AI-1) |
 | T-MAP-3 | Choice of map on the setup screen: STANDARD, CLASSIC (the original's layout), RANDOM (D56) | R-MODE-3 | T-MAP-1, T-SCR-1 | Each map plays with equal islands; the CPU finds its way on each | in review (Claude) |
 

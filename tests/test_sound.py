@@ -23,8 +23,8 @@ m = Machine()
 m.call("VARS_INIT")
 m.mem[AUDCTL] = 0xFF
 m.call("SND_INIT")
-if m.mem[AUDCTL]:
-    fail("AUDCTL %02X after SND_INIT, want 0" % m.mem[AUDCTL])
+if m.mem._subject[AUDCTL]:           # what was written: reads are ALLPOT
+    fail("AUDCTL %02X after SND_INIT, want 0" % m.mem._subject[AUDCTL])
 
 
 def voices():
