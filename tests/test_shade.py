@@ -60,7 +60,7 @@ for line in open(os.path.join(HERE, "..", "src", "font_map.asm")):
 n = m.addr("WV_N")
 if len(codes) != n:
     fail("%d wave characters in FONT_MAP.ASM, WV_N %d" % (len(codes), n))
-fonts = [m.addr("MAPFONT")] + [m.addr("MAPFNT%d" % i) for i in range(1, m.addr("N_FONTS"))]
+fonts = sorted(set(m.byte("FONTPG", i) << 8 for i in range(m.addr("N_FONTS"))))
 wv = m.addr("WVDATA")
 rate = m.addr("WV_RATE")
 for frame in range(0, 8 * rate):
@@ -108,7 +108,7 @@ for sr in range(11):
             fail("BND_TILE row %d tile %d: %d, want %d" % (sr, T_PT + k, m.byte("MTILE"), want))
 # a corner square's top left character: dark (00) in the very corner,
 # light sea (01) further in
-font0 = m.addr("MAPFONT")
+font0 = m.addr("MFNT00")
 code = m.byte("TILECH", m.byte("ISLTILE", 0)) & 0x7F
 top = m.mem[font0 + code * 8]
 code = m.byte("TILECH", m.byte("ISLTILE", 9)) & 0x7F

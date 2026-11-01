@@ -35,6 +35,8 @@ DG_SAV  LDA SU_VAL,X
         STA TRNLEN
         LDA #DM_LVL
         STA SU_VAL+SU_FLVL
+        LDA #0
+        STA MAPNO       ; map 1: the script is made for it (D56)
         LDA #1
         STA DEMO
         STA DM_CNT      ; the first script step at the next frame

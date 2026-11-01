@@ -20,8 +20,13 @@ TESTS    := $(wildcard tests/test_*.py)
 
 all: $(XEX)
 
+# the loader (D57) first, then its INITAD, then the game: ATasm sorts a
+# file's segments by address, so it can't put them in this order itself
 $(XEX): $(SRC) | build
-	$(ATASM) -Isrc -o$@ -l$(LAB) src/acadia.asm
+	$(ATASM) -Isrc -obuild/loader.xex src/loader.asm
+	$(ATASM) -Isrc -obuild/ldrinit.xex src/ldrinit.asm
+	$(ATASM) -Isrc -obuild/game.xex -l$(LAB) src/acadia.asm
+	cat build/loader.xex build/ldrinit.xex build/game.xex > $@
 
 build:
 	mkdir -p build

@@ -2,7 +2,8 @@
 """Run routines from build/acadia.xex on a 6502 core (py65), for tests.
 
 Loads every XEX segment into a flat 64K memory, reads label addresses
-from the ATasm label file and literal equates (NAME = $xx or NAME = 123) from src/,
+from the ATasm label file and equates from src/ (NAME = $xx, NAME = 123,
+or sums of those and other symbols, such as NAME = MAPSCR+20),
 and calls a routine by name with A/X/Y set, returning when it RTSes.
 No Atari hardware is emulated: use it for pure routines (math, tables,
 map logic), not for display or interrupt code.
@@ -36,14 +37,20 @@ class Machine:
             parts = line.split()
             if len(parts) == 2:
                 self.sym[parts[1].upper()] = int(parts[0], 16)
-        equ = re.compile(r"^([A-Z_][A-Z0-9_]*)\s*=\s*(\$[0-9A-F]+|[0-9]+)\s*(;|$)", re.I)
+        equ = re.compile(r"^([A-Z_][A-Z0-9_]*)\s*=\s*([$0-9A-Z_+\-]+)\s*(;|$)", re.I)
+        todo = {}
         for path in glob.glob(os.path.join(ROOT, "src", "*.asm")):
             for line in open(path):
                 m = equ.match(line)
                 if m:
-                    v = m.group(2)
-                    v = int(v[1:], 16) if v.startswith("$") else int(v)
-                    self.sym.setdefault(m.group(1).upper(), v)
+                    todo.setdefault(m.group(1).upper(), m.group(2).upper())
+        while todo:             # an equate may use one defined later
+            done = [n for n, e in todo.items() if self._expr(e) is not None]
+            if not done:
+                break
+            for n in done:
+                self.sym.setdefault(n, self._expr(todo.pop(n)))
+
         # Hardware that routines wait on: VCOUNT counts lines, and ALLPOT
         # shows every pot still low (no keypad in port 2, D58).  Tests
         # that need others subscribe their own, which take precedence.
@@ -54,6 +61,22 @@ class Machine:
             return vc[0]
         self.on_read("VCOUNT", vcount)
         self.on_read("ALLPOT", lambda: 0xFF)
+
+    def _expr(self, e):
+        """Value of a sum like MAPSCR+20 or $D000-1, None if a symbol in
+        it is not known (yet)."""
+        v = 0
+        for sign, t in re.findall(r"([+-]?)([^+-]+)", e):
+            if t.startswith("$"):
+                t = int(t[1:], 16)
+            elif t.isdigit():
+                t = int(t)
+            elif t in self.sym:
+                t = self.sym[t]
+            else:
+                return None
+            v += -t if sign == "-" else t
+        return v & 0xFFFF
 
     def _load_xex(self, data):
         i = 0
