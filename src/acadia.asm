@@ -139,6 +139,7 @@ VI_CLR  STA (ZPTR),Y
         .INCLUDE "sprites.asm"
         .INCLUDE "cursor.asm"
         .INCLUDE "map.asm"
+        .INCLUDE "stats.asm"
         .INCLUDE "display.asm"
 
 ; ---------------------------------------------------------------------
@@ -183,10 +184,10 @@ ISLDATA =  $9000
         .INCLUDE "trail.asm"
 
 ; ---------------------------------------------------------------------
-;  The stats screen at the end of a game (D61), after the wakes; must
-;  also end below $BC00
+;  The stats screen's second part (D61), after the wakes; must also
+;  end below $BC00
 ; ---------------------------------------------------------------------
-        .INCLUDE "stats.asm"
+        .INCLUDE "stats2.asm"
 
 ; ---------------------------------------------------------------------
 ;  Run address
