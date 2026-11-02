@@ -20,7 +20,8 @@ and keep your people fed and happy through storms, pirates and rebels.
 - POKEY sound effects and music.
 - Mixed ANTIC modes: a mode 2 text status bar over a mode 4
   multicolour map, split with display list interrupts.
-- Menus and item selection on the keyboard; this is a computer. In a 1-player game an Atari Video Touch Pad (or CX50 keypad) in port 2 works too: plug it in and it is found when the game starts.
+- Menus and item selection on the keyboard; this is a computer. A tap of
+  the fire button does what 0 does (lift or park a boat). In a 1-player game an Atari Video Touch Pad (or CX50 keypad) in port 2 works too: plug it in and it is found when the game starts.
 
 Acadia is an independent project, not affiliated with or endorsed by
 Mattel. All code, graphics, sound and music are new.

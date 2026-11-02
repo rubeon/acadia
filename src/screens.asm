@@ -57,6 +57,9 @@ GAME_START
         BNE GS_KP
         JSR KP_AUTO
 GS_KP
+        LDA #FX_USED    ; fire still held from the setup screen
+        STA FTAP        ; is no tap (D60)
+        STA FTAP+1
         LDA #0
         LDX #19
 GN_CNT  STA COUNT,X
