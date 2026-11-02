@@ -206,7 +206,7 @@ CT_TDIG LDA CTDB,Y
 
 ; ---------------------------------------------------------------------
 ;  CT_XLAB -- the round numbers under the chart: 1, every 5th and the
-;  last (a 5th close before the last is left out).  Trashes A, X, Y.
+;  last (a 5th less than 12 pixels before the last is left out).  Trashes A, X, Y.
 ; ---------------------------------------------------------------------
 CT_XLAB
         LDA #0
@@ -223,10 +223,18 @@ CX_LOOP LDA CT_I
         LDA CT_M5
         CMP #5
         BNE CX_NEXT
-        LDA CT_N        ; a 5th: 3 or more before the last?
-        SEC
-        SBC CT_I
-        CMP #4
+        LDA CT_N        ; a 5th: 12 pixels or more before the last?
+        CLC             ; (N - r) x 11 >= N - 1, as CT_W = 132 = 12 x 11
+        SBC CT_I        ; N - r (r = CT_I + 1)
+        LDX #11
+        JSR MUL8
+        LDA M_NUM+1
+        BNE CX_SHOW
+        LDX CT_N
+        DEX
+        STX CT_T
+        LDA M_NUM
+        CMP CT_T
         BCC CX_NEXT
 CX_SHOW JSR CT_XOF      ; centred under its x
         LDX CT_I

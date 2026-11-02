@@ -117,7 +117,7 @@ for rnd in (0, 7, 49):
 def game(n, seed):
     rng = random.Random(seed)
     sc = [[rng.randint(0, 100) for _ in range(n)] for _ in range(2)]
-    pop = [[min(9999, 1000 + rng.randint(-50, 400) * i) for i in range(n)] for _ in range(2)]
+    pop = [[max(0, min(9999, 1000 + rng.randint(-20, 400) * i)) for i in range(n)] for _ in range(2)]
     gold = [[rng.randint(0, 9999) if seed % 2 else rng.randint(80, 140) for _ in range(n)] for _ in range(2)]
     for p in range(2):
         for i in range(n):
@@ -158,9 +158,9 @@ for n, seed in ((10, 1), (50, 2), (2, 3), (1, 4), (23, 5)):
                     fail("n %d page %d player %d round %d: pixel %d,%d is %d"
                          % (n, pg, p + 1, i + 1, x, y, got))
         # grid lines: dotted from column 6
-        for k in range(6):
+        for k in range(6 if n > 1 else 0):    # (1 round: a flat line on one)
             y = YB - GAP * k
-            if sum(m.mem[row_addr(y) + c] == 0x44 for c in range(6, 40)) < 17:
+            if sum(pixel(x, y) == 1 for x in range(X0, X0 + W, 2)) < 10:
                 fail("n %d page %d: no grid line at %d" % (n, pg, y))
         # page names: this one inverse
         tabs = [m.byte("CT_TAB", c) for c in (5, 18, 32)]
@@ -189,8 +189,12 @@ if text(40).split() != ["1", "5", "10", "12"]:
     fail("12 rounds: %r" % text(40).split())
 m.poke("CURTRN", 11)
 m.call("CT_ENTER", limit=BIG)
-if text(40).split() != ["1", "5", "11"]:
-    fail("11 rounds (10 is too close): %r" % text(40).split())
+if text(40).split() != ["1", "5", "10", "11"]:
+    fail("11 rounds: %r" % text(40).split())
+m.poke("CURTRN", 47)
+m.call("CT_ENTER", limit=BIG)
+if text(40).split()[-2:] != ["40", "47"]:
+    fail("47 rounds (45 is too close): %r" % text(40).split())
 
 # --- the stick flips pages, both ways round -----------------------------
 m.poke("CT_PG", 0)
