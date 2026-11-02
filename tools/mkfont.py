@@ -276,10 +276,23 @@ WAVE_GLINTS = {"T_WAVE1": [(4, 1)], "T_WAVE2": [(10, 1)]}
 WAVE_LAG = {"T_WAVE1": 0, "T_WAVE2": WV_PH // 2, "T_SPARK": 0}
 SPARKS = [[(3, 1)], [(3, 1)], [(6, 3)], []]     # dots (row, column) by phase
 
+# Boat wakes (D59): a steered boat leaves a wave on each plain sea
+# square it passes (TRAIL.ASM).  In rows 2-8 that is T_WAVE1 or
+# T_WAVE2.  Rows 1 and 9 are half corner rows (D55): their open sea
+# gets fixed tiles, T_SEAB1 / T_SEAB9 (PF0 in the corner half), and a
+# wave each built from characters the map already has: T_WAVE2B
+# (row 1: WAVE2's bottom half) and T_WAVE1C (row 9: WAVE1's top
+# half).  Rows 0 and 10 get none: a crest on PF0 would need new
+# characters, and the first map font has no code left.
+WAVE_GLINTS.update({"T_WAVE2B": [(10, 1)], "T_WAVE1C": [(4, 1)]})
+WAVE_LAG.update({"T_WAVE2B": WV_PH // 2, "T_WAVE1C": 0})
+WAVE_BG = {"T_WAVE2B": "G.", "T_WAVE1C": ".G"}   # sea, top / bottom half
+
 
 def wave_frame(name, phase):
     """8 x 16 art of animated sea tile name in phase 0-3."""
-    a = [list("........") for _ in range(TH)]
+    bg = WAVE_BG.get(name, "..")
+    a = [list(bg[y // 8] * TW) for y in range(TH)]
     p = (phase + WAVE_LAG[name]) % WV_PH
     if name == "T_SPARK":
         for row, col in SPARKS[p]:
@@ -649,8 +662,14 @@ FIXED += [("T_WRECK", "wreck of a parked boat", WRECK),
           ("T_GRASS2", "plain grass, other specks", GRASS2),
           ("T_GRASS3", "plain grass, one speck", GRASS3),
           ("T_GRASS4", "plain grass, no specks", GRASS4)]
+N_HELP = len(FIXED)            # the tiles the help font holds
+FIXED += [("T_SEAB1", "open sea, row 1 (corner rows above)", ["GGGGGGGG"] * 8 + ["........"] * 8),
+          ("T_SEAB9", "open sea, row 9 (corner rows below)", ["........"] * 8 + ["GGGGGGGG"] * 8),
+          ("T_WAVE2B", "open sea, row 1, a boat's wake", wave_frame("T_WAVE2B", 0)),
+          ("T_WAVE1C", "open sea, row 9, a boat's wake", wave_frame("T_WAVE1C", 0))]
 T = {t[0]: n for n, t in enumerate(FIXED)}
 NFIX = len(FIXED)
+BAND_SEA = {1: "T_SEAB1", 9: "T_SEAB9"}   # rows 1, 9: open sea away from the corners
 
 
 def quarters(a):
@@ -837,10 +856,14 @@ def build_pair(mapname, outline, seeds, font_addr, generic=False, base=None):
             elif ch == "." and r in BANDS:
                 a = corner_art(FIXED[T["T_SEA"]][2], r, c)    # no waves here
                 key = (r, tuple(a))
-                if key not in index:
-                    index[key] = len(tiles)
-                    tiles.append((None, "sea, row %d" % r, a))
-                t, k = index[key], K_SEA
+                if r in BAND_SEA and a == FIXED[T[BAND_SEA[r]]][2]:
+                    t = T[BAND_SEA[r]]              # boats' wakes go here (D59)
+                else:
+                    if key not in index:
+                        index[key] = len(tiles)
+                        tiles.append((None, "sea, row %d" % r, a))
+                    t = index[key]
+                k = K_SEA
             elif ch == ".":
                 t, k = wave_tile(r, c), K_SEA
             else:
@@ -865,20 +888,24 @@ def build_pair(mapname, outline, seeds, font_addr, generic=False, base=None):
             tiles.append((None, "%s, row %d" % (name, r), a))
     # characters: fixed ones (deduplicated) get the same codes in every
     # font; coast ones go into the font of their character row
-    fixed_code, fixed_list, anim = {}, [], []
+    fixed_code, fixed_list, anim, acode, anim_code = {}, [], [], {}, {}
     for t in range(NFIX):
         name = tiles[t][0]
         frames = [quarters(wave_frame(name, ph)) for ph in range(WV_PH)] if name in WAVE_LAG else None
         for q, (bs, inv) in enumerate(quarters(tiles[t][2])):
-            if frames and any(any(f[q][0]) for f in frames):
-                # an animated character: its own code, its bytes per phase
-                anim.append((t, q, len(fixed_list), [f[q][0] for f in frames]))
-                fixed_list.append(bs)
+            fr = tuple(f[q][0] for f in frames) if frames else ()
+            if len(set(fr)) > 1:
+                # an animated character: its own code, its bytes per
+                # phase; tiles with the same frames share it (D59)
+                if fr not in anim_code:
+                    anim_code[fr] = len(fixed_list)
+                    anim.append((t, q, len(fixed_list), list(fr)))
+                    fixed_list.append(bs)
+                acode[(t, q)] = anim_code[fr]
             elif bs not in fixed_code:
                 fixed_code[bs] = len(fixed_list)
                 fixed_list.append(bs)
     nfc = len(fixed_list)
-    acode = {(t, q): code for t, q, code, fr in anim}
     rowchars = [[] for _ in range(CROWS)]          # coast chars per char row
     for t in range(NFIX, len(tiles)):
         r = int(tiles[t][1].split()[-1])
@@ -1076,7 +1103,7 @@ def help_font():
     tile's left and right codes in it."""
     font = [0] * 1024
     lcodes, rcodes = [], []
-    for t in range(NFIX):
+    for t in range(N_HELP):
         k = t - T["T_ITEM" if "T_ITEM" in T else "T_FORT"] + 1
         a = HELP_ITEMS[k] if 1 <= k <= 9 else help_art(FIXED[t][2])
         for half in (0, 1):
@@ -1088,7 +1115,7 @@ def help_font():
             (lcodes if half == 0 else rcodes).append(code | inv)
     for ch, g in GLYPHS.items():
         code = screen_code(ch) + HELP_OFS
-        assert 2 * NFIX <= code < 128, ch
+        assert 2 * N_HELP <= code < 128, ch
         for y, row in enumerate(g):
             font[8 * code + 2 + y] = sum(3 << (6 - 2 * x) for x, c in enumerate(row) if c == "#")
     return font, lcodes, rcodes

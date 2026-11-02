@@ -411,4 +411,23 @@ RM_K    *= *+1          ; RM_GEN: a count, or the land neighbours
 RM_I    *= *+1          ; RM_GEN: a square or harbour row kept
 
 ; ---------------------------------------------------------------------
+;  Boat wakes (TRAIL.ASM, D59)
+; ---------------------------------------------------------------------
+TL_N    =  8            ; wakes at once (a boat makes one each 12+
+                        ; frames, and each lasts at most 64)
+TLLC    *= *+2          ; per player: square of its boat, column ($FF: none)
+TLLR    *= *+2          ;   and row
+TLCOL   *= *+TL_N       ; per wake: its square's column
+TLROW   *= *+TL_N       ;   row
+TLTILE  *= *+TL_N       ;   wave tile drawn there, 0 = slot free
+TLLAG   *= *+TL_N       ;   its tile's phase lag (0 or WV_PH/2)
+TLARM   *= *+TL_N       ;   1 once its wave has shown (it may then end)
+TLNEXT  *= *+1          ; the next slot to use
+TL_P    *= *+1          ; TRAIL_TIC: player
+TL_C    *= *+1          ; TL_WAKE: column
+TL_R    *= *+1          ; TL_WAKE: row
+TL_PH   *= *+1          ; TL_AGE: wave phase now
+TL_S    *= *+1          ; TL_END: slot
+
+; ---------------------------------------------------------------------
 VAREND

@@ -89,6 +89,7 @@ GF_RUN  JSR HELP_KEY    ; H / HELP: price list (D34)
         JSR ECO_KEY     ; buy with digit keys (D17)
         JSR INFO_KEYS   ; console keys: info pages (D18)
         JSR WAVE_ANI    ; the waves move (D51)
+        JSR TRAIL_TIC   ; and boats leave wakes (D59)
 GF_TICS JSR TIC_POLL
 GF_TIC  JSR TIC_NEXT    ; run every due tic
         BCC GF_SHOW
@@ -173,6 +174,12 @@ CODE2   =  $5000
 ISLDATA =  $9000
         *= ISLDATA
         .INCLUDE "islands.asm"
+
+; ---------------------------------------------------------------------
+;  Boat wakes (D59): after the maps' data blocks, as CODE2 is full;
+;  must end below $BC00 (D57)
+; ---------------------------------------------------------------------
+        .INCLUDE "trail.asm"
 
 ; ---------------------------------------------------------------------
 ;  Run address
