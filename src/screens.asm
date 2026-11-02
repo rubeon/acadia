@@ -184,6 +184,7 @@ GS_DONE RTS
 ROUND_END
         JSR SND_ROUND
         JSR ECO_ROUND
+        JSR CT_REC      ; for the stats screen (D61)
         JSR REB_ROUND   ; then a rebel more or less for each player
         INC CURTRN
         LDA #0
@@ -276,16 +277,22 @@ GO_P2   LDA #<TX_W2
         BNE GO_LINE
 GO_DRAW LDA #<TX_TIE
         LDY #>TX_TIE
-GO_LINE LDX #40         ; status line 2
+GO_LINE LDX #40         ; status line 2: the winner, then the prompt
+        JSR TXT_STR
+        LDA #<TX_CHRT
+        LDY #>TX_CHRT
         JMP TXT_STR
 
 ; ---------------------------------------------------------------------
 ;  OVER_FRAME -- each frame of the game-over screen: once everything is
-;  let go, fire or any key goes back to the setup screen.
-;  Trashes A, X, Y.
+;  let go, fire or any key shows the stats screen (STATS.ASM, D61),
+;  which then has the frames.  Trashes A, X, Y.
 ; ---------------------------------------------------------------------
 OVER_FRAME
-        LDA FIRE0
+        LDA CT_ON
+        BEQ OF_OVER
+        JMP CT_FRAME    ; the stats screen is up
+OF_OVER LDA FIRE0
         ORA FIRE1
         ORA KEYDOWN
         LDX GO_ARM
@@ -297,7 +304,7 @@ OF_DONE RTS
 OF_ARMED
         CMP #0
         BEQ OF_DONE
-        JMP SETUP_ENTER ; back to the setup screen (R-MODE-4)
+        JMP CT_ENTER    ; the charts (D61)
 
 ; ---------------------------------------------------------------------
 ;  INFO_KEYS -- during a round: show the info page for a held console
@@ -418,9 +425,11 @@ TX_IPOP .SBYTE "      POPULATION      "
         .BYTE TX_END
 TX_ILST .SBYTE "      LAST ROUND      "
         .BYTE TX_END
-TX_W1   .SBYTE " PLAYER 1 WINS!  FIRE OR KEY: NEW GAME  "
+TX_W1   .SBYTE " PLAYER 1 WINS!  "  ; CT_WLEN characters each
         .BYTE TX_END
-TX_W2   .SBYTE " PLAYER 2 WINS!  FIRE OR KEY: NEW GAME  "
+TX_W2   .SBYTE " PLAYER 2 WINS!  "
         .BYTE TX_END
-TX_TIE  .SBYTE "     A DRAW!  FIRE OR KEY: NEW GAME     "
+TX_TIE  .SBYTE "     A DRAW!     "
+        .BYTE TX_END
+TX_CHRT .SBYTE "FIRE OR KEY: SEE CHARTS"   ; then the stats screen
         .BYTE TX_END

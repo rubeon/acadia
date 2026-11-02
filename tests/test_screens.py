@@ -123,8 +123,16 @@ for _ in range(120):
 if m.byte("GSTATE") != GS_OVER:
     fail("fire held over from the round restarted the game")
 frame()
+frame(fire0=True)                         # fire: the stats screen (D61)
+if m.byte("GSTATE") != GS_OVER or m.byte("CT_ON") != 1 or m.byte("SDLSTL") != m.addr("CTDLIST") & 0xFF:
+    fail("fire did not show the stats screen (state %d)" % m.byte("GSTATE"))
+if "FIRE OR KEY: NEW GAME" not in line(2):
+    fail("stats screen line 2: %r" % line(2))
+for _ in range(10):                       # fire still held: it stays up
+    frame(fire0=True)
+frame()
 frame(fire0=True)
-if m.byte("GSTATE") != GS_SETUP:
+if m.byte("GSTATE") != GS_SETUP or m.byte("CT_ON") != 0:
     fail("fire did not go back to the setup screen (state %d)" % m.byte("GSTATE"))
 for _ in range(10):                       # fire still held: setup waits
     frame(fire0=True)

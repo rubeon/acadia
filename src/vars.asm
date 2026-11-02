@@ -431,4 +431,58 @@ TL_PH   *= *+1          ; TL_AGE: wave phase now
 TL_S    *= *+1          ; TL_END: slot
 
 ; ---------------------------------------------------------------------
+;  Stats screen (STATS.ASM, D61)
+; ---------------------------------------------------------------------
+CT_MAXR =  50           ; rounds recorded (the setup allows 1-50, D31)
+CT_HLEN =  100          ; CT_MAXR for each player
+HSC     *= *+CT_HLEN    ; each round's score: player 1's, then player 2's
+HPOPL   *= *+CT_HLEN    ; population after each round, low bytes
+HPOPH   *= *+CT_HLEN    ;   high bytes
+HGLDL   *= *+CT_HLEN    ; gold after each round, low bytes
+HGLDH   *= *+CT_HLEN    ;   high bytes
+CTY     *= *+CT_MAXR    ; CT_LINE: each round's chart line
+CTDB    *= *+5          ; CT_DIGS: digits, the first first
+CT_ON   *= *+1          ; 1 while the stats screen is up (ST_VBI)
+CT_DI   *= *+1          ; the next DLI's colours (CT_DLI)
+CT_PG   *= *+1          ; page: 0 score, 1 people, 2 gold
+CT_J    *= *+1          ; stick left / right last frame
+CT_ARM  *= *+1          ; 1 once fire and keys were let go
+CT_N    *= *+1          ; rounds on the chart
+CT_S    *= *+1          ; series being drawn (CT_GET)
+CT_C    *= *+1          ; its colour, a byte of it
+CT_I    *= *+1          ; a round
+CT_SI   *= *+1          ; CT_SCALE: the step tried
+CT_D    *= *+2          ; the grid step; CT_DIV's divisor
+CT_R    *= *+2          ; CT_DIV: remainder
+CT_LO   *= *+2          ; the lowest grid line's value
+CT_MIN  *= *+2          ; the page's lowest value
+CT_MAX  *= *+2          ;   and highest
+CT_V    *= *+2          ; CT_GRID: a grid line's value
+CT_T    *= *+1          ; work byte (CT_ROW, CT_PLOT, ...)
+CT_X    *= *+1          ; CT_PLOT: pixel
+CT_XA   *= *+1          ; CT_LINE: a round's x and line
+CT_YA   *= *+1
+CT_XB   *= *+1          ;   the next round's
+CT_YB   *= *+1
+CT_YC   *= *+1          ;   the line reached so far
+CT_YN   *= *+1          ;   the line at the next column
+CT_YS   *= *+1          ; CT_SPAN: line
+CT_DX   *= *+1          ; CT_LINE: columns between two rounds
+CT_DY   *= *+1          ;   lines between them
+CT_SG   *= *+1          ;   1: going up
+CT_KX   *= *+1          ;   column count
+CT_K    *= *+1          ; CT_DIGS: digits
+CT_Y    *= *+1          ; CT_GRID: grid line
+CT_G    *= *+1          ;   digit pattern
+CT_RW   *= *+1          ;   digit line
+CT_RC   *= *+1          ;   lines left
+CT_COL  *= *+1          ;   byte column
+CT_JD   *= *+1          ;   digit
+CT_TX   *= *+1          ; CT_TNUM: text offset
+CT_TX2  *= *+1          ; CT_XLAB, CT_LEGD: text offset
+CT_TC   *= *+1          ; CT_TNUM: colour bits
+CT_P    *= *+1          ; CT_LEGD: player
+CT_M5   *= *+1          ; CT_XLAB: round number mod 5
+
+; ---------------------------------------------------------------------
 VAREND
