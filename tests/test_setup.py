@@ -206,6 +206,7 @@ print("game:  %r" % line1)
 # after game over, the setup screen comes back with the same values
 m.call("GAME_OVER")
 frame()
+tap(fire0=True)                 # the stats screen (D61), then setup
 tap(fire0=True)
 if m.byte("GSTATE") != GS_SETUP:
     fail("no setup screen after game over (state %d)" % m.byte("GSTATE"))
