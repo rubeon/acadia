@@ -33,6 +33,7 @@ KPMODE  *= *+1          ; 1: keypad controller in port 2 (D49)
 KPROW   *= *+1          ; keypad row read next, 0-3
 KPHIT   *= *+1          ; key found in this scan, 0-11, or $FF
 KPDOWN  *= *+1          ; keypad key held flag (edge detection)
+FTAP    *= *+2          ; per player: fire tap state, FT_ (FIRE_TAP, D60)
 
 ; ---------------------------------------------------------------------
 ;  Display (DISPLAY.ASM)

@@ -22,6 +22,9 @@
 ;    KEYPL         player the key belongs to (D17): the one holding
 ;                  fire; neither holding fire -> 0; both -> the key is
 ;                  dropped (KEY and KEYPL = $FF).  $FF with no key.
+;
+;  During a game FIRE_TAP also turns a tap of a fire button into key 0
+;  for that player (D60), so the stick alone can lift and park boats.
 ; =====================================================================
 
 ; ---------------------------------------------------------------------
@@ -121,6 +124,49 @@ IP_P0   LDA #0
 IP_BOTH LDA #$FF        ; both on fire: ambiguous, drop the key
         STA KEY
         STA KEYPL
+        RTS
+
+; ---------------------------------------------------------------------
+;  FIRE_TAP -- a tap of a fire button is key 0 for its player (D60)
+;  A tap is a press let go with no key pressed in between: holding
+;  fire while pressing a digit still gives that digit to the player
+;  holding it (D17), and that release is no tap.  On a tap's release,
+;  if no key came this poll, KEY = 0 and KEYPL = the player.  Call each
+;  frame of a game (play, pause, help, round summary) after
+;  INPUT_POLL; GAME_START sets FTAP to FT_USED so that a fire still
+;  held from the setup screen is no tap.  Trashes A, X.
+; ---------------------------------------------------------------------
+FT_UP   =  0            ; FTAP: fire let go
+FT_TAP  =  1            ;       pressed, a tap so far
+FT_USED =  2            ;       held, but not a tap
+
+FIRE_TAP
+        LDX #1          ; player 2, then player 1
+FT_LOOP LDA FIRE0,X
+        BEQ FT_REL
+        LDA KEYDOWN     ; held with a key: a digit for this player,
+        BNE FT_USE      ; or both on fire (D17)
+        LDA KEY         ; (keypad keys come only as KEY)
+        BMI FT_HOLD
+FT_USE  LDA #FT_USED
+        STA FTAP,X
+FT_HOLD LDA FTAP,X
+        BNE FT_NEXT     ; pressed earlier: tap or not, as it was
+        LDA #FT_TAP     ; just pressed
+        STA FTAP,X
+        BNE FT_NEXT
+FT_REL  LDA FTAP,X      ; let go: was it a tap?
+        CMP #FT_TAP
+        BNE FT_CLR
+        LDA KEY
+        BPL FT_CLR      ; a key came this poll: the key wins
+        LDA #0          ; key 0 for this player
+        STA KEY
+        STX KEYPL
+FT_CLR  LDA #FT_UP
+        STA FTAP,X
+FT_NEXT DEX
+        BPL FT_LOOP
         RTS
 
 KC_P    =  $0A          ; keyboard code of P

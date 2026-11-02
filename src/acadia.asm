@@ -78,7 +78,8 @@ GF_SU   CMP #GS_SETUP
 GF_OVER CMP #GS_OVER
         BNE GF_RUN
         JMP OVER_FRAME  ; game over: wait for fire or a key
-GF_RUN  JSR HELP_KEY    ; H / HELP: price list (D34)
+GF_RUN  JSR FIRE_TAP    ; a tap of fire is key 0 (D60)
+        JSR HELP_KEY    ; H / HELP: price list (D34)
         BNE GF_SHOW     ; help is up: nothing moves
         JSR PAUSE_KEY   ; P: pause / resume (D19)
         BNE GF_SHOW     ; paused: nothing moves

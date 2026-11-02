@@ -133,6 +133,11 @@ provide the same symbols.
 | `PAUSEK` | 1 on the poll where the pause key was pressed (P on the 800, PAUSE on a 5200 keypad), D19 |
 | `HELPK` | 1 on the poll where H or the XL/XE HELP key was pressed (help screen, D34) |
 
+During a game `GAME_FRAME` also calls `FIRE_TAP` after `INPUT_POLL`: a fire
+press let go with no key in between sets `KEY` = 0 and `KEYPL` = that
+player on the release (D60). `FTAP` holds each player's state; `GAME_START`
+sets it to `FT_USED` so a fire held over from the setup screen does not count.
+
 Keypad controller (D49, D58; CX21 Video Touch Pad or CX50): `KP_ON` / `KP_OFF` switch port 2 between a
 stick and a keypad (`KPMODE`). With the keypad on, `JOY1` and `FIRE1`
 stay 0, its digits come in as `KEY` with `KEYPL` 0, * as `PAUSEK`
