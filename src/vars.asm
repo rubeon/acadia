@@ -413,6 +413,8 @@ RM_I    *= *+1          ; RM_GEN: a square or harbour row kept
 ; ---------------------------------------------------------------------
 ;  Boat wakes (TRAIL.ASM, D59)
 ; ---------------------------------------------------------------------
+TL_N    =  8            ; wakes at once (a boat makes one each 12+
+                        ; frames, and each lasts at most 64)
 TLLC    *= *+2          ; per player: square of its boat, column ($FF: none)
 TLLR    *= *+2          ;   and row
 TLCOL   *= *+TL_N       ; per wake: its square's column

@@ -168,8 +168,12 @@ m.call("MAP_SET", a=0, x=a, y=row)
 
 # a long run: at most TL_N wakes, the oldest cleared first; both players
 m.call("TRAIL_INIT")
-run = [(c, r) for c, r in sea if r == 2][:12]
+m.poke("BOATK", 0, 0)                # both cursors: no square left yet
+tic(0)
+run = [(c, r) for c, r in sea if r < 8][:12]
 other = [(c, r) for c, r in sea if r == 8][:3]
+if len(run) < 12 or len(other) < 3:
+    fail("not enough plain sea for the long run")
 f = sail(1, other, 0)
 f = sail(0, run, f)
 woken = [s for s in run[:-1] + other[:-1] if chars(*s) != tile(T["T_SEA"])]

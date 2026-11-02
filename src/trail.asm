@@ -17,8 +17,7 @@
 ;  since stays).  The ambient waves and sparkles are not touched.
 ; =====================================================================
 
-TL_N    =  8            ; wakes at once (a boat makes one each 12+
-                        ; frames, and each lasts at most 64)
+; TL_N (wakes at once) is in VARS.ASM, which reserves the slots
 
 ; ---------------------------------------------------------------------
 ;  TRAIL_INIT -- no wakes, no boat out.  Call after MAP_DRAW.
@@ -103,7 +102,7 @@ TL_PHASE
         LSR A
         LSR A
         AND #WV_PH-1
-        RTS
+TW_NO   RTS             ; (also TL_WAKE's early way out)
 
 ; ---------------------------------------------------------------------
 ;  TL_WAKE -- a wake on square TL_C, TL_R if it is plain open sea with
@@ -112,14 +111,14 @@ TL_PHASE
 TL_WAKE LDX TL_C
         LDY TL_R
         JSR MAP_GET     ; A = item there
-        BCS TW_RTS      ; off the map
+        BCS TW_NO       ; off the map
         CMP #0
-        BNE TW_RTS      ; something on it
+        BNE TW_NO       ; something on it
         JSR MAP_IDX
         TAX
         LDA ISLTILE,X   ; its terrain must be the row's plain sea
         CMP TLSEA,Y
-        BNE TW_RTS
+        BNE TW_NO
         LDX #TL_N-1     ; already a wake there (the boat came back):
 TW_DUP  LDA TLTILE,X    ; drop it, this one replaces it
         BEQ TW_DUPN
@@ -174,7 +173,6 @@ TW_ARM  STA TLARM,X
         LDX TL_C
         LDY TL_R
         JMP MAP_PUT
-TW_RTS  RTS
 
 ; ---------------------------------------------------------------------
 ;  TL_END -- slot X's wake ends: its square is drawn as it should be

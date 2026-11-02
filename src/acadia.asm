@@ -162,7 +162,6 @@ CODE2   =  $5000
         .INCLUDE "title.asm"
         .INCLUDE "demo.asm"
         .INCLUDE "shade.asm"
-        .INCLUDE "trail.asm"
         .INCLUDE "maps.asm"
         .INCLUDE "status.asm"
         .INCLUDE "vars.asm"
@@ -175,6 +174,12 @@ CODE2   =  $5000
 ISLDATA =  $9000
         *= ISLDATA
         .INCLUDE "islands.asm"
+
+; ---------------------------------------------------------------------
+;  Boat wakes (D59): after the maps' data blocks, as CODE2 is full;
+;  must end below $BC00 (D57)
+; ---------------------------------------------------------------------
+        .INCLUDE "trail.asm"
 
 ; ---------------------------------------------------------------------
 ;  Run address
