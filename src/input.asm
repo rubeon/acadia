@@ -133,40 +133,40 @@ IP_BOTH LDA #$FF        ; both on fire: ambiguous, drop the key
 ;  holding it (D17), and that release is no tap.  On a tap's release,
 ;  if no key came this poll, KEY = 0 and KEYPL = the player.  Call each
 ;  frame of a game (play, pause, help, round summary) after
-;  INPUT_POLL; GAME_START sets FTAP to FT_USED so that a fire still
+;  INPUT_POLL; GAME_START sets FTAP to FX_USED so that a fire still
 ;  held from the setup screen is no tap.  Trashes A, X.
 ; ---------------------------------------------------------------------
-FT_UP   =  0            ; FTAP: fire let go
-FT_TAP  =  1            ;       pressed, a tap so far
-FT_USED =  2            ;       held, but not a tap
+FX_UP   =  0            ; FTAP: fire let go
+FX_TAP  =  1            ;       pressed, a tap so far
+FX_USED =  2            ;       held, but not a tap
 
 FIRE_TAP
         LDX #1          ; player 2, then player 1
-FT_LOOP LDA FIRE0,X
-        BEQ FT_REL
+FX_LOOP LDA FIRE0,X
+        BEQ FX_REL
         LDA KEYDOWN     ; held with a key: a digit for this player,
-        BNE FT_USE      ; or both on fire (D17)
+        BNE FX_USE      ; or both on fire (D17)
         LDA KEY         ; (keypad keys come only as KEY)
-        BMI FT_HOLD
-FT_USE  LDA #FT_USED
+        BMI FX_HOLD
+FX_USE  LDA #FX_USED
         STA FTAP,X
-FT_HOLD LDA FTAP,X
-        BNE FT_NEXT     ; pressed earlier: tap or not, as it was
-        LDA #FT_TAP     ; just pressed
+FX_HOLD LDA FTAP,X
+        BNE FX_NEXT     ; pressed earlier: tap or not, as it was
+        LDA #FX_TAP     ; just pressed
         STA FTAP,X
-        BNE FT_NEXT
-FT_REL  LDA FTAP,X      ; let go: was it a tap?
-        CMP #FT_TAP
-        BNE FT_CLR
+        BNE FX_NEXT
+FX_REL  LDA FTAP,X      ; let go: was it a tap?
+        CMP #FX_TAP
+        BNE FX_CLR
         LDA KEY
-        BPL FT_CLR      ; a key came this poll: the key wins
+        BPL FX_CLR      ; a key came this poll: the key wins
         LDA #0          ; key 0 for this player
         STA KEY
         STX KEYPL
-FT_CLR  LDA #FT_UP
+FX_CLR  LDA #FX_UP
         STA FTAP,X
-FT_NEXT DEX
-        BPL FT_LOOP
+FX_NEXT DEX
+        BPL FX_LOOP
         RTS
 
 KC_P    =  $0A          ; keyboard code of P
