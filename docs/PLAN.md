@@ -54,6 +54,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 | T-SCR-2 | Round summary and game-over screens; info displays | R-SCR-6, R-MODE-4, R-CTL-4 | T-ECO-4 | Full game of N rounds completes | done |
 | T-SCR-3 | Purchase help screen: one line per item with its key number, its map icon (the same tile as on the map) its name and its price, e.g. `1 [fort] FORT 50` | R-CTL-2 | T-SCR-2, T-EVT-1 | All 9 items shown with the right icon; leaving it returns to the game unchanged (clock paused while up) | done (D34) |
 | T-SCR-4 | Status line 2 in play: the input debug echo replaced by each player's population and a news slot (hurricane, boat sunk, storm damage, rebels, refused keys) | R-SCR-1 | T-SCR-2 | Populations shown and kept current; each message centred, cleared after 3 s, never hidden by a lower priority; no refusals shown for the CPU | done (D44) |
+| T-SCR-5 | End-of-game stats screen: line charts over the rounds of each player's score, population and gold | R-SCR-7 | T-SCR-2 | Every round of a game up to 50 rounds is recorded and charted; the chart scales to the values; fire goes on to the setup screen | in progress (Claude) |
 
 ## M4 — Moving things
 

@@ -64,9 +64,18 @@ ST_VBI
         EOR COLRSH
         AND DRKMSK
         STA STBK+3
+        LDA CT_ON       ; the stats screen: its own DLIs (D61)
+        BNE SV_CT
         LDA #<DLI_ST
         STA VDSLST
         LDA #>DLI_ST
+        STA VDSLST+1
+        RTS
+SV_CT   LDA #0
+        STA CT_DI
+        LDA #<CT_DLI
+        STA VDSLST
+        LDA #>CT_DLI
         STA VDSLST+1
         RTS
 

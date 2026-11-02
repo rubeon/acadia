@@ -584,3 +584,40 @@ TDLIST
         .BYTE DL_MODE6                  ; the prompt (TT_SCR+20)
         .BYTE DL_JVB
         .WORD TDLIST
+
+; Stats screen (STATS.ASM, D61): the status bar, the page names, the
+; chart (64 mode D lines from three blocks) and two text lines; a DLI
+; for each zone's colours (CT_DLI).  Same page as DLIST, like SUDLIST
+CTDLIST
+        .BYTE DL_BLANK8,DL_BLANK8
+        .BYTE DL_DLI+DL_BLANK8          ; DLI 0: status line 1's colours
+        .BYTE DL_DLI+DL_LMS+DL_MODE4    ; status line 1; DLI 1: line 2's
+        .WORD STATUS1
+        .BYTE DL_DLI+DL_MODE4           ; line 2; DLI 2: the page names'
+        .BYTE DL_BLANK4
+        .BYTE DL_DLI+DL_LMS+DL_MODE4    ; page names; DLI 3: the chart's
+        .WORD CT_TAB
+        .BYTE DL_BLANK2
+        .BYTE DL_LMS+DL_MODED           ; chart lines 0-24
+        .WORD CTBM0
+        .BYTE DL_MODED,DL_MODED,DL_MODED,DL_MODED,DL_MODED,DL_MODED
+        .BYTE DL_MODED,DL_MODED,DL_MODED,DL_MODED,DL_MODED,DL_MODED
+        .BYTE DL_MODED,DL_MODED,DL_MODED,DL_MODED,DL_MODED,DL_MODED
+        .BYTE DL_MODED,DL_MODED,DL_MODED,DL_MODED,DL_MODED,DL_MODED
+        .BYTE DL_LMS+DL_MODED           ; lines 25-49
+        .WORD CTBM1
+        .BYTE DL_MODED,DL_MODED,DL_MODED,DL_MODED,DL_MODED,DL_MODED
+        .BYTE DL_MODED,DL_MODED,DL_MODED,DL_MODED,DL_MODED,DL_MODED
+        .BYTE DL_MODED,DL_MODED,DL_MODED,DL_MODED,DL_MODED,DL_MODED
+        .BYTE DL_MODED,DL_MODED,DL_MODED,DL_MODED,DL_MODED,DL_MODED
+        .BYTE DL_LMS+DL_MODED           ; lines 50-63
+        .WORD CTBM2
+        .BYTE DL_MODED,DL_MODED,DL_MODED,DL_MODED,DL_MODED,DL_MODED
+        .BYTE DL_MODED,DL_MODED,DL_MODED,DL_MODED,DL_MODED,DL_MODED
+        .BYTE DL_DLI+DL_MODED           ; DLI 4: the round numbers'
+        .BYTE DL_DLI+DL_LMS+DL_MODE4    ; round numbers; DLI 5: legend's
+        .WORD CT_XL
+        .BYTE DL_BLANK2
+        .BYTE DL_MODE4                  ; legend (CT_LEG follows CT_XL)
+        .BYTE DL_JVB
+        .WORD CTDLIST

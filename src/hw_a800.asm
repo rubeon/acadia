@@ -96,6 +96,8 @@ NMIST   =  $D40F        ; R  NMI status
 
 ; ANTIC display list instructions
 DL_BLANK8 = $70         ; 8 blank lines
+DL_BLANK4 = $30         ; 4 blank lines
+DL_BLANK2 = $10         ; 2 blank lines
 DL_LMS    = $40         ; load memory scan (OR with mode)
 DL_DLI    = $80         ; display list interrupt (OR with mode)
 DL_JVB    = $41         ; jump and wait for vertical blank
