@@ -25,8 +25,12 @@ T_SPARK    = 18   ; open sea, sparkles
 T_GRASS2   = 19   ; plain grass, other specks
 T_GRASS3   = 20   ; plain grass, one speck
 T_GRASS4   = 21   ; plain grass, no specks
+T_SEAB1    = 22   ; open sea, row 1 (corner rows above)
+T_SEAB9    = 23   ; open sea, row 9 (corner rows below)
+T_WAVE2B   = 24   ; open sea, row 1, a boat's wake
+T_WAVE1C   = 25   ; open sea, row 9, a boat's wake
 T_ITEM     = 2    ; item k (1-9) is tile T_ITEM+k-1
-N_FIXED    = 22   ; fixed tiles, same character codes in every font
+N_FIXED    = 26   ; fixed tiles, same character codes in every font
 
 ; Cell kinds (ISLKIND); bit 7 set = square belongs to player 1
 K_SEA      = $00  ; open sea
