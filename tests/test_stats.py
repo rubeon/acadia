@@ -11,7 +11,7 @@ from run6502 import Machine  # noqa: E402
 m = Machine()
 fails = 0
 MAXR = 50
-X0, W, YB, GAP = m.addr("CT_X0"), m.addr("CT_W"), m.addr("CT_YB"), m.addr("CT_GAP")
+X0, W, YB, GAP = m.addr("CT_X0"), m.addr("CT_W"), m.addr("CT_YBOT"), m.addr("CT_GAP")
 STEPS = [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000]
 BIG = 2000000
 

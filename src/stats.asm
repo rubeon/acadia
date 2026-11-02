@@ -29,7 +29,7 @@
 
 CT_X0   =  24           ; chart: x of round 1 (mode D pixels)
 CT_W    =  132          ; the last round is CT_W further right
-CT_YB   =  60           ; chart line of the lowest grid line
+CT_YBOT   =  60           ; chart line of the lowest grid line
 CT_GAP  =  11           ; lines from one grid line to the next (5 steps)
 CT_LCOL =  5            ; y labels end before this byte column
 CT_GCOL =  6            ; grid lines start at this byte column
@@ -380,7 +380,7 @@ CD_NEXT DEX
 ; ---------------------------------------------------------------------
 ;  CT_YOF -- the chart line of a value
 ;  In: A = low byte, X = high byte (CT_LO up to CT_LO + 5 x CT_D).
-;  Out: A = line (CT_YB for CT_LO, CT_YB - 5 x CT_GAP at the top).
+;  Out: A = line (CT_YBOT for CT_LO, CT_YBOT - 5 x CT_GAP at the top).
 ;  Trashes X, Y, M_NUM.
 ; ---------------------------------------------------------------------
 CT_YOF
@@ -395,7 +395,7 @@ CT_YOF
         LDA #CT_GAP     ; (value - lowest line) x CT_GAP / step
         JSR MULN
         JSR CT_DIV
-        LDA #CT_YB
+        LDA #CT_YBOT
         SEC
         SBC M_NUM
         RTS
@@ -505,7 +505,7 @@ CN_DONE RTS
 ; ---------------------------------------------------------------------
 CT_LINE
         LDY #0          ; each round's line first
-CL_Y    STY CT_I
+CQ_Y    STY CT_I
         LDX CT_S
         JSR CT_GET
         JSR CT_YOF
@@ -513,7 +513,7 @@ CL_Y    STY CT_I
         STA CTY,Y
         INY
         CPY CT_N
-        BCC CL_Y
+        BCC CQ_Y
         LDA #0          ; from round 1
         STA CT_I
         JSR CT_XOF
@@ -521,21 +521,21 @@ CL_Y    STY CT_I
         LDA CTY
         STA CT_YA
         STA CT_YC
-CL_SEG  LDX CT_N        ; to the next round
+CQ_SEG  LDX CT_N        ; to the next round
         DEX
-        BNE CL_NXT
+        BNE CQ_NXT
         LDA #CT_X0+CT_W ; one round only: a flat line across
         STA CT_XB
         LDA CT_YA
         STA CT_YB
-        BNE CL_DRAW     ; (CT_YA is never 0)
-CL_NXT  INC CT_I
+        BNE CQ_DRAW     ; (CT_YA is never 0)
+CQ_NXT  INC CT_I
         JSR CT_XOF
         STA CT_XB
         LDY CT_I
         LDA CTY,Y
         STA CT_YB
-CL_DRAW LDA CT_XB       ; width and height, and which way
+CQ_DRAW LDA CT_XB       ; width and height, and which way
         SEC
         SBC CT_XA
         STA CT_DX
@@ -543,31 +543,31 @@ CL_DRAW LDA CT_XB       ; width and height, and which way
         SEC
         SBC CT_YA
         LDX #0
-        BCS CL_DY       ; down (or level)
+        BCS CQ_DY       ; down (or level)
         EOR #$FF        ; up: the height is minus that
         ADC #1
         INX
-CL_DY   STA CT_DY
+CQ_DY   STA CT_DY
         STX CT_SG
         LDA CT_XA
         STA CT_X
         LDA #1
         STA CT_KX
-CL_COL  LDA CT_DY       ; line at column CT_KX: |dy| x k / dx
+CQ_COL  LDA CT_DY       ; line at column CT_KX: |dy| x k / dx
         LDX CT_KX
         JSR MUL8
         LDA CT_DX
         JSR DIVN
         LDA CT_SG
-        BNE CL_UP
+        BNE CQ_UP
         LDA CT_YA
         CLC
         ADC M_NUM
-        JMP CL_YN
-CL_UP   LDA CT_YA
+        JMP CQ_YN
+CQ_UP   LDA CT_YA
         SEC
         SBC M_NUM
-CL_YN   STA CT_YN
+CQ_YN   STA CT_YN
         JSR CT_SPAN     ; this column: from the last line to this one
         LDA CT_YN
         STA CT_YC
@@ -575,7 +575,7 @@ CL_YN   STA CT_YN
         INC CT_KX
         LDA CT_DX
         CMP CT_KX
-        BCS CL_COL      ; k up to dx
+        BCS CQ_COL      ; k up to dx
         LDA CT_XB       ; the next round from here
         STA CT_XA
         LDA CT_YB
@@ -583,9 +583,9 @@ CL_YN   STA CT_YN
         LDX CT_I
         INX
         CPX CT_N
-        BCS CL_END
-        JMP CL_SEG
-CL_END  RTS
+        BCS CQ_END
+        JMP CQ_SEG
+CQ_END  RTS
 
 ; ---------------------------------------------------------------------
 ;  CT_GRID -- the 6 grid lines with their values at the left.
@@ -596,7 +596,7 @@ CT_GRID
         STA CT_V
         LDA CT_LO+1
         STA CT_V+1
-        LDA #CT_YB
+        LDA #CT_YBOT
         STA CT_Y
 CG_LINE LDA CT_Y        ; a dotted line
         JSR CT_ROW
