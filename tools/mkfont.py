@@ -276,23 +276,11 @@ WAVE_GLINTS = {"T_WAVE1": [(4, 1)], "T_WAVE2": [(10, 1)]}
 WAVE_LAG = {"T_WAVE1": 0, "T_WAVE2": WV_PH // 2, "T_SPARK": 0}
 SPARKS = [[(3, 1)], [(3, 1)], [(6, 3)], []]     # dots (row, column) by phase
 
-# Boat wakes (D59): a steered boat leaves a wave on each plain sea
-# square it passes (TRAIL.ASM).  In rows 2-8 that is T_WAVE1 or
-# T_WAVE2.  Rows 1 and 9 are half corner rows (D55): their open sea
-# gets fixed tiles, T_SEAB1 / T_SEAB9 (PF0 in the corner half), and a
-# wave each built from characters the map already has: T_WAVE2B
-# (row 1: WAVE2's bottom half) and T_WAVE1C (row 9: WAVE1's top
-# half).  Rows 0 and 10 get none: a crest on PF0 would need new
-# characters, and the first map font has no code left.
-WAVE_GLINTS.update({"T_WAVE2B": [(10, 1)], "T_WAVE1C": [(4, 1)]})
-WAVE_LAG.update({"T_WAVE2B": WV_PH // 2, "T_WAVE1C": 0})
-WAVE_BG = {"T_WAVE2B": "G.", "T_WAVE1C": ".G"}   # sea, top / bottom half
 
 
 def wave_frame(name, phase):
     """8 x 16 art of animated sea tile name in phase 0-3."""
-    bg = WAVE_BG.get(name, "..")
-    a = [list(bg[y // 8] * TW) for y in range(TH)]
+    a = [list("........") for _ in range(TH)]
     p = (phase + WAVE_LAG[name]) % WV_PH
     if name == "T_SPARK":
         for row, col in SPARKS[p]:
@@ -446,7 +434,7 @@ SEA = ["." * 20] * 11
 # and the 1K font slots their coast characters go in.
 MAPS = [
     ("STANDARD", [l + r.replace("#", "o").replace("H", "h") for l, r in zip(LEFT, RIGHT)],
-     (11, 29), [0x3000, 0x4800, 0x8800], False),
+     (11, 29), [0x3000, 0x4800, 0x8800, 0xA400], False),
     (" CLASSIC", CLASSIC, (17,), [0x8C00, 0xA000, 0xA400], False),
     ("  RANDOM", SEA, (11, 29), [0xA800], True),
 ]
@@ -663,13 +651,40 @@ FIXED += [("T_WRECK", "wreck of a parked boat", WRECK),
           ("T_GRASS3", "plain grass, one speck", GRASS3),
           ("T_GRASS4", "plain grass, no specks", GRASS4)]
 N_HELP = len(FIXED)            # the tiles the help font holds
-FIXED += [("T_SEAB1", "open sea, row 1 (corner rows above)", ["GGGGGGGG"] * 8 + ["........"] * 8),
-          ("T_SEAB9", "open sea, row 9 (corner rows below)", ["........"] * 8 + ["GGGGGGGG"] * 8),
-          ("T_WAVE2B", "open sea, row 1, a boat's wake", wave_frame("T_WAVE2B", 0)),
-          ("T_WAVE1C", "open sea, row 9, a boat's wake", wave_frame("T_WAVE1C", 0))]
+# Boat trails (D62, replacing D59's waves): a steered boat leaves a
+# sparkle on each open sea square it passes (TRAIL.ASM), which fades
+# in SPK_STEPS steps: a star with a glint, a small star, two dots.  The
+# sparkle sits in the square's bottom right quarter, so it needs one
+# new character per step, and one more on the corner rows' PF0 sea
+# (rows 0, 9 and 10 have that sea in their bottom half).  The corner
+# rows' open sea away from the corners gets fixed tiles, so TRAIL.ASM
+# can tell it: T_SEAB (rows 0 and 10), T_SEAB1, T_SEAB9.
+SPARKLE = [                    # bottom right quarter by step (1 = faintest)
+    ["....", "....", "....", "..W.", "....", "....", "W...", "...."],
+    ["....", "....", ".W..", "WWW.", ".W..", "....", "...W", "...."],
+    ["...W", ".W..", ".W..", "WWW.", ".W..", ".W..", "....", "...."]]
+SPK_STEPS = len(SPARKLE)
+SPK_KINDS = (("A", "rows 2-8", ".."), ("B", "row 1", "G."),
+             ("C", "row 9", ".G"), ("D", "rows 0 and 10", "GG"))
+
+
+def sparkle_art(bg, step):
+    """8 x 16 art: sea (. or G per half) with sparkle step 1-3."""
+    a = [bg[y // 8] * TW for y in range(TH)]
+    for y, row in enumerate(SPARKLE[step - 1]):
+        a[8 + y] = bg[1] * 4 + "".join("W" if p == "W" else bg[1] for p in row)
+    return a
+
+
+FIXED += [("T_SEAB", "open sea, rows 0 and 10 (corner rows)", ["GGGGGGGG"] * 16),
+          ("T_SEAB1", "open sea, row 1 (corner rows above)", ["GGGGGGGG"] * 8 + ["........"] * 8),
+          ("T_SEAB9", "open sea, row 9 (corner rows below)", ["........"] * 8 + ["GGGGGGGG"] * 8)]
+for _k, _w, _bg in SPK_KINDS:
+    FIXED += [("T_SPK%s%d" % (_k, _s), "boat trail sparkle, %s, step %d" % (_w, _s),
+               sparkle_art(_bg, _s)) for _s in range(1, SPK_STEPS + 1)]
 T = {t[0]: n for n, t in enumerate(FIXED)}
 NFIX = len(FIXED)
-BAND_SEA = {1: "T_SEAB1", 9: "T_SEAB9"}   # rows 1, 9: open sea away from the corners
+BAND_SEA = {0: "T_SEAB", 1: "T_SEAB1", 9: "T_SEAB9", 10: "T_SEAB"}  # away from the corners
 
 
 def quarters(a):
@@ -804,7 +819,9 @@ def random_pair(q, seed):
     return dict(q, tgrid=tg)
 
 
-def build_pair(mapname, outline, seeds, font_addr, generic=False, base=None):
+def build_pair(mapname, outline, seeds, font_addr, generic=False, base=None, seed=None):
+    """seed: (font index, characters) this map's font starts with, the
+    base map's top corner font sharing its 1K (D62)."""
     bm = pair_map(outline, seeds)
     for r in BANDS:
         assert set(outline[r]) <= set(".r"), "map %s row %d must be open sea" % (mapname, r)
@@ -921,6 +938,15 @@ def build_pair(mapname, outline, seeds, font_addr, generic=False, base=None):
     # every map) are taken from its fonts: rowfont -1 - f is its font f.
     fonts, rowfont = [[]], []
     groups = [[0]] + [[cr, cr + 1] if cr + 1 < CROWS else [cr] for cr in range(1, CROWS, 2)]
+    topfont = None
+    if not base:
+        # the top corner rows (0-2) get a font of their own, which shares
+        # its 1K with another map's last font (D62): the first font would
+        # be full otherwise
+        topfont = []
+        for cr in CORNER_CR[:3]:
+            topfont += [bs for bs in rowchars[cr] if bs not in topfont]
+        groups = groups[2:]
     if base:
         groups = [[cr, cr + 1] for cr in range(3, 19, 2)]
         for cr in CORNER_CR:
@@ -932,13 +958,20 @@ def build_pair(mapname, outline, seeds, font_addr, generic=False, base=None):
             need += [bs for bs in rowchars[cr] if bs not in need]
         new = [bs for bs in need if bs not in fonts[-1]]
         if nfc + len(fonts[-1]) + len(new) > 128:
-            fonts.append([])
-            new = need
+            fonts.append(list(seed[1]) if seed and len(fonts) == seed[0] else [])
+            new = [bs for bs in need if bs not in fonts[-1]]
         if nfc + len(need) > 128:
             sys.exit("character rows %r need %d coast characters; max %d"
                      % (grp, len(need), 128 - nfc))
         fonts[-1] += new
         rowfont += [len(fonts) - 1] * len(grp)
+    if seed:
+        while len(fonts) <= seed[0]:
+            fonts.append(list(seed[1]))
+        assert fonts[seed[0]][:len(seed[1])] == list(seed[1])
+    if topfont is not None:
+        rowfont = [len(fonts)] * 3 + rowfont
+        fonts.append(topfont)
     if base:
         rowfont = [-1 - base["rowfont"][cr] for cr in CORNER_CR[:3]] + rowfont + \
                   [-1 - base["rowfont"][cr] for cr in CORNER_CR[3:]]
@@ -981,6 +1014,7 @@ def build_pair(mapname, outline, seeds, font_addr, generic=False, base=None):
                         ", ".join("row %d, %d from the outer edge" % h for h in harb)))
     return dict(name=mapname, font_addr=font_addr, gentile=gentile, land=land, outline=outline, tiles=tiles, bndvar=bndvar,
                 kinds=kinds, tgrid=tgrid, fonts=fonts, rowfont=rowfont,
+                top=len(fonts) - 1 if topfont is not None else None,
                 codes=codes, fixed_chars=fixed_chars, anim=anim, stats=stats)
 
 def sea_steps(kinds, goal):
@@ -1161,7 +1195,11 @@ def main():
         prev_dir = sys.argv[sys.argv.index("--preview") + 1]
         os.makedirs(prev_dir, exist_ok=True)
     ps = [build_pair(*MAPS[0])]
-    ps += [build_pair(*m, base=ps[0]) for m in MAPS[1:]]
+    # STANDARD's top corner font shares its 1K with CLASSIC's last font
+    top = ps[0]["fonts"][ps[0]["top"]]
+    assert MAPS[1][3][2] == MAPS[0][3][ps[0]["top"]]
+    ps.append(build_pair(*MAPS[1], base=ps[0], seed=(2, top)))
+    ps += [build_pair(*m, base=ps[0]) for m in MAPS[2:]]
     p = ps[0]
     for q in ps[1:]:
         assert q["fixed_chars"] == p["fixed_chars"] and q["anim"] == p["anim"]
@@ -1178,6 +1216,7 @@ def main():
         out.append("%-11s= %-4d ; %s" % (equ, n, comment))
     out.append("%-11s= %-4d ; item k (1-9) is tile T_ITEM+k-1" % ("T_ITEM", T["T_FORT"]))
     out.append("%-11s= %-4d ; fixed tiles, same character codes in every font" % ("N_FIXED", NFIX))
+    out.append("%-11s= %-4d ; boat trail sparkle steps, T_SPKx1-x%d (D62)" % ("SPK_STEPS", SPK_STEPS, SPK_STEPS))
     out.append("")
     out.append("; Cell kinds (ISLKIND); bit 7 set = square belongs to player 1")
     for nm, v, what in (("K_SEA", K_SEA, "open sea"),
@@ -1200,6 +1239,11 @@ def main():
             out.append("; map %d (%s) font %d: character rows %s, %d coast characters"
                        % (mi + 1, q["name"].strip(), fi,
                           ",".join(str(r) for r in range(CROWS) if q["rowfont"][r] == fi), len(f)))
+            if fi == q["top"]:
+                # its characters lead the font sharing its 1K (D62)
+                out.append("MFNT%d%d   = $%04X  ; the first characters of map 2's font 2"
+                           % (mi, fi, q["font_addr"][fi]))
+                continue
             out.append("        *= $%04X" % q["font_addr"][fi])
             out.append("MFNT%d%d" % (mi, fi))
             for bs in q["fixed_chars"] + f:
@@ -1266,7 +1310,7 @@ def main():
         if live:
             o.append("; FONTPG: each map font's page, for WAVE_ANI")
             o.append("FONTPG")
-        fp = list(range(len(q["fonts"])))
+        fp = [f for f in range(len(q["fonts"])) if f != q["top"]]  # no waves up top
         fp += [fp[-1]] * (N_FONTS - len(fp))
         o.append("        .BYTE " + ",".join(">MFNT%d%d" % (mi, f) for f in fp))
         if live:

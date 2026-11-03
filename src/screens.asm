@@ -93,7 +93,7 @@ GN_STL  STA STATUS1,X   ; still in STATUS1 (STAT_LINE fills them after)
         JSR MAP_LOAD
         JSR MAP_INIT    ; empty islands
         JSR MAP_DRAW
-        JSR TRAIL_INIT  ; no wakes (D59)
+        JSR TRAIL_INIT  ; no boat trails (D62)
         JSR ECO_INIT    ; 1000 people, 100 gold each
         JSR CUR_INIT
         JSR FISH_INIT   ; no schools yet

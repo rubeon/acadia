@@ -90,7 +90,7 @@ GF_RUN  JSR FIRE_TAP    ; a tap of fire is key 0 (D60)
         JSR ECO_KEY     ; buy with digit keys (D17)
         JSR INFO_KEYS   ; console keys: info pages (D18)
         JSR WAVE_ANI    ; the waves move (D51)
-        JSR TRAIL_TIC   ; and boats leave wakes (D59)
+        JSR TRAIL_TIC   ; boats leave sparkles (D62)
 GF_TICS JSR TIC_POLL
 GF_TIC  JSR TIC_NEXT    ; run every due tic
         BCC GF_SHOW
