@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""D62: boats leave a fading trail of sparkles (TRAIL_INIT / TRAIL_TIC),
+"""D63: boats leave a fading trail of white dots (TRAIL_INIT / TRAIL_TIC),
 on py65."""
 
 import os
@@ -82,16 +82,21 @@ def find(want, rows=range(11)):
 for t, r in (("T_SEAB", 0), ("T_SEAB1", 1), ("T_SEAB9", 9), ("T_SEAB", 10)):
     if [c for c, rr in find(T[t]) if rr == r] != list(range(4 if r in (0, 10) else 1, 16 if r in (0, 10) else 19)):
         fail("row %d: %s squares %r" % (r, t, [c for c, rr in find(T[t]) if rr == r]))
-# each sparkle tile: the row's sea, a sparkle in the bottom right
-# quarter (white), the brighter steps different
+# each trail tile: per quarter either the row's sea there or white
+# dots (inverse); the brightest step dotted all over; the steps, and
+# their top left + bottom right pair (TL_SHOWN), all different
 g = m.byte("TILECH", T["T_GRASS4"])
 for r, top, bot in ((5, 0, 0), (1, g, 0), (9, 0, g), (0, g, g), (10, g, g)):
     for s in range(1, STEPS + 1):
         ch = spark(r, s)
-        if ch[:3] != (top, top, bot) or not ch[3] & 0x80:
+        sea = (top, top, bot, bot)
+        if any(c != w and not c & 0x80 for c, w in zip(ch, sea)):
             fail("row %d step %d: characters %r" % (r, s, ch))
-    if len({spark(r, s)[3] for s in range(1, STEPS + 1)}) != STEPS:
-        fail("row %d: the steps look the same" % r)
+    if not all(c & 0x80 for c in spark(r, STEPS)):
+        fail("row %d: the brightest step is not dotted all over" % r)
+    pairs = {(spark(r, s)[0], spark(r, s)[3]) for s in range(1, STEPS + 1)}
+    if len(pairs) != STEPS or (top, bot) in pairs:
+        fail("row %d: steps not told apart by their corners" % r)
 
 # a boat crossing open sea: the square it leaves sparkles, brightest
 # first, a step fainter every SPK_RATE frames, then plain sea again

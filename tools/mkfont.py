@@ -651,36 +651,38 @@ FIXED += [("T_WRECK", "wreck of a parked boat", WRECK),
           ("T_GRASS3", "plain grass, one speck", GRASS3),
           ("T_GRASS4", "plain grass, no specks", GRASS4)]
 N_HELP = len(FIXED)            # the tiles the help font holds
-# Boat trails (D62, replacing D59's waves): a steered boat leaves a
-# sparkle on each open sea square it passes (TRAIL.ASM), which fades
-# in SPK_STEPS steps: a star with a glint, a small star, two dots.  The
-# sparkle sits in the square's bottom right quarter, so it needs one
-# new character per step, and one more on the corner rows' PF0 sea
-# (rows 0, 9 and 10 have that sea in their bottom half).  The corner
-# rows' open sea away from the corners gets fixed tiles, so TRAIL.ASM
-# can tell it: T_SEAB (rows 0 and 10), T_SEAB1, T_SEAB9.
-SPARKLE = [                    # bottom right quarter by step (1 = faintest)
-    ["....", "....", "....", "..W.", "....", "....", "W...", "...."],
-    ["....", "....", ".W..", "WWW.", ".W..", "....", "...W", "...."],
-    ["...W", ".W..", ".W..", "WWW.", ".W..", ".W..", "....", "...."]]
-SPK_STEPS = len(SPARKLE)
+# Boat trails (D63, replacing D62's sparkles and D59's waves): a
+# steered boat leaves a trail of white dots on each open sea square it
+# passes (TRAIL.ASM), fish-sized (1 pixel by 2 lines, like the school
+# sprite's) and ever fewer as it fades: SPK_STEPS steps of 12, 6 and 3
+# dots.  Each quarter of a step is one of 4 dot patterns (TRAIL_QTR)
+# or empty, so the trail needs 4 new characters, and 4 more on the
+# corner rows' PF0 sea.  The corner rows' open sea away from the
+# corners gets fixed tiles, so TRAIL.ASM can tell it: T_SEAB (rows 0
+# and 10), T_SEAB1, T_SEAB9.
+TRAIL_QTR = {"4": [(0, 0), (2, 2), (1, 4), (3, 6)], "3": [(1, 0), (3, 3), (0, 5)],
+             "2": [(2, 1), (0, 5)], "1": [(3, 4)], "0": []}   # dots (column, line)
+TRAIL_STEP = ["1011", "2121", "4334"]  # quarters TL TR BL BR by step (1 = faintest)
+SPK_STEPS = len(TRAIL_STEP)
 SPK_KINDS = (("A", "rows 2-8", ".."), ("B", "row 1", "G."),
              ("C", "row 9", ".G"), ("D", "rows 0 and 10", "GG"))
 
 
 def sparkle_art(bg, step):
-    """8 x 16 art: sea (. or G per half) with sparkle step 1-3."""
-    a = [bg[y // 8] * TW for y in range(TH)]
-    for y, row in enumerate(SPARKLE[step - 1]):
-        a[8 + y] = bg[1] * 4 + "".join("W" if p == "W" else bg[1] for p in row)
-    return a
+    """8 x 16 art: sea (. or G per half) with trail step 1-3's dots."""
+    a = [list(bg[y // 8] * TW) for y in range(TH)]
+    for i, k in enumerate(TRAIL_STEP[step - 1]):
+        for x, y in TRAIL_QTR[k]:
+            for dy in (0, 1):
+                a[(i // 2) * 8 + y + dy][(i % 2) * 4 + x] = "W"
+    return ["".join(r) for r in a]
 
 
 FIXED += [("T_SEAB", "open sea, rows 0 and 10 (corner rows)", ["GGGGGGGG"] * 16),
           ("T_SEAB1", "open sea, row 1 (corner rows above)", ["GGGGGGGG"] * 8 + ["........"] * 8),
           ("T_SEAB9", "open sea, row 9 (corner rows below)", ["........"] * 8 + ["GGGGGGGG"] * 8)]
 for _k, _w, _bg in SPK_KINDS:
-    FIXED += [("T_SPK%s%d" % (_k, _s), "boat trail sparkle, %s, step %d" % (_w, _s),
+    FIXED += [("T_SPK%s%d" % (_k, _s), "boat trail dots, %s, step %d" % (_w, _s),
                sparkle_art(_bg, _s)) for _s in range(1, SPK_STEPS + 1)]
 T = {t[0]: n for n, t in enumerate(FIXED)}
 NFIX = len(FIXED)
@@ -1216,7 +1218,7 @@ def main():
         out.append("%-11s= %-4d ; %s" % (equ, n, comment))
     out.append("%-11s= %-4d ; item k (1-9) is tile T_ITEM+k-1" % ("T_ITEM", T["T_FORT"]))
     out.append("%-11s= %-4d ; fixed tiles, same character codes in every font" % ("N_FIXED", NFIX))
-    out.append("%-11s= %-4d ; boat trail sparkle steps, T_SPKx1-x%d (D62)" % ("SPK_STEPS", SPK_STEPS, SPK_STEPS))
+    out.append("%-11s= %-4d ; boat trail steps, T_SPKx1-x%d (D63)" % ("SPK_STEPS", SPK_STEPS, SPK_STEPS))
     out.append("")
     out.append("; Cell kinds (ISLKIND); bit 7 set = square belongs to player 1")
     for nm, v, what in (("K_SEA", K_SEA, "open sea"),

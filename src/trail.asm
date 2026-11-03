@@ -1,25 +1,25 @@
 ; =====================================================================
-;  TRAIL.ASM -- boats leave a fading trail of sparkles (D62, was
-;  waves, D59)
+;  TRAIL.ASM -- boats leave a fading trail of white dots (D63; was
+;  sparkles, D62, and waves, D59)
 ;
 ;  When a steered boat's centre moves on to a new square, the square
-;  it left gets a sparkle if it is open sea with nothing on it (plain
-;  sea, or one of the ambient waves or sparkles, which come back after).
-;  The sparkle fades in SPK_STEPS steps of SPK_RATE frames: a
-;  twinkling star (T_SPKx3), two dots, one dot, then the square is
-;  drawn as it should be again.  Each kind of row has its own 3 tiles
-;  (TLBASE): rows 2-8 (A), row 1 (B), row 9 (C), rows 0 and 10 (D),
-;  for the corner rows' PF0 sea (D55).  A sparkle is never drawn over
-;  an item, and is only changed or taken off the map while its square
-;  still shows it (a wreck or a boat drawn there since stays).
+;  it left gets dots if it is open sea with nothing on it (plain sea,
+;  or one of the ambient waves or sparkles, which come back after).
+;  The dots, fish-sized, thin out in SPK_STEPS steps of SPK_RATE
+;  frames: 12 dots (T_SPKx3), 6, 3, then the square is drawn as it
+;  should be again.  Each kind of row has its own 3 tiles (TLBASE):
+;  rows 2-8 (A), row 1 (B), row 9 (C), rows 0 and 10 (D), for the
+;  corner rows' PF0 sea (D55).  Dots are never drawn over an item,
+;  and only changed or taken off the map while their square still
+;  shows them (a wreck or a boat drawn there since stays).
 ; =====================================================================
 
-; TL_N (sparkles at once) is in VARS.ASM, which reserves the slots
+; TL_N (trails at once) is in VARS.ASM, which reserves the slots
 SPK_RATE =  12          ; frames per fade step (a boat crosses a
                         ; square in 12 or more)
 
 ; ---------------------------------------------------------------------
-;  TRAIL_INIT -- no sparkles, no boat out.  Call after MAP_DRAW.
+;  TRAIL_INIT -- no trails, no boat out.  Call after MAP_DRAW.
 ;  Trashes A, X.
 ; ---------------------------------------------------------------------
 TRAIL_INIT
