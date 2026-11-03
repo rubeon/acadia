@@ -124,9 +124,7 @@ TW_DUPN DEX
         LDX TLNEXT      ; the next slot; if in use, its sparkle ends now
         LDA TLSTEP,X
         BEQ TW_FREE
-        LDA #1
-        STA TLSTEP,X
-        JSR TL_FADE
+        JSR TL_END
 TW_FREE LDA TL_C
         STA TLCOL,X
         LDA TL_R
@@ -151,6 +149,12 @@ TW_FREE LDA TL_C
 ;  shows it, else the slot is just freed.  X kept; trashes A, Y,
 ;  ZPTR, MTILE.
 ; ---------------------------------------------------------------------
+; TL_END -- slot X's sparkle gone now, if its square still shows it.
+TL_END  STX TL_S
+        JSR TL_SHOWN
+        BCC TF_FREE
+        BCS TF_END
+
 TL_FADE STX TL_S
         JSR TL_SHOWN
         BCC TF_FREE     ; something else drawn over it

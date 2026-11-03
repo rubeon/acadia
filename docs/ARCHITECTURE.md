@@ -95,8 +95,8 @@ Current files are marked ✓; the rest are planned (see PLAN.md).
 | `$9C00-$9FFF` | Not loaded: the OS screen while the XEX loads with BASIC in (D57); at run time the stats screen's chart lines 0-24 (`CTBM0`, D61) |
 | `$A000-$A7FF` | CLASSIC map fonts 1-2 (D56); font 2 (`$A400`) starts with STANDARD's top corner rows' characters, which all maps use (`MFNT03`, D62) |
 | `$A800-$ABFF` | RANDOM map font (corner rows from STANDARD's fonts, D57) |
-| `$AC00-$B75x` | Each map's data block `MAPS0`-`MAPS2`, `MAPNAME`, `RNDTILE`, `GRSTL` (`islands.asm`, D56) |
-| `$B72C-$BBFF` | `trail.asm` (D59) right after the maps' data, then `stats2.asm` (D61); the rest free. Must end below `$BC00` (D57) |
+| `$AC00-$B7xx` | Each map's data block `MAPS0`-`MAPS2`, `MAPNAME`, `RNDTILE`, `GRSTL` (`islands.asm`, D56) |
+| `$B7xx-$BBF5` | `trail.asm` (D62) right after the maps' data, then `stats2.asm` (D61): only about 10 bytes free. Must end below `$BC00` (D57) |
 | `$BC00-$BFFF` | Not loaded: the OS screen while the XEX loads with BASIC out (D57); at run time the stats screen's chart lines 25-49 (`CTBM1`, D61) |
 
 Variables: all RAM variables live in one block, `src/vars.asm` at
