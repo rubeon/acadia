@@ -6,12 +6,20 @@ Writes three files (do not edit them by hand):
   src/tiles.asm     tile-number and cell-kind equates
   src/font_map.asm  the map fonts (1K each, fixed addresses) and the
                     help font
-  src/islands.asm   TILECH / TILECTR / TILECBL / TILECBR (tile ->
-                    character codes), HLPCH (help font codes),
-                    ROWFONT (font page per character row), ISLKIND
-                    (cell kinds), ISLTILE (terrain tile per square) and
-                    AI_HD / AI_UP / AI_DN (steps by sea for the CPU's
-                    boat: to its harbour, above, below the islands)
+  src/isl_live.asm  the live map's tables, starting as STANDARD's
+                    (800 build, RAM loaded with the XEX): TILECH /
+                    TILECTR / TILECBL / TILECBR (tile -> character
+                    codes), ROWFONT (font page per character row),
+                    ISLKIND (cell kinds), ISLTILE (terrain tile per
+                    square), BNDVAR, FONTPG and AI_HD / AI_UP / AI_DN
+                    (steps by sea for the CPU's boat: to its harbour,
+                    above, below the islands)
+  src/isl_live5200.asm  the same labels and sizes as *= *+n
+                    reservations (5200 build: RAM the cartridge can't
+                    load; MAP_LOAD fills it, D62)
+  src/islands.asm   the constants both builds share: HLPCH (help font
+                    codes), the wave tables, and each map's data block
+                    MAPS0 ... at MAPSRC
 
 The map is ANTIC mode 4 (D50).  Each map square is one tile = 2 x 2
 mode 4 characters = 8 x 16 pixels at 160 resolution, shown 8 colour
@@ -1015,7 +1023,7 @@ def banner(name, what):
 
 
 # map fonts, 1K aligned, at the slots MAPS gives; $4C00 holds the help
-# font.  The live island data (islands.asm) is at $9000, the status bar
+# font.  The live island data (isl_live.asm) is at $9000, the status bar
 # font (tools/mkstat.py) at $9800, the maps' data blocks at MAPSRC.
 
 # ---------------------------------------------------------------------
@@ -1274,11 +1282,11 @@ def main():
             o.append("MAPBLK  = MAPEND-TILECH ; bytes MAP_LOAD copies")
         return o
 
-    # islands.asm
-    out = banner("ISLANDS.ASM", "Island data, tile codes and font per character row (20 x 11).\n"
-                 ";  The block from TILECH to FONTPG and the AI_ tables are RAM: they\n"
-                 ";  start as map 1's, and MAP_LOAD copies a map's block (MAPS0 ...)\n"
-                 ";  over them and works out the AI_ tables again (D56).")
+    # isl_live.asm: the live tables, as map 1's (800)
+    out = banner("ISL_LIVE.ASM", "The live map's tables (RAM), 800 build: they start as map\n"
+                 ";  1's, and MAP_LOAD copies a map's block (MAPS0 ... in ISLANDS.ASM)\n"
+                 ";  over TILECH ... FONTPG and works out the AI_ tables again (D56).\n"
+                 ";  ISL_LIVE5200.ASM has the same labels and sizes for the 5200 (D62).")
     out += map_block(p, 0, True)
     out.append("; AI_HD: steps by sea (4 ways, not over land) from each square to")
     out.append("; player 2's harbour, the CPU's way home (AI.ASM); $FF: land or none.")
@@ -1294,6 +1302,26 @@ def main():
         steps = sea_steps(p["kinds"], goal)
         for r in range(ROWS):
             out.append("        .BYTE " + hexes(steps[r]))
+    open("src/isl_live.asm", "w").write("\n".join(out) + "\n")
+
+    # isl_live5200.asm: the same labels and sizes, reserved (5200, D62)
+    out = banner("ISL_LIVE5200.ASM", "The live map's tables (RAM), 5200 build: the labels and\n"
+                 ";  sizes of ISL_LIVE.ASM, reserved, as a cartridge can't load RAM;\n"
+                 ";  PLAT_INIT's first MAP_LOAD fills them (D62).")
+    for name, n in (("TILECH", ntiles), ("TILECTR", ntiles), ("TILECBL", ntiles),
+                    ("TILECBR", ntiles), ("ROWFONT", 2 * ROWS), ("ISLKIND", ROWS * COLS),
+                    ("ISLTILE", ROWS * COLS), ("BNDVAR", ROWS), ("FONTPG", N_FONTS)):
+        out.append("%-7s *= *+%d" % (name, n))
+    out.append("MAPEND")
+    out.append("MAPBLK  = MAPEND-TILECH ; bytes MAP_LOAD copies")
+    for name in ("AI_HD", "AI_UP", "AI_DN"):
+        out.append("%-7s *= *+%d" % (name, ROWS * COLS))
+    open("src/isl_live5200.asm", "w").write("\n".join(out) + "\n")
+
+    # islands.asm: constants and the maps' blocks (both builds)
+    out = banner("ISLANDS.ASM", "Island constants (both builds): help font codes, wave\n"
+                 ";  tables, and each map's data block (MAPS0 ...), laid out like the\n"
+                 ";  live tables in ISL_LIVE.ASM, which MAP_LOAD copies it over (D56).")
     out.append("; HLPCH, HLPCHR: help font codes of each fixed tile's left / right half")
     out.append("HLPCH   .BYTE " + hexes(hl))
     out.append("HLPCHR  .BYTE " + hexes(hr))
