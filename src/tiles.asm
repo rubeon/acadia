@@ -28,21 +28,20 @@ T_GRASS4   = 21   ; plain grass, no specks
 T_SEAB     = 22   ; open sea, rows 0 and 10 (corner rows)
 T_SEAB1    = 23   ; open sea, row 1 (corner rows above)
 T_SEAB9    = 24   ; open sea, row 9 (corner rows below)
-T_SPKA1    = 25   ; boat trail dots, rows 2-8, step 1
-T_SPKA2    = 26   ; boat trail dots, rows 2-8, step 2
-T_SPKA3    = 27   ; boat trail dots, rows 2-8, step 3
-T_SPKB1    = 28   ; boat trail dots, row 1, step 1
-T_SPKB2    = 29   ; boat trail dots, row 1, step 2
-T_SPKB3    = 30   ; boat trail dots, row 1, step 3
-T_SPKC1    = 31   ; boat trail dots, row 9, step 1
-T_SPKC2    = 32   ; boat trail dots, row 9, step 2
-T_SPKC3    = 33   ; boat trail dots, row 9, step 3
-T_SPKD1    = 34   ; boat trail dots, rows 0 and 10, step 1
-T_SPKD2    = 35   ; boat trail dots, rows 0 and 10, step 2
-T_SPKD3    = 36   ; boat trail dots, rows 0 and 10, step 3
 T_ITEM     = 2    ; item k (1-9) is tile T_ITEM+k-1
-N_FIXED    = 37   ; fixed tiles, same character codes in every font
-SPK_STEPS  = 3    ; boat trail steps, T_SPKx1-x3 (D63)
+N_FIXED    = 25   ; fixed tiles, same character codes in every font
+
+; Boat wake characters (D64, white: bit 7 set): H across, V up and
+; down, step 2 dashes, 1 dots; B on the corner rows' PF0 sea
+WK_STEPS   = 2    ; wake steps
+WK_H1      = $BA
+WK_H2      = $BB
+WK_H1B     = $BC
+WK_H2B     = $BD
+WK_V1      = $BE
+WK_V2      = $BF
+WK_V1B     = $C0
+WK_V2B     = $C1
 
 ; Cell kinds (ISLKIND); bit 7 set = square belongs to player 1
 K_SEA      = $00  ; open sea

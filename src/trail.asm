@@ -1,25 +1,28 @@
 ; =====================================================================
-;  TRAIL.ASM -- boats leave a fading trail of white dots (D63; was
+;  TRAIL.ASM -- boats leave a fading wake (D64; was dots, D63,
 ;  sparkles, D62, and waves, D59)
 ;
 ;  When a steered boat's centre moves on to a new square, the square
-;  it left gets dots if it is open sea with nothing on it (plain sea,
-;  or one of the ambient waves or sparkles, which come back after).
-;  The dots, fish-sized, thin out in SPK_STEPS steps of SPK_RATE
-;  frames: 12 dots (T_SPKx3), 6, 3, then the square is drawn as it
-;  should be again.  Each kind of row has its own 3 tiles (TLBASE):
-;  rows 2-8 (A), row 1 (B), row 9 (C), rows 0 and 10 (D), for the
-;  corner rows' PF0 sea (D55).  Dots are never drawn over an item,
-;  and only changed or taken off the map while their square still
-;  shows them (a wreck or a boat drawn there since stays).
+;  it left gets a thin dashed line if it is open sea with nothing on
+;  it (plain sea, or one of the ambient waves or sparkles, which come
+;  back after): along the boat's waterline if it moved across (its
+;  column changed), down the middle if it moved up or down.  After
+;  WK_RATE frames the dashes thin to dots, after as many more the
+;  square is drawn as it should be again.  The lines are characters
+;  (WK_H1 ... WK_V2B, TILES.ASM) written straight into screen memory:
+;  across, the bottom two; up and down, the right two.  The corner
+;  rows' halves (D55) take the ones on PF0 sea (TLBND).  A wake is
+;  never drawn over an item, and only changed or taken off the map
+;  while its square still shows it (a wreck or a boat drawn there
+;  since stays).
 ; =====================================================================
 
-; TL_N (trails at once) is in VARS.ASM, which reserves the slots
-SPK_RATE =  12          ; frames per fade step (a boat crosses a
+; TL_N (wakes at once) is in VARS.ASM, which reserves the slots
+WK_RATE =  16           ; frames per fade step (a boat crosses a
                         ; square in 12 or more)
 
 ; ---------------------------------------------------------------------
-;  TRAIL_INIT -- no trails, no boat out.  Call after MAP_DRAW.
+;  TRAIL_INIT -- no wakes, no boat out.  Call after MAP_DRAW.
 ;  Trashes A, X.
 ; ---------------------------------------------------------------------
 TRAIL_INIT
@@ -35,8 +38,8 @@ TI_CLR  STA TLSTEP,X    ; 0: the slot is free
         RTS
 
 ; ---------------------------------------------------------------------
-;  TRAIL_TIC -- once a frame during play: every sparkle fades, and a
-;  new one goes on each square a steered boat has just left.
+;  TRAIL_TIC -- once a frame during play: every wake fades, and a new
+;  one goes on each square a steered boat has just left.
 ;  Trashes A, X, Y, ZPTR, MTILE.
 ; ---------------------------------------------------------------------
 TRAIL_TIC
@@ -51,8 +54,13 @@ TT_PL   STX TL_P
         LDA CURROW,X
         CMP TLLR,X
         BEQ TT_NEXT     ; still on the same square
-TT_MOVE LDA TLLC,X      ; the square it left
-        STA TL_C
+TT_MOVE LDY #0          ; across (the column changed) or up / down
+        LDA TLLC,X
+        CMP CURCOL,X
+        BNE TT_DIR
+        INY
+TT_DIR  STY TL_D
+        STA TL_C        ; the square it left
         LDA TLLR,X
         STA TL_R
         LDA CURCOL,X    ; the one it is on now
@@ -72,7 +80,7 @@ TT_NEXT LDX TL_P
         RTS
 
 ; ---------------------------------------------------------------------
-;  TL_AGE -- every sparkle's time runs down; at 0 it fades a step.
+;  TL_AGE -- every wake's time runs down; at 0 it fades a step.
 ;  Trashes A, X, Y, ZPTR, MTILE.
 ; ---------------------------------------------------------------------
 TL_AGE  LDX #TL_N-1
@@ -86,8 +94,9 @@ TA_NEXT DEX
 TW_NO   RTS             ; (also TL_WAKE's early way out)
 
 ; ---------------------------------------------------------------------
-;  TL_WAKE -- a sparkle on square TL_C, TL_R if it is open sea with
-;  nothing on it.  Trashes A, X, Y, ZPTR, MTILE.
+;  TL_WAKE -- a wake (direction TL_D: 0 across, 1 up / down) on square
+;  TL_C, TL_R if it is open sea with nothing on it.
+;  Trashes A, X, Y, ZPTR, MTILE.
 ; ---------------------------------------------------------------------
 TL_WAKE LDX TL_C
         LDY TL_R
@@ -108,8 +117,8 @@ TL_WAKE LDX TL_C
         BEQ TW_OK
         CMP #T_SPARK
         BNE TW_NO
-TW_OK   LDX #TL_N-1     ; already a sparkle there (the boat came
-TW_DUP  LDA TLSTEP,X    ; back): this one replaces it
+TW_OK   LDX #TL_N-1     ; already a wake there (the boat came back):
+TW_DUP  LDA TLSTEP,X    ; it ends, this one replaces it
         BEQ TW_DUPN
         LDA TLCOL,X
         CMP TL_C
@@ -117,11 +126,10 @@ TW_DUP  LDA TLSTEP,X    ; back): this one replaces it
         LDA TLROW,X
         CMP TL_R
         BNE TW_DUPN
-        LDA #0
-        STA TLSTEP,X
+        JSR TL_END
 TW_DUPN DEX
         BPL TW_DUP
-        LDX TLNEXT      ; the next slot; if in use, its sparkle ends now
+        LDX TLNEXT      ; the next slot; if in use, its wake ends now
         LDA TLSTEP,X
         BEQ TW_FREE
         JSR TL_END
@@ -129,27 +137,26 @@ TW_FREE LDA TL_C
         STA TLCOL,X
         LDA TL_R
         STA TLROW,X
-        LDA #SPK_STEPS  ; the brightest step
+        LDA TL_D
+        STA TLDIR,X
+        LDA #WK_STEPS   ; dashes first
         STA TLSTEP,X
-        LDA #SPK_RATE
+        LDA #WK_RATE
         STA TLTIME,X
         TXA             ; the next slot after this one
         CLC
         ADC #1
         AND #TL_N-1
         STA TLNEXT
-        JSR TL_TILE
-        LDX TL_C
-        LDY TL_R
-        JMP MAP_PUT
+        JMP TL_PUT
 
 ; ---------------------------------------------------------------------
-;  TL_FADE -- slot X's sparkle a step fainter, or gone (its square
-;  drawn as it should be: item or terrain); only if the square still
-;  shows it, else the slot is just freed.  X kept; trashes A, Y,
-;  ZPTR, MTILE.
+;  TL_FADE -- slot X's wake a step fainter, or gone (its square drawn
+;  as it should be: item or terrain); only if the square still shows
+;  it, else the slot is just freed.
+;  TL_END  -- slot X's wake gone now, the same way.
+;  X kept; trashes A, Y, ZPTR, MTILE.
 ; ---------------------------------------------------------------------
-; TL_END -- slot X's sparkle gone now, if its square still shows it.
 TL_END  STX TL_S
         JSR TL_SHOWN
         BCC TF_FREE
@@ -160,17 +167,9 @@ TL_FADE STX TL_S
         BCC TF_FREE     ; something else drawn over it
         DEC TLSTEP,X
         BEQ TF_END
-        LDA #SPK_RATE
+        LDA #WK_RATE
         STA TLTIME,X
-        JSR TL_TILE     ; the fainter tile
-        LDY TLROW,X
-        PHA
-        LDA TLCOL,X
-        TAX
-        PLA
-        JSR MAP_PUT
-        LDX TL_S
-        RTS
+        JMP TL_PUT      ; the fainter line
 TF_END  LDY TLROW,X
         LDA TLCOL,X
         TAX
@@ -181,21 +180,49 @@ TF_FREE LDX TL_S
         STA TLSTEP,X
         RTS
 
-; TL_TILE -- A = the tile slot X shows (TLBASE + step - 1).  Keeps X.
-TL_TILE LDY TLROW,X
-        LDA TLBASE,Y
+; ---------------------------------------------------------------------
+;  TL_PUT -- draw slot X's line at its step.  TL_SHOWN -- C set if its
+;  square still shows it (its first character).  Both keep X; trash
+;  A, Y, ZPTR.
+; ---------------------------------------------------------------------
+TL_PUT  JSR TL_FIRST    ; TL_K1, ZPTR, Y: the first character
+        STA (ZPTR),Y
+        LDA TLDIR,X
+        BNE TP_V
+        INY             ; across: the bottom right one too
+        LDA TL_K1
+        STA (ZPTR),Y
+        RTS
+TP_V    LDA #2          ; up / down: the bottom right one, its own sea
+        JSR TL_CODE
+        PHA
+        LDA TL_Y        ; (TL_CODE trashed Y)
         CLC
-        ADC TLSTEP,X
-        SEC
-        SBC #1
+        ADC #MAPCOLS
+        TAY
+        PLA
+        STA (ZPTR),Y
         RTS
 
-; TL_SHOWN -- C set if slot X's square still shows its sparkle (its
-; top left and bottom right characters).  In: X = TL_S = slot.
-; Keeps X; trashes A, Y, ZPTR.
 TL_SHOWN
-        JSR TL_TILE
-        STA TL_T
+        JSR TL_FIRST
+        CMP (ZPTR),Y
+        BNE TS_NO
+        SEC
+        RTS
+TS_NO   CLC
+        RTS
+
+; TL_FIRST -- slot X's first character: A = TL_K1 = its code, ZPTR + Y
+; (also TL_Y) = where it goes (across: bottom left; up / down: top
+; right).  Keeps X.
+TL_FIRST
+        LDA #2          ; across: the bottom half's sea
+        LDY TLDIR,X
+        BEQ TF_1
+        LDA #1          ; up / down: the top half's sea
+TF_1    JSR TL_CODE
+        STA TL_K1
         LDY TLROW,X     ; the square's screen address
         LDA ROWLO,Y
         STA ZPTR
@@ -203,27 +230,40 @@ TL_SHOWN
         STA ZPTR+1
         LDA TLCOL,X
         ASL A           ; two characters per square
+        LDY TLDIR,X
+        BNE TF_V
+        ADC #MAPCOLS    ; across: bottom left (carry clear)
+        BCC TF_Y        ; always
+TF_V    ADC #1          ; up / down: top right (carry clear)
+TF_Y    STA TL_Y
         TAY
-        LDX TL_T
-        LDA (ZPTR),Y    ; top left
-        CMP TILECH,X
-        BNE TS_NO
-        TYA
-        CLC
-        ADC #MAPCOLS+1  ; bottom right
-        TAY
-        LDA (ZPTR),Y
-        CMP TILECBR,X
-        BNE TS_NO
-        LDX TL_S
-        SEC
-        RTS
-TS_NO   LDX TL_S
-        CLC
+        LDA TL_K1
         RTS
 
-; Per square row 0-10: the open sea a sparkle may be drawn on, and its
-; sparkle tiles' first (faintest) step
+; TL_CODE -- A = slot X's character for a half (A = 1 top, 2 bottom):
+; WKCODE by direction, the half's sea (TLBND) and step.  Keeps X.
+TL_CODE STA TL_T
+        LDY TLROW,X
+        LDA TLBND,Y     ; corner rows' sea in this half?
+        AND TL_T
+        BEQ TK_SEA
+        LDA #2
+TK_SEA  CLC
+        ADC TLSTEP,X    ; + step 1-2
+        STA TL_T
+        LDA TLDIR,X
+        ASL A
+        ASL A           ; + 4 x direction
+        CLC
+        ADC TL_T
+        TAY
+        LDA WKCODE-1,Y
+        RTS
+
+; Per square row 0-10: the open sea a wake may be drawn on, and which
+; halves are on the corner rows' PF0 sea (1 top, 2 bottom, D55)
 TLSEA   .BYTE T_SEAB,T_SEAB1,T_SEA,T_SEA,T_SEA,T_SEA,T_SEA,T_SEA,T_SEA,T_SEAB9,T_SEAB
-TLBASE  .BYTE T_SPKD1,T_SPKB1,T_SPKA1,T_SPKA1,T_SPKA1,T_SPKA1,T_SPKA1,T_SPKA1
-        .BYTE T_SPKA1,T_SPKC1,T_SPKD1
+TLBND   .BYTE 3,1,0,0,0,0,0,0,0,2,3
+; The wake characters: across, then up / down; each on COLBK sea
+; (steps 1, 2), then on PF0 sea
+WKCODE  .BYTE WK_H1,WK_H2,WK_H1B,WK_H2B,WK_V1,WK_V2,WK_V1B,WK_V2B

@@ -412,22 +412,26 @@ RM_K    *= *+1          ; RM_GEN: a count, or the land neighbours
 RM_I    *= *+1          ; RM_GEN: a square or harbour row kept
 
 ; ---------------------------------------------------------------------
-;  Boat trails (TRAIL.ASM, D62)
+;  Boat wakes (TRAIL.ASM, D64)
 ; ---------------------------------------------------------------------
-TL_N    =  8            ; sparkles at once (a boat makes one each 12+
-                        ; frames, and each lasts 36)
+TL_N    =  8            ; wakes at once (a boat makes one each 12+
+                        ; frames, and each lasts 32)
 TLLC    *= *+2          ; per player: square of its boat, column ($FF: none)
 TLLR    *= *+2          ;   and row
-TLCOL   *= *+TL_N       ; per sparkle: its square's column
+TLCOL   *= *+TL_N       ; per wake: its square's column
 TLROW   *= *+TL_N       ;   row
-TLSTEP  *= *+TL_N       ;   fade step 1-3 (3 brightest), 0 = slot free
+TLDIR   *= *+TL_N       ;   0 across, 1 up / down
+TLSTEP  *= *+TL_N       ;   fade step 1-2 (2: dashes), 0 = slot free
 TLTIME  *= *+TL_N       ;   frames left in this step
 TLNEXT  *= *+1          ; the next slot to use
 TL_P    *= *+1          ; TRAIL_TIC: player
 TL_C    *= *+1          ; TL_WAKE: column
 TL_R    *= *+1          ; TL_WAKE: row
+TL_D    *= *+1          ; TL_WAKE: direction
 TL_S    *= *+1          ; TL_FADE: slot
-TL_T    *= *+1          ; TL_SHOWN: tile
+TL_T    *= *+1          ; TL_CODE: work
+TL_K1   *= *+1          ; TL_FIRST: the first character's code
+TL_Y    *= *+1          ; TL_FIRST: its offset from ZPTR
 
 ; ---------------------------------------------------------------------
 ;  Stats screen (STATS.ASM, D61)

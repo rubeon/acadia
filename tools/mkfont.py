@@ -651,39 +651,37 @@ FIXED += [("T_WRECK", "wreck of a parked boat", WRECK),
           ("T_GRASS3", "plain grass, one speck", GRASS3),
           ("T_GRASS4", "plain grass, no specks", GRASS4)]
 N_HELP = len(FIXED)            # the tiles the help font holds
-# Boat trails (D63, replacing D62's sparkles and D59's waves): a
-# steered boat leaves a trail of white dots on each open sea square it
-# passes (TRAIL.ASM), fish-sized (1 pixel by 2 lines, like the school
-# sprite's) and ever fewer as it fades: SPK_STEPS steps of 12, 6 and 3
-# dots.  Each quarter of a step is one of 4 dot patterns (TRAIL_QTR)
-# or empty, so the trail needs 4 new characters, and 4 more on the
-# corner rows' PF0 sea.  The corner rows' open sea away from the
-# corners gets fixed tiles, so TRAIL.ASM can tell it: T_SEAB (rows 0
-# and 10), T_SEAB1, T_SEAB9.
-TRAIL_QTR = {"4": [(0, 0), (2, 2), (1, 4), (3, 6)], "3": [(1, 0), (3, 3), (0, 5)],
-             "2": [(2, 1), (0, 5)], "1": [(3, 4)], "0": []}   # dots (column, line)
-TRAIL_STEP = ["1011", "2121", "4334"]  # quarters TL TR BL BR by step (1 = faintest)
-SPK_STEPS = len(TRAIL_STEP)
-SPK_KINDS = (("A", "rows 2-8", ".."), ("B", "row 1", "G."),
-             ("C", "row 9", ".G"), ("D", "rows 0 and 10", "GG"))
+# Boat wakes (D64, replacing D63's dots and D62's sparkles): a
+# steered boat leaves a thin dashed line on each open sea square it
+# passes (TRAIL.ASM): one along its waterline (tile line WK_LINE)
+# when it moves across, one down the middle (tile column WK_COL) when
+# it moves up or down.  It fades in WK_STEPS steps: dashes, then
+# sparse dots.  The line is the same character in both quarters it
+# crosses, so these are characters, not tiles: TRAIL.ASM writes them
+# straight into screen memory.  WAKE_CHARS: (equate, horizontal?,
+# step, sea), the sea . (COLBK) or G (the corner rows' PF0 sea).
+# The corner rows' open sea away from the corners gets fixed tiles,
+# so TRAIL.ASM can tell it: T_SEAB (rows 0 and 10), T_SEAB1, T_SEAB9.
+WK_LINE, WK_COL, WK_STEPS = 11, 4, 2
+WAKE_CHARS = [("WK_%s%d%s" % ("H" if h else "V", st, "B" if sea == "G" else ""), h, st, sea)
+              for h in (True, False) for sea in ".G" for st in (1, 2)]
 
 
-def sparkle_art(bg, step):
-    """8 x 16 art: sea (. or G per half) with trail step 1-3's dots."""
-    a = [list(bg[y // 8] * TW) for y in range(TH)]
-    for i, k in enumerate(TRAIL_STEP[step - 1]):
-        for x, y in TRAIL_QTR[k]:
-            for dy in (0, 1):
-                a[(i // 2) * 8 + y + dy][(i % 2) * 4 + x] = "W"
-    return ["".join(r) for r in a]
+def wake_char(horiz, step, sea):
+    """The 4 x 8 pixels of a wake character: dashes (step 2) or dots."""
+    on = (lambda k: k % 4 != 3) if step == 2 else (lambda k: k % 4 == 1)
+    rows = []
+    for y in range(8):
+        if horiz:
+            rows.append("".join("W" if y == WK_LINE % 8 and on(x) else sea for x in range(4)))
+        else:
+            rows.append("".join("W" if x == WK_COL % 4 and on(y) else sea for x in range(4)))
+    return tuple(PIX[r[0]] << 6 | PIX[r[1]] << 4 | PIX[r[2]] << 2 | PIX[r[3]] for r in rows)
 
 
 FIXED += [("T_SEAB", "open sea, rows 0 and 10 (corner rows)", ["GGGGGGGG"] * 16),
           ("T_SEAB1", "open sea, row 1 (corner rows above)", ["GGGGGGGG"] * 8 + ["........"] * 8),
           ("T_SEAB9", "open sea, row 9 (corner rows below)", ["........"] * 8 + ["GGGGGGGG"] * 8)]
-for _k, _w, _bg in SPK_KINDS:
-    FIXED += [("T_SPK%s%d" % (_k, _s), "boat trail dots, %s, step %d" % (_w, _s),
-               sparkle_art(_bg, _s)) for _s in range(1, SPK_STEPS + 1)]
 T = {t[0]: n for n, t in enumerate(FIXED)}
 NFIX = len(FIXED)
 BAND_SEA = {0: "T_SEAB", 1: "T_SEAB1", 9: "T_SEAB9", 10: "T_SEAB"}  # away from the corners
@@ -924,6 +922,13 @@ def build_pair(mapname, outline, seeds, font_addr, generic=False, base=None, see
             elif bs not in fixed_code:
                 fixed_code[bs] = len(fixed_list)
                 fixed_list.append(bs)
+    wake_code = {}                 # boat wake characters (D64), white
+    for name, h, st, sea in WAKE_CHARS:
+        bs = wake_char(h, st, sea)
+        if bs not in fixed_code:
+            fixed_code[bs] = len(fixed_list)
+            fixed_list.append(bs)
+        wake_code[name] = fixed_code[bs] | 0x80
     nfc = len(fixed_list)
     rowchars = [[] for _ in range(CROWS)]          # coast chars per char row
     for t in range(NFIX, len(tiles)):
@@ -1017,7 +1022,8 @@ def build_pair(mapname, outline, seeds, font_addr, generic=False, base=None, see
     return dict(name=mapname, font_addr=font_addr, gentile=gentile, land=land, outline=outline, tiles=tiles, bndvar=bndvar,
                 kinds=kinds, tgrid=tgrid, fonts=fonts, rowfont=rowfont,
                 top=len(fonts) - 1 if topfont is not None else None,
-                codes=codes, fixed_chars=fixed_chars, anim=anim, stats=stats)
+                codes=codes, fixed_chars=fixed_chars, anim=anim, stats=stats,
+                wake_code=wake_code)
 
 def sea_steps(kinds, goal):
     """Steps by sea from each square to the nearest square where
@@ -1218,7 +1224,12 @@ def main():
         out.append("%-11s= %-4d ; %s" % (equ, n, comment))
     out.append("%-11s= %-4d ; item k (1-9) is tile T_ITEM+k-1" % ("T_ITEM", T["T_FORT"]))
     out.append("%-11s= %-4d ; fixed tiles, same character codes in every font" % ("N_FIXED", NFIX))
-    out.append("%-11s= %-4d ; boat trail steps, T_SPKx1-x%d (D63)" % ("SPK_STEPS", SPK_STEPS, SPK_STEPS))
+    out.append("")
+    out.append("; Boat wake characters (D64, white: bit 7 set): H across, V up and")
+    out.append("; down, step 2 dashes, 1 dots; B on the corner rows' PF0 sea")
+    out.append("%-11s= %-4d ; wake steps" % ("WK_STEPS", WK_STEPS))
+    for name, h, st, sea in WAKE_CHARS:
+        out.append("%-11s= $%02X" % (name, p["wake_code"][name]))
     out.append("")
     out.append("; Cell kinds (ISLKIND); bit 7 set = square belongs to player 1")
     for nm, v, what in (("K_SEA", K_SEA, "open sea"),
