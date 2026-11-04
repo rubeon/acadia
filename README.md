@@ -23,14 +23,14 @@ and keep your people fed and happy through storms, pirates and rebels.
 - Menus and item selection on the keyboard; this is a computer. A tap of
   the fire button does what 0 does (lift or park a boat). In a 1-player game an Atari Video Touch Pad (or CX50 keypad) in port 2 works too: plug it in and it is found when the game starts.
 - On the Atari 5200 (D63): the analog stick moves the cursor and the
-  fire button (`TRIG`) is fire. Keypad 1-9 buy items for that
-  controller's player; 0 or the other side button lifts or parks a
+  bottom side button is fire. Keypad 1-9 buy items for that
+  controller's player; 0 or the top side button lifts or parks a
   boat; `*` shows the price list; `PAUSE` pauses; `START` begins a game
   and, held during a round, shows the total scores; `#` held shows the
   info pages (totals, then populations, then last round on each press
-  soon after). In atari800 `-5200`: numpad stick, Right Ctrl fire,
-  Shift the second button, `0`-`9`, `=` for `#`, numpad `*`, `P`
-  pause, F4 START (`#` and `*` typed with Shift also press the second
+  soon after). In atari800 `-5200`: numpad stick, Right Ctrl the top
+  button (key 0), Shift the bottom button (fire), `0`-`9`, `=` for `#`, numpad `*`, `P`
+  pause, F4 START (`#` and `*` typed with Shift also press the bottom
   button).
 
 Acadia is an independent project, not affiliated with or endorsed by
@@ -138,4 +138,4 @@ it cheap:
 - All input goes through `src/input.asm`, which exposes `JOY0/JOY1`,
   `FIRE0/FIRE1` and `KEY`. The 5200's `src/input5200.asm` maps the
   analog sticks, the keypads (items 0-9, a natural fit for the
-  original's keypad controls) and the second side button (D63).
+  original's keypad controls) and both side buttons (D63).

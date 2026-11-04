@@ -4,7 +4,7 @@
 The cartridge's start-up (MAIN_INIT's steps), then GAME_FRAME once per
 simulated frame with the BIOS's pot shadows, the triggers, KBCODE,
 SKSTAT and CONSOL faked: the title screen, the setup screen, a game
-started with START, the stick, buying, the 2nd button, *, PAUSE and
+started with START, the stick, buying, the top button, *, PAUSE and
 #; then a 2-player game's keys per controller.
 """
 
@@ -64,10 +64,10 @@ def press(k, ctl=0, hold=4, rest=6):
 
 GS_TITLE, GS_SETUP = m.sym["GS_TITLE"], m.sym["GS_SETUP"]
 
-# title: the top button goes on to the setup screen
+# title: the bottom button (fire) goes on to the setup screen
 frame(10)
 check("title", m.byte("GSTATE"), GS_TITLE)
-frame(3, trig=(0, 1))
+frame(3, bot=(True, False))
 frame(5)
 check("fire on the title: setup", m.byte("GSTATE"), GS_SETUP)
 
@@ -89,13 +89,13 @@ check("stick down-right moves the cursor",
       (m.byte("CURX") > x, m.byte("CURY") > y), (True, True))
 frame(5)
 
-# 9 buys a fishing boat (the gold goes down); the 2nd button is key 0
+# 9 buys a fishing boat (the gold goes down); the top button is key 0
 gold = m.word("GOLD")
 press("9")
 if m.word("GOLD") >= gold:
     fail("9 did not buy a boat: gold %d -> %d" % (gold, m.word("GOLD")))
-frame(1, bot=(True, False))                  # key 0 reaches the game
-check("the 2nd button in a game: key 0", (m.byte("KEY"), m.byte("KEYPL")), (0, 0))
+frame(1, trig=(0, 1))                        # key 0 reaches the game
+check("the top button in a game: key 0", (m.byte("KEY"), m.byte("KEYPL")), (0, 0))
 frame(5)
 
 # * opens and closes the help screen

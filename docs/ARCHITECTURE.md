@@ -191,19 +191,19 @@ columns charge pots 2 and 3 at once, D58); `SETUP_ENTER` turns it off.
 5200 mapping (`input5200.asm`, D63): each analog stick (the BIOS's pot
 shadows `PADDL0-3`, low = left / up) past a dead zone (under 74 or from
 155, centre ~114; both pots at 228 = no controller) gives `JOY0` /
-`JOY1`; the `TRIG` buttons give `FIRE0` / `FIRE1`. POKEY scans the
-keypad and the second side button (`SKSTAT` bit 3) of the one controller
+`JOY1`. POKEY scans the keypad and the bottom side button (`SKSTAT`
+bit 3), which gives `FIRE0` / `FIRE1`, of the one controller
 `CONSOL` bits 0-1 select (bit 2 kept set: pots on); `INPUT_POLL` reads
 the controller selected the frame before, then selects the next:
 controller 1 every frame, the two in turn during the rounds of a
 2-player game. Keypad 1-9 → `KEY` with `KEYPL` = the controller; 0 and
-the second side button → `KEY` 0 on the press; `*` → `HELPK`; `PAUSE` →
+the top side button (`TRIG0/1`) → `KEY` 0 on the press; `*` → `HELPK`; `PAUSE` →
 `PAUSEK`; `START` held → `CONKEY` bit 0; `#` held during a round →
 `CONKEY` bit 0, 1 or 2 (totals, then the next page on each press within
 1.5 s of the last). `*`, `#`, `START` and `PAUSE` are shared: a press
 counts unless the other controller holds the same key. `KEYDOWN` = any
-key or second button held. `FIRE_TAP`, `KP_ON`, `KP_OFF` and `KP_AUTO`
-are an `RTS`. `IN_INIT` (from `PLAT_INIT`) turns off the second button's
+key or top button held. `FIRE_TAP`, `KP_ON`, `KP_OFF` and `KP_AUTO`
+are an `RTS`. `IN_INIT` (from `PLAT_INIT`) turns off the bottom button's
 BREAK IRQ, as input is polled.
 
 **Interrupts:** the game installs a deferred VBI (`VVBLKD`) and a DLI

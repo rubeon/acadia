@@ -3,18 +3,19 @@
 ;
 ;  The same variables as INPUT.ASM (ARCHITECTURE.md section 4), from
 ;  the 5200's controllers: an analog stick, two side buttons and a
-;  12-key keypad with START, PAUSE and RESET.  One side button is wired
-;  to GTIA's TRIG (the bottom one, by A.N.A.L.O.G. #15 and the connector
-;  pinouts), the other to the keypad's shift line (SKSTAT bit 3, read
-;  like the keypad); D63.
+;  12-key keypad with START, PAUSE and RESET.  The top side button is
+;  wired to GTIA's TRIG (found on a real 5200, 2026-11-04; A.N.A.L.O.G.
+;  #15 and the connector pinouts had it the other way round), the
+;  bottom one to the keypad's shift line (SKSTAT bit 3, read like the
+;  keypad).  Rube wants the bottom one to fire (D63).
 ;
 ;    stick         PADDL0-3 (the BIOS's pot shadows: controller 1 x, y,
 ;                  controller 2 x, y; low = left / up) past a dead
 ;                  zone around the centre -> JOY0, JOY1
-;    fire          TRIG0, TRIG1 -> FIRE0, FIRE1
+;    fire          the bottom side button (SKSTAT bit 3) -> FIRE0, FIRE1
 ;    keypad 1-9    KEY 1-9, KEYPL = the controller it came from
-;    0, the other  KEY 0 for that controller (lift / park a boat)
-;    side button
+;    0, the top    KEY 0 for that controller (lift / park a boat)
+;    side button   (TRIG0, TRIG1)
 ;    *             HELPK (help screen, D34)
 ;    #             info pages (D18) while held, during a round: totals,
 ;                  then each press within IN_PGTM frames of the last
@@ -24,11 +25,11 @@
 ;    PAUSE         PAUSEK (D19)
 ;    RESET         nothing (the BIOS's keypad IRQ ignores it too)
 ;
-;  POKEY scans one controller's keypad and 2nd button at a time,
+;  POKEY scans one controller's keypad and bottom button at a time,
 ;  the one CONSOL bits 0-1 select.  INPUT_POLL reads the controller
 ;  selected the frame before and selects the next one: controller 1
 ;  every frame, except during the rounds of a 2-player game, when the
-;  two take turns.  A digit, 0 or the 2nd button counts when it is
+;  two take turns.  A digit, 0 or the top button counts when it is
 ;  pressed on its controller; *, #, START and PAUSE are shared, like
 ;  the 800's console keys, and count when pressed on one controller
 ;  while the other is not holding the same key.  (atari800 presses a
@@ -44,12 +45,15 @@ FX_USED =  2            ;       held, but not a tap
 IN_CTL  =  PLATRAM+11   ; controller selected for the next read (0/1)
 IN_HELD =  PLATRAM+12   ; 2 bytes: per controller, keypad code held at
                         ; its last read (1-15, 0 = none)
-IN_BOT  =  PLATRAM+14   ; 2 bytes: per controller, 2nd button held
+IN_BOT  =  PLATRAM+14   ; 2 bytes: per controller, bottom button held
                         ; at its last read (SK_BOT, 0 = not)
 IN_PG   =  PLATRAM+16   ; info page # shows: 1-3 (D18)
 IN_PGT  =  PLATRAM+17   ; frames left to step the page with #
 IN_J    =  PLATRAM+18   ; IN_STK: direction bits so far
-IN_N    =  8            ; bytes IN_INIT clears (IN_CTL ... IN_J)
+IN_TRG  =  PLATRAM+19   ; 2 bytes: per controller, top button (TRIG)
+                        ; held at the last poll (1 = held)
+IN_TWO  =  PLATRAM+21   ; 1: both controllers are read (IN_SEL)
+IN_N    =  11           ; bytes IN_INIT clears (IN_CTL ... IN_TWO)
 
 IN_LO   =  74           ; pot < IN_LO: up / left (centre ~114)
 IN_HI   =  155          ; pot >= IN_HI: down / right
@@ -59,9 +63,9 @@ IN_PGTM =  90           ; frames after # is let go in which a new
                         ; press steps the page (1.5 s), else totals
 
 SK_KEY  =  $04          ; SKSTAT bit 2: 0 = a key held
-SK_BOT  =  $08          ; SKSTAT bit 3: 0 = the 2nd side button held
+SK_BOT  =  $08          ; SKSTAT bit 3: 0 = the bottom side button held
 CN_POT  =  $04          ; CONSOL bit 2: pots on (bits 0-1: controller)
-IQ_BOT  =  $80          ; IRQEN bit 7: the 2nd button's BREAK IRQ
+IQ_BOT  =  $80          ; IRQEN bit 7: the bottom button's BREAK IRQ
 
 ; Keypad codes, (KBCODE / 2) AND 15
 KC_HASH =  $01
@@ -73,7 +77,7 @@ KC_STRT =  $0C
 
 ; ---------------------------------------------------------------------
 ;  IN_INIT -- clear the input state, controller 1 selected, pots on,
-;  and no IRQ for the 2nd button (polled; the BIOS's VTRIGR vector
+;  and no IRQ for the bottom button (polled; the BIOS's VTRIGR vector
 ;  at $020C may not be set).  Called by PLAT_INIT.  Keeps the I flag
 ;  as it is.  Trashes A, X.
 ; ---------------------------------------------------------------------
@@ -104,12 +108,6 @@ INPUT_POLL
         LDX #2          ; controller 2's
         JSR IN_STK
         STA JOY1
-        LDA TRIG0       ; fire buttons, 0 = pressed
-        EOR #$01
-        STA FIRE0
-        LDA TRIG1
-        EOR #$01
-        STA FIRE1
 
         LDA #0
         STA PAUSEK
@@ -120,11 +118,23 @@ INPUT_POLL
         LDX IN_CTL      ; the controller POKEY scanned this frame
         JSR IN_PAD
         JSR IN_SEL      ; and the one it scans next
+        LDX #0          ; top buttons: key 0
+        JSR IN_TOP
+        LDX #1
+        JSR IN_TOP
 
-        LDA IN_HELD     ; KEYDOWN: anything held on a keypad
-        ORA IN_HELD+1
-        ORA IN_BOT
-        ORA IN_BOT+1
+        LDX #1          ; bottom buttons: fire (D63)
+IP_FIRE LDA IN_BOT,X
+        BEQ IP_FSET
+        LDA #1
+IP_FSET STA FIRE0,X
+        DEX
+        BPL IP_FIRE
+
+        LDA IN_HELD     ; KEYDOWN: anything held on a keypad, or a
+        ORA IN_HELD+1   ; top button (key 0)
+        ORA IN_TRG
+        ORA IN_TRG+1
         BEQ IP_KD
         LDA #1
 IP_KD   STA KEYDOWN
@@ -206,7 +216,7 @@ IS_NOX  LDA IN_J
         RTS
 
 ; ---------------------------------------------------------------------
-;  IN_PAD -- read the keypad and 2nd button of controller X, which
+;  IN_PAD -- read the keypad and bottom button of controller X, which
 ;  POKEY has scanned this frame; KEY, KEYPL, PAUSEK, HELPK and the #
 ;  page on a new press.  Trashes A, Y.
 ; ---------------------------------------------------------------------
@@ -257,20 +267,36 @@ IA_PG1  LDY #0
 IA_PGN  INY
         STY IN_PG
 
-IA_BOT  LDA SKSTAT      ; the 2nd button: key 0 when pressed
+IA_BOT  LDA SKSTAT      ; the bottom button (fire): held or not
         AND #SK_BOT
         EOR #SK_BOT     ; SK_BOT = held
-        CMP IN_BOT,X
-        BEQ IA_RTS
         STA IN_BOT,X
+        RTS
+
+; ---------------------------------------------------------------------
+;  IN_TOP -- controller X's top side button (TRIG): KEY 0 for that
+;  controller when it is pressed, unless the keypad gave a key this
+;  poll.  Controller 2's only counts while both are read (IN_TWO), but
+;  its state is kept, so a button held when that starts is no press.
+;  Trashes A, Y.
+; ---------------------------------------------------------------------
+IN_TOP  LDA TRIG0,X     ; 0 = pressed
+        EOR #$01        ; 1 = held
+        CMP IN_TRG,X
+        BEQ IT_RTS      ; no change
+        STA IN_TRG,X
         TAY
-        BEQ IA_RTS      ; let go
-        LDA KEY
-        BPL IA_RTS      ; a key on the keypad this read wins
+        BEQ IT_RTS      ; let go
+        TXA
+        BEQ IT_KEY      ; controller 1: always
+        LDA IN_TWO
+        BEQ IT_RTS
+IT_KEY  LDA KEY
+        BPL IT_RTS      ; a key on the keypad this poll wins
         LDA #0
         STA KEY
         STX KEYPL
-IA_RTS  RTS
+IT_RTS  RTS
 
 IK_SHR  =  $80          ; IN_KEYS: a shared key, not a digit
 ; keypad code (KBCODE / 2 AND 15) -> digit, or IK_SHR
@@ -300,10 +326,13 @@ IN_SEL  LDA DEMO
         LDA SU_VAL+SU_FPLY
         CMP #2
         BNE IL_ONE
-        LDA IN_CTL      ; 2 players: take turns
+        LDA #1          ; 2 players: both read,
+        STA IN_TWO
+        LDA IN_CTL      ; and they take turns
         EOR #1
         BPL IL_SET
 IL_ONE  LDA #0
+        STA IN_TWO
         STA IN_HELD+1
         STA IN_BOT+1
 IL_SET  STA IN_CTL

@@ -44,8 +44,9 @@ def setup(players=2, gstate=PLAY):
 
 
 def frame(pots=(CENTRE,) * 4, trig=(1, 1), pad=(None, None), bot=(False, False)):
-    """One INPUT_POLL; pad[i] / bot[i]: the key / 2nd button held on
-    controller i, seen only when CONSOL selects it."""
+    """One INPUT_POLL; pad[i] / bot[i]: the key / bottom button held on
+    controller i, seen only when CONSOL selects it; trig[i]: its top
+    button (TRIG, 0 = held), always seen."""
     m.poke("PADDL0", *pots)
     m.poke("TRIG0", trig[0])
     m.poke("TRIG1", trig[1])
@@ -67,7 +68,7 @@ def key():
     return None if k == 0xFF else (k, p)
 
 
-# --- set-up: pots on, the 2nd button's IRQ off, the I flag kept ---
+# --- set-up: pots on, the bottom button's IRQ off, the I flag kept ---
 setup()
 check("IN_INIT CONSOL", m.byte("CONSOL"), 0x04)
 check("IN_INIT POKMSK", m.byte("POKMSK"), 0x40)
@@ -88,11 +89,24 @@ for (x, y), want in cases:
     check("JOY1 at %d,%d" % (x, y), m.byte("JOY1"), want)
     check("JOY0 still", m.byte("JOY0"), 0)
 
-# --- top buttons: FIRE0 / FIRE1 ---
-frame(trig=(0, 1))
+# --- bottom buttons: FIRE0 / FIRE1, read when their controller is
+#     scanned (D63: the bottom button fires, found on a real 5200) ---
+setup(players=2)
+while m.byte("CONSOL") & 3 != 0:
+    frame()
+frame(bot=(True, False))
 check("FIRE0", (m.byte("FIRE0"), m.byte("FIRE1")), (1, 0))
-frame(trig=(1, 0))
+frame(bot=(True, True))                          # controller 2's turn
+check("FIRE0 and FIRE1", (m.byte("FIRE0"), m.byte("FIRE1")), (1, 1))
+frame(bot=(False, True))                         # controller 1 let go
 check("FIRE1", (m.byte("FIRE0"), m.byte("FIRE1")), (0, 1))
+frame()
+check("fire let go", (m.byte("FIRE0"), m.byte("FIRE1")), (0, 0))
+setup(players=2)
+while m.byte("CONSOL") & 3 != 0:
+    frame()
+frame(trig=(0, 0))
+check("the top button is not fire", (m.byte("FIRE0"), m.byte("FIRE1")), (0, 0))
 
 # --- 2 players in a round: the controllers take turns, digits per
 #     controller, once per press ---
@@ -122,18 +136,27 @@ frame(pad=("1", None))
 frame(pad=("2", None))
 check("1 then 2", key(), (2, 0))
 
-# --- 2nd button: key 0 for its controller, on the press ---
+# --- top button (TRIG): key 0 for its controller, on the press ---
 setup(players=2)
-frame(bot=(True, False))
-check("2nd button 1", key(), (0, 0))
-frame(bot=(True, False))
-frame(bot=(True, False))
-check("2nd button 1 held", key(), None)
-frame(bot=(False, True))                         # controller 2's turn
-check("2nd button 2", key(), (0, 1))
+frame(trig=(0, 1))
+check("top button 1", key(), (0, 0))
+check("KEYDOWN, top button held", m.byte("KEYDOWN"), 1)
+frame(trig=(0, 1))
+frame(trig=(0, 1))
+check("top button 1 held", key(), None)
+frame(trig=(1, 0))
+check("top button 2", key(), (0, 1))
+frame()
+frame()
+check("KEYDOWN, top buttons let go", m.byte("KEYDOWN"), 0)
 setup(players=2)
-frame(pad=("5", None), bot=(True, False))
-check("a digit and the 2nd button: the digit", key(), (5, 0))
+while m.byte("CONSOL") & 3 != 0:
+    frame()
+frame(pad=("5", None), trig=(0, 1))
+check("a digit and the top button: the digit", key(), (5, 0))
+setup(players=1)
+frame(trig=(1, 0))
+check("1 player: controller 2's top button", key(), None)
 
 # --- 1 player: controller 1 every frame, controller 2 not read ---
 setup(players=1)
@@ -249,7 +272,7 @@ setup(players=1)
 for what, kw in (("stick", dict(pots=(6, CENTRE, CENTRE, CENTRE))),
                  ("stick 2", dict(pots=(CENTRE, CENTRE, CENTRE, 220))),
                  ("fire", dict(trig=(1, 0))), ("key", dict(pad=("4", None))),
-                 ("2nd button", dict(bot=(True, False))), ("START", dict(pad=("S", None)))):
+                 ("bottom button", dict(bot=(True, False))), ("START", dict(pad=("S", None)))):
     frame()
     frame()
     m.poke("ATRACT", 0x55)
