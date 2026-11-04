@@ -25,12 +25,23 @@ T_SPARK    = 18   ; open sea, sparkles
 T_GRASS2   = 19   ; plain grass, other specks
 T_GRASS3   = 20   ; plain grass, one speck
 T_GRASS4   = 21   ; plain grass, no specks
-T_SEAB1    = 22   ; open sea, row 1 (corner rows above)
-T_SEAB9    = 23   ; open sea, row 9 (corner rows below)
-T_WAVE2B   = 24   ; open sea, row 1, a boat's wake
-T_WAVE1C   = 25   ; open sea, row 9, a boat's wake
+T_SEAB     = 22   ; open sea, rows 0 and 10 (corner rows)
+T_SEAB1    = 23   ; open sea, row 1 (corner rows above)
+T_SEAB9    = 24   ; open sea, row 9 (corner rows below)
 T_ITEM     = 2    ; item k (1-9) is tile T_ITEM+k-1
-N_FIXED    = 26   ; fixed tiles, same character codes in every font
+N_FIXED    = 25   ; fixed tiles, same character codes in every font
+
+; Boat wake characters (D64, white: bit 7 set): H across, V up and
+; down, step 2 dashes, 1 dots; B on the corner rows' PF0 sea
+WK_STEPS   = 2    ; wake steps
+WK_H1      = $BA
+WK_H2      = $BB
+WK_H1B     = $BC
+WK_H2B     = $BD
+WK_V1      = $BE
+WK_V2      = $BF
+WK_V1B     = $C0
+WK_V2B     = $C1
 
 ; Cell kinds (ISLKIND); bit 7 set = square belongs to player 1
 K_SEA      = $00  ; open sea

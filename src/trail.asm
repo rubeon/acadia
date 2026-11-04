@@ -1,23 +1,25 @@
 ; =====================================================================
-;  TRAIL.ASM -- boats leave a trail of waves (D59)
+;  TRAIL.ASM -- boats leave a fading wake (D64; was dots, D63,
+;  sparkles, D62, and waves, D59)
 ;
 ;  When a steered boat's centre moves on to a new square, the square
-;  it left gets a wave, if it is plain open sea with nothing on it:
-;  the wave tile that is showing its crest now (T_WAVE1 or T_WAVE2,
-;  which WAVE_ANI animates 2 phases apart), so every wake starts with
-;  a crest that rolls on and breaks.  When that tile reaches its calm
-;  phase, which looks the same as plain sea, the square is drawn as
-;  its terrain again, so the wake ends without a jump.
-;  Rows 1 and 9 (half corner rows, D55) have one wave tile each,
-;  T_WAVE2B and T_WAVE1C; a wake there that starts while its tile is
-;  calm waits up to WV_RATE frames for the crest.  Rows 0 and 10 get
-;  no wake (no font room for a crest on PF0, see mkfont.py).
-;  A wake is never drawn over an item, and one is only taken off the
-;  map if its square still shows it (a wreck or a boat drawn there
-;  since stays).  The ambient waves and sparkles are not touched.
+;  it left gets a thin dashed line if it is open sea with nothing on
+;  it (plain sea, or one of the ambient waves or sparkles, which come
+;  back after): along the boat's waterline if it moved across (its
+;  column changed), down the middle if it moved up or down.  After
+;  WK_RATE frames the dashes thin to dots, after as many more the
+;  square is drawn as it should be again.  The lines are characters
+;  (WK_H1 ... WK_V2B, TILES.ASM) written straight into screen memory:
+;  across, the bottom two; up and down, the right two.  The corner
+;  rows' halves (D55) take the ones on PF0 sea (TLBND).  A wake is
+;  never drawn over an item, and only changed or taken off the map
+;  while its square still shows it (a wreck or a boat drawn there
+;  since stays).
 ; =====================================================================
 
 ; TL_N (wakes at once) is in VARS.ASM, which reserves the slots
+WK_RATE =  16           ; frames per fade step (a boat crosses a
+                        ; square in 12 or more)
 
 ; ---------------------------------------------------------------------
 ;  TRAIL_INIT -- no wakes, no boat out.  Call after MAP_DRAW.
@@ -27,7 +29,7 @@ TRAIL_INIT
         LDA #0
         STA TLNEXT
         LDX #TL_N-1
-TI_CLR  STA TLTILE,X    ; 0: the slot is free
+TI_CLR  STA TLSTEP,X    ; 0: the slot is free
         DEX
         BPL TI_CLR
         LDA #$FF        ; no boat on a square yet
@@ -36,11 +38,12 @@ TI_CLR  STA TLTILE,X    ; 0: the slot is free
         RTS
 
 ; ---------------------------------------------------------------------
-;  TRAIL_TIC -- once a frame during play, after WAVE_ANI: a wake on
-;  each square a steered boat has just left; wakes whose wave has
-;  gone calm are cleared.  Trashes A, X, Y, ZPTR, MTILE.
+;  TRAIL_TIC -- once a frame during play: every wake fades, and a new
+;  one goes on each square a steered boat has just left.
+;  Trashes A, X, Y, ZPTR, MTILE.
 ; ---------------------------------------------------------------------
 TRAIL_TIC
+        JSR TL_AGE      ; first, so a new one shows its full time
         LDX #1
 TT_PL   STX TL_P
         LDA BOATK,X
@@ -51,8 +54,13 @@ TT_PL   STX TL_P
         LDA CURROW,X
         CMP TLLR,X
         BEQ TT_NEXT     ; still on the same square
-TT_MOVE LDA TLLC,X      ; the square it left
-        STA TL_C
+TT_MOVE LDY #0          ; across (the column changed) or up / down
+        LDA TLLC,X
+        CMP CURCOL,X
+        BNE TT_DIR
+        INY
+TT_DIR  STY TL_D
+        STA TL_C        ; the square it left
         LDA TLLR,X
         STA TL_R
         LDA CURCOL,X    ; the one it is on now
@@ -69,44 +77,26 @@ TT_NONE LDA #$FF        ; no boat out
 TT_NEXT LDX TL_P
         DEX
         BPL TT_PL
-        ; fall through: age the wakes
-
-; ---------------------------------------------------------------------
-;  TL_AGE -- clear each wake whose wave has gone calm after showing.
-;  Trashes A, X, Y, ZPTR, MTILE.
-; ---------------------------------------------------------------------
-TL_AGE  JSR TL_PHASE
-        STA TL_PH
-        LDX #TL_N-1
-TA_SLOT LDA TLTILE,X
-        BEQ TA_NEXT     ; free
-        LDA TL_PH       ; the phase its tile shows
-        EOR TLLAG,X
-        CMP #WV_PH-1
-        BEQ TA_CALM
-        LDA #1          ; it has shown a wave
-        STA TLARM,X
-        BNE TA_NEXT
-TA_CALM LDA TLARM,X
-        BEQ TA_NEXT     ; calm since it was drawn: the crest is to come
-        JSR TL_END
-TA_NEXT DEX
-        BPL TA_SLOT
         RTS
 
-; TL_PHASE -- A = the phase WAVE_ANI shows now (0 to WV_PH-1)
-TL_PHASE
-        LDA FRAME
-        LSR A           ; / WV_RATE (16)
-        LSR A
-        LSR A
-        LSR A
-        AND #WV_PH-1
+; ---------------------------------------------------------------------
+;  TL_AGE -- every wake's time runs down; at 0 it fades a step.
+;  Trashes A, X, Y, ZPTR, MTILE.
+; ---------------------------------------------------------------------
+TL_AGE  LDX #TL_N-1
+TA_SLOT LDA TLSTEP,X
+        BEQ TA_NEXT     ; free
+        DEC TLTIME,X
+        BNE TA_NEXT
+        JSR TL_FADE
+TA_NEXT DEX
+        BPL TA_SLOT
 TW_NO   RTS             ; (also TL_WAKE's early way out)
 
 ; ---------------------------------------------------------------------
-;  TL_WAKE -- a wake on square TL_C, TL_R if it is plain open sea with
-;  nothing on it.  Trashes A, X, Y, ZPTR, MTILE.
+;  TL_WAKE -- a wake (direction TL_D: 0 across, 1 up / down) on square
+;  TL_C, TL_R if it is open sea with nothing on it.
+;  Trashes A, X, Y, ZPTR, MTILE.
 ; ---------------------------------------------------------------------
 TL_WAKE LDX TL_C
         LDY TL_R
@@ -116,11 +106,19 @@ TL_WAKE LDX TL_C
         BNE TW_NO       ; something on it
         JSR MAP_IDX
         TAX
-        LDA ISLTILE,X   ; its terrain must be the row's plain sea
+        LDA ISLTILE,X   ; terrain: the row's open sea
         CMP TLSEA,Y
+        BEQ TW_OK
+        LDX TLSEA,Y     ; or in rows 2-8 (T_SEA = 0) an ambient wave
+        BNE TW_NO       ; or sparkle
+        CMP #T_WAVE1
+        BEQ TW_OK
+        CMP #T_WAVE2
+        BEQ TW_OK
+        CMP #T_SPARK
         BNE TW_NO
-        LDX #TL_N-1     ; already a wake there (the boat came back):
-TW_DUP  LDA TLTILE,X    ; drop it, this one replaces it
+TW_OK   LDX #TL_N-1     ; already a wake there (the boat came back):
+TW_DUP  LDA TLSTEP,X    ; it ends, this one replaces it
         BEQ TW_DUPN
         LDA TLCOL,X
         CMP TL_C
@@ -128,92 +126,144 @@ TW_DUP  LDA TLTILE,X    ; drop it, this one replaces it
         LDA TLROW,X
         CMP TL_R
         BNE TW_DUPN
-        LDA #0
-        STA TLTILE,X
+        JSR TL_END
 TW_DUPN DEX
         BPL TW_DUP
         LDX TLNEXT      ; the next slot; if in use, its wake ends now
-        LDA TLTILE,X
+        LDA TLSTEP,X
         BEQ TW_FREE
         JSR TL_END
-TW_FREE JSR TL_PHASE    ; which wave shows a crest now: phases 0-1
-        LDY TL_R        ; of T_WAVE1, or 2-3 (its 0-1) of T_WAVE2
-        CMP #2
-        BCS TW_PRF2
-        LDA TLW1,Y      ; T_WAVE1's kind, if the row has one
-        BNE TW_L0
-        BEQ TW_L2       ; (row 1: only T_WAVE2's)
-TW_PRF2 LDA TLW2,Y      ; T_WAVE2's kind, if the row has one
-        BNE TW_L2B
-        LDA TLW1,Y      ; (row 9: only T_WAVE1's)
-TW_L0   STA TLTILE,X
-        LDA #0          ; in step with WAVE_ANI's phase
-        BEQ TW_SET
-TW_L2   LDA TLW2,Y
-TW_L2B  STA TLTILE,X
-        LDA #WV_PH/2    ; T_WAVE2's kind runs 2 phases behind
-TW_SET  STA TLLAG,X
-        LDA TL_C
+TW_FREE LDA TL_C
         STA TLCOL,X
         LDA TL_R
         STA TLROW,X
-        JSR TL_PHASE    ; armed if its wave shows now, else not yet
-        EOR TLLAG,X
-        CMP #WV_PH-1
-        LDA #0
-        BCS TW_ARM      ; calm (phase 3): wait for the crest
-        LDA #1
-TW_ARM  STA TLARM,X
+        LDA TL_D
+        STA TLDIR,X
+        LDA #WK_STEPS   ; dashes first
+        STA TLSTEP,X
+        LDA #WK_RATE
+        STA TLTIME,X
         TXA             ; the next slot after this one
         CLC
         ADC #1
         AND #TL_N-1
         STA TLNEXT
-        LDA TLTILE,X
-        LDX TL_C
-        LDY TL_R
-        JMP MAP_PUT
+        JMP TL_PUT
 
 ; ---------------------------------------------------------------------
-;  TL_END -- slot X's wake ends: its square is drawn as it should be
-;  (item or terrain), unless something else has been drawn over the
-;  wake since.  X kept; trashes A, Y, ZPTR, MTILE.
+;  TL_FADE -- slot X's wake a step fainter, or gone (its square drawn
+;  as it should be: item or terrain); only if the square still shows
+;  it, else the slot is just freed.
+;  TL_END  -- slot X's wake gone now, the same way.
+;  X kept; trashes A, Y, ZPTR, MTILE.
 ; ---------------------------------------------------------------------
 TL_END  STX TL_S
-        LDY TLROW,X
-        LDA ROWLO,Y     ; the square's screen address
+        JSR TL_SHOWN
+        BCC TF_FREE
+        BCS TF_END
+
+TL_FADE STX TL_S
+        JSR TL_SHOWN
+        BCC TF_FREE     ; something else drawn over it
+        DEC TLSTEP,X
+        BEQ TF_END
+        LDA #WK_RATE
+        STA TLTIME,X
+        JMP TL_PUT      ; the fainter line
+TF_END  LDY TLROW,X
+        LDA TLCOL,X
+        TAX
+        JSR MAP_GET     ; A = item (0: terrain)
+        JSR MAP_SET     ; drawn as it should be
+TF_FREE LDX TL_S
+        LDA #0
+        STA TLSTEP,X
+        RTS
+
+; ---------------------------------------------------------------------
+;  TL_PUT -- draw slot X's line at its step.  TL_SHOWN -- C set if its
+;  square still shows it (its first character).  Both keep X; trash
+;  A, Y, ZPTR.
+; ---------------------------------------------------------------------
+TL_PUT  JSR TL_FIRST    ; TL_K1, ZPTR, Y: the first character
+        STA (ZPTR),Y
+        LDA TLDIR,X
+        BNE TP_V
+        INY             ; across: the bottom right one too
+        LDA TL_K1
+        STA (ZPTR),Y
+        RTS
+TP_V    LDA #2          ; up / down: the bottom right one, its own sea
+        JSR TL_CODE
+        PHA
+        LDA TL_Y        ; (TL_CODE trashed Y)
+        CLC
+        ADC #MAPCOLS
+        TAY
+        PLA
+        STA (ZPTR),Y
+        RTS
+
+TL_SHOWN
+        JSR TL_FIRST
+        CMP (ZPTR),Y
+        BNE TS_NO
+        SEC
+        RTS
+TS_NO   CLC
+        RTS
+
+; TL_FIRST -- slot X's first character: A = TL_K1 = its code, ZPTR + Y
+; (also TL_Y) = where it goes (across: bottom left; up / down: top
+; right).  Keeps X.
+TL_FIRST
+        LDA #2          ; across: the bottom half's sea
+        LDY TLDIR,X
+        BEQ TF_1
+        LDA #1          ; up / down: the top half's sea
+TF_1    JSR TL_CODE
+        STA TL_K1
+        LDY TLROW,X     ; the square's screen address
+        LDA ROWLO,Y
         STA ZPTR
         LDA ROWHI,Y
         STA ZPTR+1
         LDA TLCOL,X
         ASL A           ; two characters per square
+        LDY TLDIR,X
+        BNE TF_V
+        ADC #MAPCOLS    ; across: bottom left (carry clear)
+        BCC TF_Y        ; always
+TF_V    ADC #1          ; up / down: top right (carry clear)
+TF_Y    STA TL_Y
         TAY
-        LDA TLTILE,X
-        TAX
-        LDA (ZPTR),Y    ; top left still the wake's?
-        CMP TILECH,X
-        BNE TE_FREE
-        TYA
-        CLC
-        ADC #MAPCOLS    ; bottom left
-        TAY
-        LDA (ZPTR),Y
-        CMP TILECBL,X
-        BNE TE_FREE
-        LDX TL_S
-        LDY TLROW,X
-        LDA TLCOL,X
-        TAX
-        JSR MAP_GET     ; A = item (0: terrain)
-        JSR MAP_SET     ; drawn as it should be
-TE_FREE LDX TL_S
-        LDA #0
-        STA TLTILE,X
+        LDA TL_K1
         RTS
 
-; Per square row 0-10: the plain open sea a wake may be drawn on ($FF:
-; none in this row), the wave tile with a crest when the wave phase is
-; 0-1 (TLW1) and when it is 2-3 (TLW2); 0 if the row has none
-TLSEA   .BYTE $FF,T_SEAB1,T_SEA,T_SEA,T_SEA,T_SEA,T_SEA,T_SEA,T_SEA,T_SEAB9,$FF
-TLW1    .BYTE 0,0,T_WAVE1,T_WAVE1,T_WAVE1,T_WAVE1,T_WAVE1,T_WAVE1,T_WAVE1,T_WAVE1C,0
-TLW2    .BYTE 0,T_WAVE2B,T_WAVE2,T_WAVE2,T_WAVE2,T_WAVE2,T_WAVE2,T_WAVE2,T_WAVE2,0,0
+; TL_CODE -- A = slot X's character for a half (A = 1 top, 2 bottom):
+; WKCODE by direction, the half's sea (TLBND) and step.  Keeps X.
+TL_CODE STA TL_T
+        LDY TLROW,X
+        LDA TLBND,Y     ; corner rows' sea in this half?
+        AND TL_T
+        BEQ TK_SEA
+        LDA #2
+TK_SEA  CLC
+        ADC TLSTEP,X    ; + step 1-2
+        STA TL_T
+        LDA TLDIR,X
+        ASL A
+        ASL A           ; + 4 x direction
+        CLC
+        ADC TL_T
+        TAY
+        LDA WKCODE-1,Y
+        RTS
+
+; Per square row 0-10: the open sea a wake may be drawn on, and which
+; halves are on the corner rows' PF0 sea (1 top, 2 bottom, D55)
+TLSEA   .BYTE T_SEAB,T_SEAB1,T_SEA,T_SEA,T_SEA,T_SEA,T_SEA,T_SEA,T_SEA,T_SEAB9,T_SEAB
+TLBND   .BYTE 3,1,0,0,0,0,0,0,0,2,3
+; The wake characters: across, then up / down; each on COLBK sea
+; (steps 1, 2), then on PF0 sea
+WKCODE  .BYTE WK_H1,WK_H2,WK_H1B,WK_H2B,WK_V1,WK_V2,WK_V1B,WK_V2B
