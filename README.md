@@ -22,6 +22,16 @@ and keep your people fed and happy through storms, pirates and rebels.
   multicolour map, split with display list interrupts.
 - Menus and item selection on the keyboard; this is a computer. A tap of
   the fire button does what 0 does (lift or park a boat). In a 1-player game an Atari Video Touch Pad (or CX50 keypad) in port 2 works too: plug it in and it is found when the game starts.
+- On the Atari 5200 (D63): the analog stick moves the cursor and the
+  fire button (`TRIG`) is fire. Keypad 1-9 buy items for that
+  controller's player; 0 or the other side button lifts or parks a
+  boat; `*` shows the price list; `PAUSE` pauses; `START` begins a game
+  and, held during a round, shows the total scores; `#` held shows the
+  info pages (totals, then populations, then last round on each press
+  soon after). In atari800 `-5200`: numpad stick, Right Ctrl fire,
+  Shift the second button, `0`-`9`, `=` for `#`, numpad `*`, `P`
+  pause, F4 START (`#` and `*` typed with Shift also press the second
+  button).
 
 Acadia is an independent project, not affiliated with or endorsed by
 Mattel. All code, graphics, sound and music are new.
@@ -66,7 +76,7 @@ Output is an XEX load file for now; an ATR disk image will follow.
 | `src/mem_a800.asm`, `src/mem_5200.asm` | Each build's memory map |
 | `src/plat_a800.asm`, `src/plat_5200.asm` | Each build's platform hooks (`PLAT_INIT`, `PLAT_MAP`) |
 | `src/input.asm` | Input layer: joysticks, triggers, console keys, keyboard |
-| `src/input5200.asm` | 5200 input layer (a stub for now) |
+| `src/input5200.asm` | 5200 input layer: analog sticks, side buttons, keypads (D63) |
 | `src/math.asm` | 24 × 8 multiply, 24 ÷ 8 divide (truncating and rounded) |
 | `src/rand.asm` | `RAND_N`: random number 0..N−1 |
 | `src/tic.asm` | 20 Hz game tic and seconds, NTSC and PAL |
@@ -116,7 +126,8 @@ reserved with `*= *+n`.
 
 ## Atari 5200 plan
 
-A 5200 port is a future prospect. To keep it cheap:
+The 5200 cartridge (`make 5200`, D62, D63) shares the source. To keep
+it cheap:
 
 - All hardware addresses live in `src/hw_a800.asm`; a 5200 build will
   provide `hw_5200.asm` with the same symbol names (GTIA at `$C000`,
@@ -125,6 +136,6 @@ A 5200 port is a future prospect. To keep it cheap:
   and VBI vectors and the shadow registers, which the 5200 BIOS also
   provides.
 - All input goes through `src/input.asm`, which exposes `JOY0/JOY1`,
-  `FIRE0/FIRE1` and `KEY`. The 5200 version will map the analog sticks,
-  the keypad (items 0-9, a natural fit for the original's keypad
-  controls) and the second fire button.
+  `FIRE0/FIRE1` and `KEY`. The 5200's `src/input5200.asm` maps the
+  analog sticks, the keypads (items 0-9, a natural fit for the
+  original's keypad controls) and the second side button (D63).

@@ -123,7 +123,7 @@ Set in `src/mem_5200.asm`. RAM is `$0000-$3FFF`; only reserved blocks
 | `$0080-$0090`, `$00CB-$00CE` | Game ZP, as on the 800 (`main.asm`) |
 | `$0100-$01FF` | Stack |
 | `$0200-$021B` | BIOS vectors (`VIMIRQ`, `VVBLKI`, `VVBLKD`, `VDSLST`, `VKYBDI`, `VKYBDF`, ...) |
-| `$0220-$022F` | `PLATRAM`: `CHBAS`, `GPRIOR`, `COLRSH`, `DRKMSK`; `PLAT_5200`'s `PV_OLD`, `PM_ORG`, `PM_I`, `PM_N` |
+| `$0220-$023F` | `PLATRAM` (`PLATSZ` bytes): `CHBAS`, `GPRIOR`, `COLRSH`, `DRKMSK`; `PLAT_5200`'s `PV_OLD`, `PM_ORG`, `PM_I`, `PM_N`; `INPUT5200`'s `IN_CTL` ... `IN_J` |
 | `$0400-$07FF` | P/M graphics (`PMAREA`, 1K aligned, double-line) |
 | `$0800-$13FF` | `RMFONT0-2`: RAM copies of the live map's fonts (`PLAT_MAP`), 1K each |
 | `$1400-$17FF` | `MAPSCR` (880 bytes used); setup and title text; chart lines 50-63 (`CTBM2`) |
@@ -188,9 +188,23 @@ and # as `HELPK`. In a 1-player game `GAME_START` calls `KP_AUTO`,
 which turns it on if a keypad is plugged into port 2 (its pulled-up
 columns charge pots 2 and 3 at once, D58); `SETUP_ENTER` turns it off.
 
-5200 mapping (later): analog sticks thresholded into `JOY*`; keypad
-0-9 → `KEY` (per controller); second fire button → mode toggle (key 0)
-or info display. See OPEN-QUESTIONS Q4.
+5200 mapping (`input5200.asm`, D63): each analog stick (the BIOS's pot
+shadows `PADDL0-3`, low = left / up) past a dead zone (under 74 or from
+155, centre ~114; both pots at 228 = no controller) gives `JOY0` /
+`JOY1`; the `TRIG` buttons give `FIRE0` / `FIRE1`. POKEY scans the
+keypad and the second side button (`SKSTAT` bit 3) of the one controller
+`CONSOL` bits 0-1 select (bit 2 kept set: pots on); `INPUT_POLL` reads
+the controller selected the frame before, then selects the next:
+controller 1 every frame, the two in turn during the rounds of a
+2-player game. Keypad 1-9 → `KEY` with `KEYPL` = the controller; 0 and
+the second side button → `KEY` 0 on the press; `*` → `HELPK`; `PAUSE` →
+`PAUSEK`; `START` held → `CONKEY` bit 0; `#` held during a round →
+`CONKEY` bit 0, 1 or 2 (totals, then the next page on each press within
+1.5 s of the last). `*`, `#`, `START` and `PAUSE` are shared: a press
+counts unless the other controller holds the same key. `KEYDOWN` = any
+key or second button held. `FIRE_TAP`, `KP_ON`, `KP_OFF` and `KP_AUTO`
+are an `RTS`. `IN_INIT` (from `PLAT_INIT`) turns off the second button's
+BREAK IRQ, as input is polled.
 
 **Interrupts:** the game installs a deferred VBI (`VVBLKD`) and a DLI
 (`VDSLST`) by writing the RAM vectors with `NMIEN = 0`, then
