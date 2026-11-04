@@ -10,7 +10,7 @@ IC_PER2 =  $64          ; player 2's person (print with bit 7: turquoise)
 TX_RED  =  $40          ; TXCOL: red digits (player 1)
 TX_TURQ =  $80          ; TXCOL: turquoise digits (player 2)
 
-        *= $9800
+        *= STFONTA        ; $9800 on the 800 (MEM_A800.ASM)
 STFONT
         .BYTE $00,$00,$00,$00,$00,$00,$00,$00   ; $00
         .BYTE $30,$30,$30,$30,$30,$00,$30,$00   ; $01

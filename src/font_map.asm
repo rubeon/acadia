@@ -7,7 +7,7 @@
 ; =====================================================================
 
 ; map 1 (STANDARD) font 0: character rows 0,1,2,3,4,5,6, 70 coast characters
-        *= $3000
+        *= MFA00          ; $3000 on the 800 (MEM_A800.ASM)
 MFNT00
         .BYTE $00,$00,$00,$00,$00,$00,$00,$00
         .BYTE $55,$55,$65,$55,$55,$55,$55,$55
@@ -138,7 +138,7 @@ MFNT00
         .BYTE $C3,$33,$CC,$FF,$7F,$55,$55,$55
         .BYTE $35,$F5,$D5,$D5,$55,$55,$55,$55
 ; map 1 (STANDARD) font 1: character rows 7,8,9,10,11,12,13,14, 60 coast characters
-        *= $4800
+        *= MFA01          ; $4800 on the 800 (MEM_A800.ASM)
 MFNT01
         .BYTE $00,$00,$00,$00,$00,$00,$00,$00
         .BYTE $55,$55,$65,$55,$55,$55,$55,$55
@@ -259,7 +259,7 @@ MFNT01
         .BYTE $CD,$FD,$3D,$0D,$3D,$0D,$3D,$3D
         .BYTE $7F,$73,$6F,$5F,$57,$57,$57,$57
 ; map 1 (STANDARD) font 2: character rows 15,16,17,18,19,20,21, 55 coast characters
-        *= $8800
+        *= MFA02          ; $8800 on the 800 (MEM_A800.ASM)
 MFNT02
         .BYTE $00,$00,$00,$00,$00,$00,$00,$00
         .BYTE $55,$55,$65,$55,$55,$55,$55,$55
@@ -375,7 +375,7 @@ MFNT02
         .BYTE $55,$55,$55,$54,$40,$00,$00,$00
         .BYTE $54,$50,$00,$00,$00,$00,$00,$00
 ; map 2 (CLASSIC) font 0: character rows 3,4,5,6,7,8,9,10, 61 coast characters
-        *= $8C00
+        *= MFA10          ; $8C00 on the 800 (MEM_A800.ASM)
 MFNT10
         .BYTE $00,$00,$00,$00,$00,$00,$00,$00
         .BYTE $55,$55,$65,$55,$55,$55,$55,$55
@@ -497,7 +497,7 @@ MFNT10
         .BYTE $D5,$D5,$D5,$D5,$F5,$F5,$D5,$D5
         .BYTE $FF,$FF,$6C,$5F,$5C,$5F,$73,$7C
 ; map 2 (CLASSIC) font 1: character rows 11,12,13,14,15,16, 56 coast characters
-        *= $A000
+        *= MFA11          ; $A000 on the 800 (MEM_A800.ASM)
 MFNT11
         .BYTE $00,$00,$00,$00,$00,$00,$00,$00
         .BYTE $55,$55,$65,$55,$55,$55,$55,$55
@@ -614,7 +614,7 @@ MFNT11
         .BYTE $F5,$35,$D5,$D5,$D5,$D5,$D5,$D5
         .BYTE $57,$57,$57,$57,$57,$57,$57,$57
 ; map 2 (CLASSIC) font 2: character rows 17,18, 18 coast characters
-        *= $A400
+        *= MFA12          ; $A400 on the 800 (MEM_A800.ASM)
 MFNT12
         .BYTE $00,$00,$00,$00,$00,$00,$00,$00
         .BYTE $55,$55,$65,$55,$55,$55,$55,$55
@@ -693,7 +693,7 @@ MFNT12
         .BYTE $D5,$D5,$F5,$35,$FF,$FF,$3C,$CF
         .BYTE $57,$57,$5F,$5F,$F3,$FC,$CC,$30
 ; map 3 (RANDOM) font 0: character rows 3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18, 48 coast characters
-        *= $A800
+        *= MFA20          ; $A800 on the 800 (MEM_A800.ASM)
 MFNT20
         .BYTE $00,$00,$00,$00,$00,$00,$00,$00
         .BYTE $55,$55,$65,$55,$55,$55,$55,$55
@@ -804,7 +804,7 @@ MFNT20
 
 ; help font (T-SCR-3, mode 5): fixed tiles at codes 2t, 2t+1 (HLPCH,
 ; HLPCHR), then 3 x 5 letters and digits at screen code + HELP_OFS
-        *= $4C00
+        *= HLPFNTA        ; $4C00 on the 800 (MEM_A800.ASM)
 HLPFONT
         .BYTE $00,$00,$00,$00,$00,$00,$00,$00
         .BYTE $00,$00,$00,$00,$00,$00,$00,$00

@@ -15,7 +15,7 @@
 ; =====================================================================
 
 GS_TITLE = 5            ; GSTATE while the title screen is up
-TITLEGFX = $8000        ; the logo bitmap (TITLE_GFX.ASM; 48K or more)
+                        ; TITLEGFX (the logo): MEM_A800.ASM
 
 TT_SCR  =  MAPSCR       ; mode 7 line (20 bytes), then mode 6 (20)
 TT_WHT  =  $C0          ; mode 6/7 colour bits: COLPF3, white

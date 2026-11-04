@@ -155,7 +155,7 @@ def main():
            "TX_RED  =  $40          ; TXCOL: red digits (player 1)",
            "TX_TURQ =  $80          ; TXCOL: turquoise digits (player 2)",
            "",
-           "        *= $%04X" % ADDR,
+           "        *= STFONTA        ; $%04X on the 800 (MEM_A800.ASM)" % ADDR,
            "STFONT"]
     for c, bs in enumerate(font):
         out.append("        .BYTE " + ",".join("$%02X" % b for b in bs) + "   ; $%02X" % c)

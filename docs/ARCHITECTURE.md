@@ -61,9 +61,14 @@ Current files are marked ✓; the rest are planned (see PLAN.md).
 | `src/pause.asm` ✓ | game | Pause (D19): `PAUSE_KEY` (P toggles), `PAUSE_ON` (save status line 1, show PAUSED, `PAL_DIM`, silence AUDC1-4), `PAUSE_OFF` (restore, `PAL_NORM`, `TIC_SYNC`); `PAUSED` flag |
 | `src/help.asm` ✓ | game | Purchase help screen (T-SCR-3, D34): `HELP_KEY` (H / HELP toggles it during a round, not while paused), `HELP_ON` (`HELP_DRAW` fills `HELPSCR`: key, map tile, name, price per item; cursors hidden; `HDLIST`), `HELP_OFF` (`DLIST`, `TIC_SYNC`, cursors back); `HELPON` flag, read by `DLI_MAP` to load `HLPFONT` |
 | `src/math.asm` ✓ | services | On 24-bit `M_NUM`: `MUL8` (8×8), `MULN` (×8, C = overflow), `DIVN` (÷8, remainder in A), `DIVNR` (÷8 rounded half up); C set on ÷0 |
+| `src/mem_a800.asm` ✓ | platform | The 800 build's memory map: every fixed address (code blocks, fonts, screens, display list page, P/M, variables, map data, logo, chart bitmap) as an equate, included by `acadia.asm` right after `hw_a800.asm`. Modules and generated files use only these names (T-5200-0), so a 5200 build can include the same modules with `mem_5200.asm` |
 | `src/hw_5200.asm` | platform | 5200 equivalents (later) |
 
 ## 3. Memory map (800XL, XEX)
+
+The addresses below are set in `src/mem_a800.asm` and nowhere else;
+change them there (and in the generators' checks in `tools/mkfont.py`
+and `tools/mkstat.py`, which still test that fonts fit).
 
 | Range | Use |
 |---|---|

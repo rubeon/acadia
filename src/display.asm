@@ -502,21 +502,19 @@ PR_OFF  SEC
 ;  font 1K aligned, display list inside one 1K page, screen inside 4K.
 ; =====================================================================
 
-; Map fonts at $3000 and, if needed, $4800+ (generated)
+; Map fonts at MFA00 ... (MEM_A800.ASM; generated)
         .INCLUDE "font_map.asm"
 
-; Status bar font at $9800 (generated)
+; Status bar font at STFONTA (MEM_A800.ASM; generated)
         .INCLUDE "font_stat.asm"
 
-; ---------------------------------------------------------------------
-;  Map screen memory (MAPCROWS x MAPCOLS, RAM, drawn at run time)
-; ---------------------------------------------------------------------
-MAPSCR  =  $3400
+; Map screen memory MAPSCR (MAPCROWS x MAPCOLS, RAM, drawn at run
+; time): see MEM_A800.ASM
 
 ; ---------------------------------------------------------------------
 ;  Display list
 ; ---------------------------------------------------------------------
-        *= $3800
+        *= DLBASE         ; one page for every display list
 DLIST
         .BYTE DL_BLANK8,DL_BLANK8
         .BYTE DL_DLI+DL_BLANK8          ; DLI_ST: line 1 background
