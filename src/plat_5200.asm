@@ -46,6 +46,7 @@ PLAT_INIT
         STA VVBLKD+1
         LDA #NMI_VBI
         STA NMIEN
+        JSR IN_INIT     ; the controllers (INPUT5200.ASM)
 
         LDA #0          ; map 1, as the 800's XEX loads it
         JMP MAP_LOAD

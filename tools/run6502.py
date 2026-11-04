@@ -13,6 +13,10 @@ map logic), not for display or interrupt code.
     m.call("MUL8", a=12, x=34)
     m.word("M_NUM")                     # read 16 bits
     m.on_read("RANDOM", lambda: 42)     # fake a hardware register
+
+    m = Machine(cart=True)              # the 5200 build: the raw 32K
+                                        # build/acadia5200.bin at $4000,
+                                        # its labels and equates (D62)
 """
 
 import glob
@@ -24,15 +28,24 @@ from py65.memory import ObservableMemory
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# files the 5200 build swaps for its own (ACADIA5200.ASM)
+A800_ONLY = {"acadia.asm", "hw_a800.asm", "mem_a800.asm", "plat_a800.asm",
+             "input.asm", "isl_live.asm", "loader.asm", "ldrinit.asm"}
+
 
 class Machine:
-    def __init__(self, xex=None, labels=None):
-        xex = xex or os.path.join(ROOT, "build", "acadia.xex")
-        labels = labels or os.path.join(ROOT, "build", "acadia.lab")
+    def __init__(self, xex=None, labels=None, cart=False):
         self.mem = ObservableMemory()
         self.mpu = MPU(memory=self.mem)
         self.sym = {}
-        self._load_xex(open(xex, "rb").read())
+        if cart:
+            labels = labels or os.path.join(ROOT, "build", "acadia5200.lab")
+            rom = open(os.path.join(ROOT, "build", "acadia5200.bin"), "rb").read()
+            self.mem[0x4000:0x4000 + len(rom)] = list(rom)
+        else:
+            xex = xex or os.path.join(ROOT, "build", "acadia.xex")
+            labels = labels or os.path.join(ROOT, "build", "acadia.lab")
+            self._load_xex(open(xex, "rb").read())
         for line in open(labels):
             parts = line.split()
             if len(parts) == 2:
@@ -40,7 +53,10 @@ class Machine:
         equ = re.compile(r"^([A-Z_][A-Z0-9_]*)\s*=\s*([$0-9A-Z_+\-]+)\s*(;|$)", re.I)
         todo = {}
         for path in glob.glob(os.path.join(ROOT, "src", "*.asm")):
-            if "5200" in os.path.basename(path):
+            base = os.path.basename(path)
+            if cart and base in A800_ONLY:
+                continue        # the 800's files: the 5200 has its own
+            if not cart and "5200" in base:
                 continue        # the 5200 build's files: its own values (D62)
             for line in open(path):
                 m = equ.match(line)

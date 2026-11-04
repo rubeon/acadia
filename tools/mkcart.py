@@ -97,7 +97,7 @@ def main():
           % (free, HDR - ROM, sym["ROMEND"], sym["TITLEGFX"] - 1,
              sym["TITLEGFX"] - sym["ROMEND"]))
     # RAM: what MEM_5200.ASM's blocks leave between them
-    ram = [(sym["PLATRAM"] + 16, sym["PMAREA"]),
+    ram = [(sym["PLATRAM"] + sym["PLATSZ"], sym["PMAREA"]),
            (sym["MAPSCR"] + 22 * 40, sym["HELPSCR"]),
            (sym["HELPSCR"] + 11 * 40, sym["ISLDATA"]),
            (sym["AI_DN"] + 220, sym["VARBASE"]),
