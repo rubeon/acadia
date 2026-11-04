@@ -4,6 +4,9 @@
 #   make run     build and run in atari800 (800XL, BASIC off)
 #   make test    build, then run the unit tests in tests/ on a 6502
 #                core (needs py65: pip install py65)
+#   make 5200    build the Atari 5200 cartridge: build/acadia5200.car
+#                (CART header, type 4) and build/acadia5200.bin (raw 32K)
+#   make run5200 build it and run it in atari800 (-5200)
 #   make clean   remove build output
 
 ATASM    ?= atasm
@@ -15,8 +18,10 @@ SRC      := $(wildcard src/*.asm)
 XEX      := build/acadia.xex
 LAB      := build/acadia.lab
 TESTS    := $(wildcard tests/test_*.py)
+CAR      := build/acadia5200.car
+LAB5200  := build/acadia5200.lab
 
-.PHONY: all run test clean
+.PHONY: all run test clean 5200 run5200
 
 all: $(XEX)
 
@@ -28,11 +33,22 @@ $(XEX): $(SRC) | build
 	$(ATASM) -Isrc -obuild/game.xex -l$(LAB) src/acadia.asm
 	cat build/loader.xex build/ldrinit.xex build/game.xex > $@
 
+# the 5200 cartridge (D62): ATasm's segments, made into a 32K image by
+# tools/mkcart.py, which also checks the fit and prints the free bytes
+5200: $(CAR)
+
+$(CAR): $(SRC) tools/mkcart.py | build
+	$(ATASM) -Isrc -obuild/acadia5200.obj -l$(LAB5200) src/acadia5200.asm
+	$(PYTHON) tools/mkcart.py build/acadia5200.obj $(LAB5200) build/acadia5200
+
 build:
 	mkdir -p build
 
 run: $(XEX)
 	$(ATARI800) $(EMUFLAGS) -run $(XEX)
+
+run5200: $(CAR)
+	$(ATARI800) -5200 -cart $(CAR)
 
 test: $(XEX)
 	@for t in $(TESTS); do $(PYTHON) $$t || exit 1; done

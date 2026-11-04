@@ -59,7 +59,8 @@ ML_PART CPY #<MAPBLK    ; then the rest (Y = 0 here)
         STA (ZPTR),Y
         INY
         BNE ML_PART
-ML_AI   LDA MAPLD
+ML_AI   JSR PLAT_MAP    ; the machine's part (5200: fonts to RAM, D62)
+        LDA MAPLD
         CMP #MAP_RND
         BNE ML_AIT
         JSR RM_GEN      ; RANDOM: new islands on the sea

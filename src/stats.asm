@@ -553,9 +553,10 @@ CTPF3   .BYTE C_STURQ,C_STURQ,C_CTSEL,C_STURQ,C_STURQ,C_STURQ
 
 CTMASK  .BYTE $C0,$30,$0C,$03   ; a pixel's bits in its byte
 
-CTPAGES .BYTE $9C,$9D,$9E,$9F   ; the bitmap's pages: CTBM0,
-        .BYTE $BC,$BD,$BE,$BF   ; CTBM1 and CTBM2 (14 lines)
-        .BYTE $34,$35,$36
+CTPAGES .BYTE >CTBM0,>[CTBM0+$100],>[CTBM0+$200],>[CTBM0+$300] ; the
+        .BYTE >CTBM1,>[CTBM1+$100],>[CTBM1+$200],>[CTBM1+$300] ; bitmap's
+        .BYTE >CTBM2,>[CTBM2+$100],>[CTBM2+$200]     ; pages: CTBM0, CTBM1
+                                ; and CTBM2 (14 lines)
 CT_NBMP =  11
 
 ; the steps a grid can have, smallest first

@@ -25,6 +25,7 @@ syntax, built with ATasm into an XEX.
 ```sh
 make            # build/acadia.xex
 make run        # atari800 -xl -nobasic -run build/acadia.xex
+make 5200       # build/acadia5200.car: the Atari 5200 cartridge (D62)
 make clean
 ```
 
@@ -45,13 +46,16 @@ A change is not done until `make` succeeds with **0 warnings**.
    CIO, no SETVBV. Write vectors and shadow registers only, with NMIs
    disabled while patching vectors. This keeps the 5200 port possible.
 4. **Hardware access only through the platform layer.** Hardware
-   addresses live in `src/hw_a800.asm`. Joystick/keyboard reads live
-   only in `src/input.asm`. Game logic reads `JOY0/JOY1/FIRE0/FIRE1/KEY`.
+   addresses live in `src/hw_a800.asm` (and `src/hw_5200.asm`, same
+   names, D62). Joystick/keyboard reads live only in `src/input.asm`
+   (`src/input5200.asm` on the 5200). Game logic reads
+   `JOY0/JOY1/FIRE0/FIRE1/KEY`.
 5. **Labels are global, so prefix them.** Every routine's internal
    labels use a short module prefix (`IP_`, `MB_`, `FR_`, ...). Check for
    collisions with `atasm -s` before committing.
-6. **Zero page is allocated in one place** (`src/acadia.asm`, see
-   ARCHITECTURE.md). Don't grab ZP bytes ad hoc.
+6. **Zero page is allocated in one place** (`src/main.asm`, shared by
+   the 800 and 5200 builds, see ARCHITECTURE.md). Don't grab ZP bytes
+   ad hoc.
 7. **Follow the original's numbers** from `docs/utopia-rules.md` unless a
    decision in DECISIONS.md says otherwise. If you deviate, record it.
 8. **Keep code ROM-safe.** The 5200 port runs code from cartridge ROM,

@@ -40,6 +40,8 @@ class Machine:
         equ = re.compile(r"^([A-Z_][A-Z0-9_]*)\s*=\s*([$0-9A-Z_+\-]+)\s*(;|$)", re.I)
         todo = {}
         for path in glob.glob(os.path.join(ROOT, "src", "*.asm")):
+            if "5200" in os.path.basename(path):
+                continue        # the 5200 build's files: its own values (D62)
             for line in open(path):
                 m = equ.match(line)
                 if m:
