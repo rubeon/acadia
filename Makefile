@@ -2,7 +2,7 @@
 #
 #   make         build build/acadia.xex
 #   make run     build and run in atari800 (800XL, BASIC off)
-#   make test    build, then run the unit tests in tests/ on a 6502
+#   make test    build both, then run the unit tests in tests/ on a 6502
 #                core (needs py65: pip install py65)
 #   make 5200    build the Atari 5200 cartridge: build/acadia5200.car
 #                (CART header, type 4) and build/acadia5200.bin (raw 32K)
@@ -50,7 +50,7 @@ run: $(XEX)
 run5200: $(CAR)
 	$(ATARI800) -5200 -cart $(CAR)
 
-test: $(XEX)
+test: $(XEX) $(CAR)
 	@for t in $(TESTS); do $(PYTHON) $$t || exit 1; done
 
 clean:

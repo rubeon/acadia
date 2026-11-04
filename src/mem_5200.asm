@@ -18,7 +18,9 @@
 ;    $0200-$021B  BIOS vectors
 ; ---------------------------------------------------------------------
 PLATRAM =  $0220        ; the 5200's own bytes (HW_5200.ASM: CHBAS ...;
-                        ; PLAT_5200.ASM: PV_OLD, PM_ORG ...), 16 bytes
+                        ; PLAT_5200.ASM: PV_OLD, PM_ORG ...;
+                        ; INPUT5200.ASM: IN_CTL ...), PLATSZ bytes
+PLATSZ  =  32           ; $0220-$023F
 PMAREA  =  $0400        ; P/M graphics, 1K aligned (double-line)
 RMFONT0 =  $0800        ; the live map's fonts: RAM copies of the map's
 RMFONT1 =  $0C00        ; ROM fonts, made by PLAT_MAP, so WAVE_ANI can
