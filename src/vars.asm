@@ -11,8 +11,7 @@
 ;  RAM, so the same addresses work from a 5200 cartridge.
 ; =====================================================================
 
-VARBASE =  $3900
-VARPAGES = 7            ; $3900-$3FFF, cleared by VARS_INIT
+; VARBASE and VARPAGES (the block cleared by VARS_INIT): MEM_A800.ASM
 
         *= VARBASE
 

@@ -19,7 +19,7 @@
 ;  map row by the DLIs.  The missiles are left for the pirates (D35).
 ; =====================================================================
 
-PMAREA  =  $4000        ; 1K aligned (double-line)
+                        ; PMAREA: MEM_A800.ASM (1K aligned)
 PM_P0   =  PMAREA+$200
 PM_LEN  =  $80          ; bytes per player
 SPR_H   =  8            ; shape height in P/M lines

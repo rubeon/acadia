@@ -41,10 +41,7 @@ CT_NPGS =  3            ; pages: score, people, gold
 CT_NDLI =  6            ; DLIs in CTDLIST
 CT_WLEN =  17           ; the winner's part of status line 2 (TX_W1)
 
-CTBM0   =  $9C00        ; chart lines 0-24 (not loaded, D57)
-CTBM1   =  $BC00        ; lines 25-49 (not loaded, D57)
-CTBM2   =  $3400        ; lines 50-63: MAPSCR (the map, drawn again later)
-CTTXT   =  $4400        ; three mode 4 lines: HELPSCR (the help screen's memory)
+                        ; CTBM0-CTBM2 (bitmap), CTTXT: MEM_A800.ASM
 CT_TAB  =  CTTXT        ; the page names
 CT_XL   =  CTTXT+40     ; the round numbers
 CT_LEG  =  CTTXT+80     ; the legend: pawns, totals, best rounds

@@ -145,7 +145,7 @@ N_MAPS  = 3
 MAP_RND = 2
 
 ; The maps' data blocks (D56), each laid out as TILECH ... FONTPG
-        *= $AC00
+        *= MAPSRC         ; $AC00 on the 800 (MEM_A800.ASM)
 MAPSL   .BYTE <MAPS0,<MAPS1,<MAPS2
 MAPSH   .BYTE >MAPS0,>MAPS1,>MAPS2
 ; map 1: STANDARD

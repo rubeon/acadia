@@ -1200,14 +1200,14 @@ def main():
             out.append("; map %d (%s) font %d: character rows %s, %d coast characters"
                        % (mi + 1, q["name"].strip(), fi,
                           ",".join(str(r) for r in range(CROWS) if q["rowfont"][r] == fi), len(f)))
-            out.append("        *= $%04X" % q["font_addr"][fi])
+            out.append("        *= MFA%d%d          ; $%04X on the 800 (MEM_A800.ASM)" % (mi, fi, q["font_addr"][fi]))
             out.append("MFNT%d%d" % (mi, fi))
             for bs in q["fixed_chars"] + f:
                 out.append("        .BYTE " + hexes(bs))
     out.append("")
     out.append("; help font (T-SCR-3, mode 5): fixed tiles at codes 2t, 2t+1 (HLPCH,")
     out.append("; HLPCHR), then 3 x 5 letters and digits at screen code + HELP_OFS")
-    out.append("        *= $%04X" % HELP_ADDR)
+    out.append("        *= HLPFNTA        ; $%04X on the 800 (MEM_A800.ASM)" % HELP_ADDR)
     out.append("HLPFONT")
     hf, hl, hr = help_font()
     last = max(screen_code(c) for c in GLYPHS) + HELP_OFS
@@ -1315,7 +1315,7 @@ def main():
     out.append("MAP_RND = %d" % MAP_RND)
     out.append("")
     out.append("; The maps' data blocks (D56), each laid out as TILECH ... FONTPG")
-    out.append("        *= $%04X" % MAPSRC)
+    out.append("        *= MAPSRC         ; $%04X on the 800 (MEM_A800.ASM)" % MAPSRC)
     out.append("MAPSL   .BYTE " + ",".join("<MAPS%d" % i for i in range(len(ps))))
     out.append("MAPSH   .BYTE " + ",".join(">MAPS%d" % i for i in range(len(ps))))
     for mi, q in enumerate(ps):

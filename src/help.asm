@@ -17,7 +17,7 @@
 ;  the help font, with player 3 (fish) off screen.
 ; =====================================================================
 
-HELPSCR =  $4400        ; 11 x 40 help screen, after P/M memory
+                        ; HELPSCR (11 x 40): MEM_A800.ASM
 HL_ROWS =  11           ; lines on the help screen
 HL_YELL =  $00          ; text colour: yellow (PF2)
 HL_WHITE = $80          ; text colour: white (PF3, inverse characters)

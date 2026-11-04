@@ -99,6 +99,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 
 | ID | Task | Status |
 |---|---|---|
+| T-5200-0 | Memory map in one file (`mem_a800.asm`): no fixed addresses left in modules or generated files; the XEX stays byte-identical | done |
 | T-5200-1 | `hw_5200.asm`, cartridge build target | todo |
 | T-5200-2 | 5200 input layer: analog sticks, keypad, second fire button (Q4) | todo |
 | T-5200-3 | Replace any remaining 800-only assumptions (memory map, interrupts via 5200 BIOS vectors) | todo |
