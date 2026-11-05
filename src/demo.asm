@@ -36,7 +36,7 @@ DG_SAV  LDA SU_VAL,X
         LDA #DM_LVL
         STA SU_VAL+SU_FLVL
         LDA #0
-        STA MAPNO       ; map 1: the script is made for it (D56)
+        STA MAPNO       ; map 1, STANDARD: the script is made for it (D65)
         LDA #1
         STA DEMO
         STA DM_CNT      ; the first script step at the next frame
@@ -119,26 +119,26 @@ DEMOSCR .BYTE 45,0,DM_NONE
         .BYTE 30,0,DM_NONE
         .BYTE 1,0,I_CROP
         .BYTE 30,0,DM_NONE
-        .BYTE 8,J_UP,DM_NONE        ; to 5, 4
+        .BYTE 8,J_DOWN,DM_NONE      ; to 5, 6
         .BYTE 30,0,DM_NONE
         .BYTE 1,0,I_CROP
         .BYTE 30,0,DM_NONE
-        .BYTE 8,J_LEFT,DM_NONE      ; to 4, 4
+        .BYTE 8,J_LEFT,DM_NONE      ; to 4, 6
         .BYTE 30,0,DM_NONE
         .BYTE 1,0,I_CROP
         .BYTE 45,0,DM_NONE
         .BYTE 1,0,I_FSBT            ; fishing boat into the harbour
         .BYTE 60,0,DM_NONE
-        .BYTE 16,J_DOWN,DM_NONE     ; to 4, 6
+        .BYTE 8,J_DOWN,DM_NONE      ; to 4, 7
         .BYTE 30,0,DM_NONE
         .BYTE 1,0,I_CROP
         .BYTE 30,0,DM_NONE
-        .BYTE 24,J_LEFT,DM_NONE     ; to 1, 6
-        .BYTE 16,J_UP,DM_NONE       ; to the harbour, 1, 4
+        .BYTE 8,J_UP,DM_NONE        ; to 4, 6
+        .BYTE 16,J_LEFT,DM_NONE     ; to the harbour, 2, 6
         .BYTE 20,0,DM_NONE
         .BYTE 1,0,0                 ; key 0: lift the boat
         .BYTE 20,0,DM_NONE
-        .BYTE 60,J_DOWN,DM_NONE     ; sail south of the island
+        .BYTE 36,J_DOWN,DM_NONE     ; sail south of the island
         .BYTE 120,J_RIGHT,DM_NONE   ; and east along it
         .BYTE 1,0,0                 ; park
         .BYTE 0

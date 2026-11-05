@@ -106,6 +106,7 @@ DL_MODE4  = $04         ; 40 col 4-colour text, 8 lines
 DL_MODE5  = $05         ; 40 col 4-colour text, 16 lines
 DL_MODE6  = $06         ; 20 col 5-colour text, 8 lines
 DL_MODE7  = $07         ; 20 col 5-colour text, 16 lines
+DL_MODEA  = $0A         ; 80 x 4-line pixels, 4 colours, 20 bytes
 DL_MODED  = $0D         ; 160 x 2-line pixels, 4 colours, 40 bytes
 
 ; DMACTL values

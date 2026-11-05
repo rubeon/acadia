@@ -84,13 +84,13 @@ for code in range(0x60, 0x66):
     if 1 not in pix:
         fail("icon character %02X has no gold" % code)
 
-# the title and setup screens use the ROM font, a game the status font
+# the title screen uses the ROM font, setup the help font (D65), a game the status font
 m.call("TITLE_ENTER")
 if m.byte("CHBAS") != m.addr("ROMFONT"):
     fail("TITLE_ENTER: CHBAS %02X" % m.byte("CHBAS"))
 m.call("ST_COLS")
 m.call("SETUP_ENTER")
-if m.byte("CHBAS") != m.addr("ROMFONT") or [m.byte("COLOR1"), m.byte("COLOR2"), m.byte("COLOR4")] != [0x0E, 0x82, 0x00]:
+if m.byte("CHBAS") != m.addr("HLPFONT") >> 8 or [m.byte("COLOR1"), m.byte("COLOR2"), m.byte("COLOR4")] != [0x94, 0x1C, 0x00]:
     fail("SETUP_ENTER: CHBAS %02X" % m.byte("CHBAS"))
 m.poke("SU_VAL", 10, 30, 2, 2)
 m.call("SU_GO")

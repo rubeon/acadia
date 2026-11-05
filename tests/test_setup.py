@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""T-SCR-1: the setup screen (py65).
+"""T-SCR-1, T-SCR-6: the setup screen (py65; D31, D65).
 
 GAME_FRAME is called once per simulated frame with the sticks,
 triggers, console keys and keyboard faked, as the main loop would.
@@ -56,8 +56,20 @@ def vals():
 
 
 def row(n):
-    base = m.addr("MAPSCR") + 20 + 40 * n
-    return "".join(chr((m.mem[base + i] & 0x7F) + 0x20) for i in range(40))
+    """Value line n (a field) as text: help font code = ASCII (D65)."""
+    base = m.addr("MAPSCR") + 40 + 40 * n
+    return "".join(chr(m.mem[base + i] & 0x7F) if m.mem[base + i] else " " for i in range(40))
+
+
+def white(n):
+    """1 for each non-blank character of line n that is white."""
+    base = m.addr("MAPSCR") + 40 + 40 * n
+    return {m.mem[base + i] >> 7 for i in range(40) if m.mem[base + i]}
+
+
+def minimap():
+    base = m.addr("MAPSCR") + 240
+    return [m.mem[base + 20 * r + 7 + i] for r in range(11) for i in range(6)]
 
 
 def check(want, what):
@@ -72,17 +84,30 @@ if m.byte("GSTATE") != GS_SETUP or m.byte("SDLSTL") != m.addr("SUDLIST") & 0xFF:
     fail("setup screen not shown")
 if (m.addr("SUDLIST") ^ m.addr("DLIST")) & 0xFF00:
     fail("SUDLIST and DLIST are not in the same page")
-title = "".join(chr(m.mem[m.addr("MAPSCR") + i] + 0x20) for i in range(20))
-if title.strip() != "ACADIA":
+if m.byte("CHBAS") != m.addr("HLPFONT") >> 8 or m.byte("COLOR4") != 0:
+    fail("not the help font on black")
+title = "".join(chr(c & 0x7F) if c else " " for c in m.mem[m.addr("MAPSCR"):m.addr("MAPSCR") + 40])
+if title.strip() != "GAME SETUP":
     fail("title %r" % title)
+prompt = "".join(chr(c & 0x7F) if c else " "
+                 for c in m.mem[m.addr("MAPSCR") + 460:m.addr("MAPSCR") + 500])
+if prompt.strip() != "PRESS START OR FIRE TO BEGIN":
+    fail("prompt %r" % prompt)
 check([10, 30, 2, 2], "defaults")
-if "ROUNDS" not in row(3) or not row(3).startswith("  >") or row(3)[32:35] != " 10":
-    fail("rounds line %r" % row(3))
-if "SECONDS PER ROUND" not in row(5) or row(5)[32:35] != " 30":
-    fail("seconds line %r" % row(5))
-if row(9)[34] != "-":
-    fail("CPU level with 2 players %r" % row(9))
-print("setup: %r" % row(3))
+if "ROUNDS" not in row(0) or row(0)[3] != ">" or row(0)[33:36] != " 10":
+    fail("rounds line %r" % row(0))
+if white(0) != {1} or white(1) != {0}:
+    fail("current line not white, or another line white")
+if "SECONDS PER ROUND" not in row(1) or row(1)[33:36] != " 30":
+    fail("seconds line %r" % row(1))
+if row(3)[35] != "-":
+    fail("CPU level with 2 players %r" % row(3))
+if row(4)[28:36] != "STANDARD":
+    fail("map line %r" % row(4))
+mm = [m.byte("MMAP0", i) for i in range(66)]
+if minimap() != mm or mm[2 * 6 + 1] != 0x6A:
+    fail("STANDARD's minimap not shown")
+print("setup: %r" % row(0))
 
 # fire held from the game before does nothing until let go
 for _ in range(5):
@@ -109,19 +134,22 @@ for i in range(46):                      # 1 + 20 + 5 x 5 frames held
 frame()
 if vals()[SECS] != 35 + 5 * 7:         # now, at 21, then 26 31 36 41 46
     fail("held right: %d seconds, want %d" % (vals()[SECS], 35 + 35))
-for _ in range(100):
-    frame(stick=RIGHT)
-frame()
-check([50, 120, 2, 2], "right stops at 120")
-for _ in range(200):
-    frame(stick=LEFT)
-frame()
-check([50, 30, 2, 2], "left stops at 30")
+for _ in range(10):                      # 70 to 120
+    tap(stick=RIGHT)
+check([50, 120, 2, 2], "right to 120")
+tap(stick=RIGHT)
+check([50, 30, 2, 2], "right from 120 goes round to 30")
+tap(stick=LEFT)
+check([50, 120, 2, 2], "left from 30 goes round to 120")
 typ("47")
 check([50, 47, 2, 2], "typed 47")
 typ("200")
 tap(stick=UP)
 check([50, 120, 2, 2], "typed 200 clamped on leaving")
+tap(stick=RIGHT)
+check([1, 120, 2, 2], "right from 50 rounds goes round to 1")
+tap(stick=LEFT)
+check([50, 120, 2, 2], "left from 1 round goes round to 50")
 typ("0")
 tap(console=SELECT)
 check([1, 120, 2, 2], "typed 0 rounds clamped to 1")
@@ -142,39 +170,48 @@ if m.byte("SU_FLD") != MAP:
 tap(stick=UP)
 if m.byte("SU_FLD") != PLAYERS:
     fail("2 players: up from MAP went to %d" % m.byte("SU_FLD"))
-if not row(7).startswith("  >"):
-    fail("marker not on PLAYERS: %r" % row(7))
+if row(2)[3] != ">" or white(2) != {1} or white(0) != {0}:
+    fail("marker not on PLAYERS: %r" % row(2))
 
 # 1 player: CPU LEVEL can be chosen; digits out of range are ignored
-tap(stick=LEFT)
+tap(stick=RIGHT)                          # 2 goes round to 1
 check([1, 120, 1, 2], "1 player")
 typ("7")
 check([1, 120, 1, 2], "7 players ignored")
 tap(stick=DOWN)
-if m.byte("SU_FLD") != LEVEL or row(9)[32:35] != "  2":
-    fail("CPU level line: field %d, %r" % (m.byte("SU_FLD"), row(9)))
+if m.byte("SU_FLD") != LEVEL or row(3)[30:36] != "MEDIUM":
+    fail("CPU level line: field %d, %r" % (m.byte("SU_FLD"), row(3)))
 typ("3")
 typ("9")
 check([1, 120, 1, 3], "CPU level 3, 9 ignored")
+if row(3)[30:36] != "  HARD":
+    fail("CPU level 3: %r" % row(3))
+tap(stick=RIGHT)
+if row(3)[30:36] != "  EASY":
+    fail("CPU level right from HARD: %r" % row(3))
+tap(stick=LEFT)
+check([1, 120, 1, 3], "CPU level left from EASY goes round to HARD")
 tap(stick=DOWN)
-if m.byte("SU_FLD") != MAP or row(11)[27:35] != "STANDARD":
-    fail("1 player: down from CPU LEVEL: field %d, %r" % (m.byte("SU_FLD"), row(11)))
-box = m.addr("MAPSCR") + 20 + 40 * 11
-if [m.mem[box + i] >> 7 for i in range(25, 37)] != [0] + [1] * 10 + [0]:
-    fail("map line: inverse box not over columns 26-35")
-# the map line: names, digits 1-3
-for d, name in (("2", " CLASSIC"), ("3", "  RANDOM"), ("4", "  RANDOM"), ("1", "STANDARD")):
+if m.byte("SU_FLD") != MAP or row(4)[28:36] != "STANDARD":
+    fail("1 player: down from CPU LEVEL: field %d, %r" % (m.byte("SU_FLD"), row(4)))
+# the map line: names and minimaps, digits 1-2, going round
+for d, name, mp in (("2", "  RANDOM", 1), ("3", "  RANDOM", 1), ("1", "STANDARD", 0)):
     typ(d)
-    if row(11)[27:35] != name:
-        fail("map %s: %r" % (d, row(11)))
-for _ in range(4):
+    if row(4)[28:36] != name:
+        fail("map %s: %r" % (d, row(4)))
+    if minimap() != [m.byte("MMAP%d" % mp, i) for i in range(66)]:
+        fail("map %s: minimap not map %d's" % (d, mp + 1))
+for n, want in ((1, 2), (2, 1), (3, 2)):
     tap(stick=RIGHT)
-if m.byte("SU_VAL", MAP) != 3:
-    fail("map right x 4: %d" % m.byte("SU_VAL", MAP))
-for _ in range(4):
-    tap(stick=LEFT)
+    if m.byte("SU_VAL", MAP) != want:
+        fail("map right x %d: %d" % (n, m.byte("SU_VAL", MAP)))
+tap(stick=LEFT)
+tap(stick=LEFT)
+if m.byte("SU_VAL", MAP) != 2:
+    fail("map left x 2 from RANDOM: %d" % m.byte("SU_VAL", MAP))
+tap(stick=LEFT)
 if m.byte("SU_VAL", MAP) != 1:
-    fail("map left x 4: %d" % m.byte("SU_VAL", MAP))
+    fail("map left: %d" % m.byte("SU_VAL", MAP))
 tap(stick=DOWN)
 if m.byte("SU_FLD") != ROUNDS:
     fail("1 player: down from MAP went to %d" % m.byte("SU_FLD"))
@@ -187,7 +224,6 @@ if m.byte("SU_FLD") != MAP:
 tap(stick=UP)
 tap(stick=UP)
 tap(stick=RIGHT)                          # back to 2 players
-tap(stick=RIGHT)                          # stays at 2
 check([3, 120, 2, 3], "2 players")
 
 # START begins with these values
@@ -211,8 +247,8 @@ tap(fire0=True)
 if m.byte("GSTATE") != GS_SETUP:
     fail("no setup screen after game over (state %d)" % m.byte("GSTATE"))
 check([3, 120, 2, 3], "values kept for the next game")
-if m.byte("SU_FLD") != ROUNDS or row(3)[32:35] != "  3":
-    fail("setup after game over %r" % row(3))
+if m.byte("SU_FLD") != ROUNDS or row(0)[33:36] != "  3":
+    fail("setup after game over %r" % row(0))
 
 print("setup: %d failed" % fails)
 sys.exit(1 if fails else 0)

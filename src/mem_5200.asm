@@ -41,13 +41,11 @@ RAMEND  =  $4000        ; $3000-$3FFF free
 ;  Cartridge ROM ($4000-$BFE7)
 ; ---------------------------------------------------------------------
 CODE1   =  $4000        ; start-up, services, map, stats part 1, display
-MFA00   =  $5000        ; STANDARD fonts 0-2 (1K aligned, as below)
-MFA01   =  $5400
-MFA02   =  $5800
-MFA10   =  $5C00        ; CLASSIC fonts 0-2
-MFA11   =  $6000
-MFA12   =  $6400
-MFA20   =  $6800        ; RANDOM font
+MFAC    =  $5000        ; the corner font (D65; 1K aligned, as below)
+MFA00   =  $5400        ; STANDARD fonts 0-2
+MFA01   =  $5800
+MFA02   =  $5C00
+MFA10   =  $6000        ; RANDOM font ($6400-$6BFF free since D65)
 HLPFNTA =  $6C00        ; help font HLPFONT, then the wave frames WVDATA
 STFONTA =  $7000        ; status bar font STFONT (D54)
 DLBASE  =  $7400        ; display list page (DISPLAY.ASM); island
