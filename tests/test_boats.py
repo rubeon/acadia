@@ -137,11 +137,11 @@ if m.byte("COUNT", I_PTBT) != 1:
 
 # speed: 2 pixels every 3 frames, stops dead when let go
 x0, y0 = pos(0)
-for _ in range(15):
-    frame(s0=UP)
+for _ in range(15):                    # down: sea below the harbour (D65)
+    frame(s0=DOWN)
 x1, y1 = pos(0)
-if (x1, y0 - y1) != (x0, 10):
-    fail("15 frames up: %r -> %r, want 10 lines" % ((x0, y0), (x1, y1)))
+if (x1, y1 - y0) != (x0, 10):
+    fail("15 frames down: %r -> %r, want 10 lines" % ((x0, y0), (x1, y1)))
 for _ in range(10):
     frame()
 if pos(0) != (x1, y1):

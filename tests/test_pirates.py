@@ -85,7 +85,7 @@ def chars(col, row):
 def coast(p):
     """A sea square with a land square of player p's island to its east,
     and a sea square two to the west of that (out of the land's reach)."""
-    for row in range(3, 8):
+    for row in range(2, 9):
         for col in range(1, 19):
             k = m.byte("ISLKIND", row * 20 + col)
             e = m.byte("ISLKIND", row * 20 + col + 1)

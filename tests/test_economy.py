@@ -75,11 +75,11 @@ def expect_buy(what, p, item, col, row, ok, reason=None):
 # player 1 (index 0) on the left island, player 2 on the right
 expect_buy("P1 fort on own land", 0, 1, 4, 5, True)
 expect_buy("occupied square", 0, 3, 4, 5, False, R_TAKEN)
-expect_buy("P1 on P2's island", 0, 3, 14, 5, False, R_LAND)
+expect_buy("P1 on P2's island", 0, 3, 16, 5, False, R_LAND)
 expect_buy("sea square", 0, 3, 9, 5, False, R_LAND)
-expect_buy("harbour square", 0, 3, 1, 4, False, R_LAND)
+expect_buy("harbour square", 0, 3, 2, 6, False, R_LAND)
 expect_buy("off the map", 0, 3, 20, 5, False, R_LAND)
-expect_buy("P2 factory on own land", 1, 2, 14, 5, True)
+expect_buy("P2 factory on own land", 1, 2, 16, 5, True)
 expect_buy("P2 on P1's island", 1, 3, 5, 5, False, R_LAND)
 
 # gold boundaries
@@ -88,11 +88,11 @@ expect_buy("exactly enough", 0, 4, 5, 5, True)
 if gold(0) != 0:
     fail("gold not 0 after exact purchase")
 set_gold(0, 74)
-expect_buy("one short", 0, 5, 6, 5, False, R_GOLD)
+expect_buy("one short", 0, 5, 3, 5, False, R_GOLD)
 set_gold(0, 2)
-expect_buy("crop one short", 0, 3, 6, 5, False, R_GOLD)
+expect_buy("crop one short", 0, 3, 3, 5, False, R_GOLD)
 set_gold(0, 300)                      # borrow across the high byte
-expect_buy("16-bit gold", 0, 6, 6, 5, True)
+expect_buy("16-bit gold", 0, 6, 3, 5, True)
 if gold(0) != 240:
     fail("gold %d after 300 - 60" % gold(0))
 

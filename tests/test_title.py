@@ -98,7 +98,7 @@ for held in ({"fire0": True}, {"console": OPTION}, {"kb": 0x21}):
     if m.byte("GSTATE") != GS_SETUP:
         fail("%r did not go on to the setup screen" % held)
 
-# the tune carries on into the setup screen; colours are the status bar's
+# the tune carries on into the setup screen, in its own colours (D65)
 boot()
 for _ in range(100):
     frame()
@@ -108,8 +108,8 @@ if m.byte("GSTATE") != GS_SETUP or m.byte("SDLSTL") != m.addr("SUDLIST") & 0xFF:
     fail("START: state %d" % m.byte("GSTATE"))
 if not m.byte("MZ_ON") or m.byte("MZ_POS") < pos:
     fail("the title tune restarted: position %d, was %d" % (m.byte("MZ_POS"), pos))
-if [m.byte("COLOR1"), m.byte("COLOR2"), m.byte("COLOR4")] != [0x0E, 0x82, 0x00]:
-    fail("status bar colours not restored")
+if [m.byte("COLOR1"), m.byte("COLOR2"), m.byte("COLOR4")] != [0x94, 0x1C, 0x00]:
+    fail("setup screen colours not set (D65)")
 # left alone for 30 s the demo starts: 1 player against the CPU, player
 # 1 scripted; it goes back to the title after 15 s, setup values kept
 m.poke("PAL", 0x0F)                       # NTSC: 60 frames a second

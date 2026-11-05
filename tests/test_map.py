@@ -59,8 +59,8 @@ if any(m.byte("MAPITEM", i) for i in range(COLS * ROWS)):
     fail("MAP_INIT left items")
 
 # kinds and owners straight from the island data
-for col, row, want in [(4, 5, K_LAND), (14, 5, K_LAND | K_P1), (9, 5, K_SEA),
-                       (1, 4, K_HARB), (18, 4, K_HARB | K_P1), (0, 0, K_SEA)]:
+for col, row, want in [(4, 5, K_LAND), (16, 5, K_LAND | K_P1), (9, 5, K_SEA),
+                       (2, 6, K_HARB), (18, 4, K_HARB | K_P1), (0, 0, K_SEA)]:
     a, kind, c = get(col, row)
     if (a, kind, c) != (0, want, False):
         fail("MAP_GET(%d,%d) = %r, want kind $%02X" % (col, row, (a, kind, c), want))
