@@ -583,7 +583,10 @@ DLIST
                                         ; before it starts (D67)
         .BYTE DL_DLI+DL_LMS+DL_MODE4    ; character row 0 (wide, D67);
         .WORD SCR_WT                     ; each DLI sets the next row's
-        .BYTE DL_DLI+DL_MODE4,DL_DLI+DL_MODE4 ; font; rows 1, 2 wide
+        .BYTE DL_DLI+DL_LMS+DL_MODE4    ; font; rows 1, 2 wide, each
+        .WORD SCR_WT+WROW               ; with its own LMS, so a row
+        .BYTE DL_DLI+DL_LMS+DL_MODE4    ; fetched at the wrong width
+        .WORD SCR_WT+WROW+WROW          ; can't shift the next
         .BYTE DL_DLI+DL_LMS+DL_MODE4    ; row 3, normal width
         .WORD SCR_N
         .BYTE DL_DLI+DL_MODE4,DL_DLI+DL_MODE4,DL_DLI+DL_MODE4
