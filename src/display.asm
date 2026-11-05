@@ -203,14 +203,14 @@ DLI_ROW
         TXA             ; its width, font and shades, looked up by the
         PHA             ; DLI before, so they are set before its first
         LDA DL_NDM      ; line (a band of colour starts on such a row,
-        LDX DL_NFN      ; D52; set later, the line would keep the old).
+        LDX DL_NPF      ; D52; set later, the line would keep the old).
         STA WSYNC       ; Little before WSYNC: in a wide line the DLI
         STA DMACTL      ; has few cycles (D67).  The width first,
-        STX CHBASE      ; before the row's DMA starts
-        LDA DL_NBK
-        STA COLBK
-        LDA DL_NPF
-        STA COLPF0
+        STX COLPF0      ; before the row's DMA starts, then PF0 (on a
+        LDA DL_NFN      ; first line the CPU barely runs once DMA
+        STA CHBASE      ; starts: later, the line keeps the old PF0);
+        LDA DL_NBK      ; the font may come a little later, as a row's
+        STA COLBK       ; first characters are fixed ones (sea, border)
         TYA
         PHA
 DR_LOOK LDX DLIROW      ; look up its fish and weather now
@@ -572,11 +572,15 @@ PR_OFF  SEC
 ; ---------------------------------------------------------------------
         *= DLBASE         ; one page for every display list
 DLIST
-        .BYTE DL_BLANK8,DL_BLANK8
+        .BYTE DL_BLANK6,DL_BLANK8       ; (6: room for the 2 below, D67)
         .BYTE DL_DLI+DL_BLANK8          ; DLI_ST: line 1 background
         .BYTE DL_DLI+DL_LMS+DL_MODE4    ; status line 1 (D54);
         .WORD STATUS1                   ; DLI_ST2: line 2 background
-        .BYTE DL_DLI+DL_MODE4           ; line 2; DLI_MAP at its end
+        .BYTE DL_MODE4                  ; line 2
+        .BYTE DL_DLI+DL_BLANK2          ; 2 lines in line 2's colour:
+                                        ; DLI_MAP runs in a blank line,
+                                        ; with time to set row 0's width
+                                        ; before it starts (D67)
         .BYTE DL_DLI+DL_LMS+DL_MODE4    ; character row 0 (wide, D67);
         .WORD SCR_WT                     ; each DLI sets the next row's
         .BYTE DL_DLI+DL_MODE4,DL_DLI+DL_MODE4 ; font; rows 1, 2 wide
