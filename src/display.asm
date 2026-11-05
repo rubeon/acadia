@@ -256,6 +256,31 @@ DLI_R3  STA WSYNC
         PHA
         JMP DR_LOOK
 
+; DLI_R19 -- DLI_ROW for character row 19, the first bottom wide row
+; (D67).  Row 19's first line is a wide first line: once its DMA starts
+; the CPU does not run again until the line has been drawn, so whatever
+; DLI_ROW writes after PF0 lands a line late.  Row 19 has a new font
+; (the corners) with the same character codes as other tiles in row
+; 18's, so a late font drew row 18's tiles on row 19's top line, at the
+; corners.  This DLI runs in row 18, a normal-width line with time
+; before WSYNC, so all three registers are loaded first and written
+; straight after WSYNC: width, font, PF0.  COLBK may come a line late.
+DLI_R19 PHA
+        TXA
+        PHA
+        TYA
+        PHA
+        LDA DL_NDM      ; the wide width
+        LDX DL_NFN      ; the corner font
+        LDY DL_NPF      ; the dark corner blue
+        STA WSYNC
+        STA DMACTL
+        STX CHBASE
+        STY COLPF0
+        LDA DL_NBK
+        STA COLBK
+        JMP DR_LOOK
+
 ; DLI_END -- the map's last line ends: below it the background is the
 ; dark corner sea (row 0's PF0), as the corners run into it (D55);
 ; COLBK in the map is the light sea since D67
@@ -303,13 +328,19 @@ DLI_SQ  PHA
         LDA ROWDMA+1,X  ; and width (D67)
         STA DL_NDM
         LDA #<DLI_ROW   ; the next DLI is the square's second row;
-        STA VDSLST      ; after row 2 (the last top wide row) DLI_R3
-        LDA #>DLI_ROW
-        CPX #2
-        BNE DS_VEC
+        STA VDSLST      ; after row 2 (the last top wide row) DLI_R3,
+        LDA #>DLI_ROW   ; after row 18 (before the first bottom wide
+        CPX #2          ; row) DLI_R19
+        BNE DS_V19
         LDA #<DLI_R3
         STA VDSLST
         LDA #>DLI_R3
+        BNE DS_VEC      ; always: a high byte is never 0
+DS_V19  CPX #MAPCROWS-4
+        BNE DS_VEC
+        LDA #<DLI_R19
+        STA VDSLST
+        LDA #>DLI_R19
 DS_VEC  STA VDSLST+1
         TXA
         LSR A
