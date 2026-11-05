@@ -41,7 +41,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 | T-CTL-4 | Fire button tap acts as key 0 for its player (D60) | R-CTL-3 | T-EVT-1 | Tapping fire lifts and parks boats like 0; fire held for a digit (D17) still buys and does not also toggle | done (Claude) |
 | T-SCR-1 | Setup screen: rounds, round length, mode | R-MODE-3 | T-SVC-4 | Values validated to original ranges | done (D31; CPU from T-AI-1) |
 | T-MAP-3 | Choice of map on the setup screen: STANDARD, CLASSIC (the original's layout), RANDOM (D56) | R-MODE-3 | T-MAP-1, T-SCR-1 | Each map plays with equal islands; the CPU finds its way on each | done (Claude; CLASSIC is STANDARD since D65) |
-| T-SCR-6 | Setup screen redrawn: help font on black, CPU level by name, values go round, a minimap of the chosen map; the original's layout is STANDARD and the default, the old STANDARD gone (D65) | R-MODE-3 | T-MAP-3 | Both maps' minimaps shown; every line goes round both ways; 800 and 5200 builds | in progress (Claude) |
+| T-SCR-6 | Setup screen redrawn: help font on black, CPU level by name, values go round, a minimap of the chosen map; the original's layout is STANDARD and the default, the old STANDARD gone (D65) | R-MODE-3 | T-MAP-3 | Both maps' minimaps shown; every line goes round both ways; 800 and 5200 builds | done (Claude) |
 
 ## M3 — Rounds and scoring (the economic game)
 
