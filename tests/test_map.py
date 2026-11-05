@@ -8,12 +8,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 from run6502 import Machine  # noqa: E402
 
 COLS, ROWS = 20, 11
-MAPSCR = 0x3400
 K_SEA, K_LAND, K_HARB, K_P1 = 0x00, 0x01, 0x03, 0x80
 
 m = Machine()
 m.call("VARS_INIT")
-m.call("MAP_ROWS")
 m.call("MAP_DRAW")
 m.call("MAP_INIT")
 fails = 0
@@ -38,8 +36,9 @@ def put(item, col, row):
 
 def chars(col, row):
     """The square's 4 characters: top left, top right, bottom left, right."""
-    a = MAPSCR + row * 80 + col * 2
-    return m.mem[a], m.mem[a + 1], m.mem[a + 40], m.mem[a + 41]
+    a = (m.byte("ROWLO", row) | m.byte("ROWHI", row) << 8) + col * 2     # top and bottom character rows:
+    b = (m.byte("ROWBLO", row) | m.byte("ROWBHI", row) << 8) + col * 2     # not always 40 apart (D67)
+    return m.mem[a], m.mem[a + 1], m.mem[b], m.mem[b + 1]
 
 
 def tile_chars(t):

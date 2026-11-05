@@ -31,6 +31,7 @@ T_WAVE2B   = 24   ; open sea, row 1, a boat's wake
 T_WAVE1C   = 25   ; open sea, row 9, a boat's wake
 T_ITEM     = 2    ; item k (1-9) is tile T_ITEM+k-1
 N_FIXED    = 26   ; fixed tiles, same character codes in every font
+CH_PF0     = $02  ; character all PF0: the corner rows' borders
 
 ; Cell kinds (ISLKIND); bit 7 set = square belongs to player 1
 K_SEA      = $00  ; open sea

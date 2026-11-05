@@ -31,7 +31,7 @@ Current files are marked ✓; the rest are planned (see PLAN.md).
 | `src/input5200.asm` ✓ | platform | 5200 input layer: a stub (nothing pressed) until T-5200-2 |
 | `src/hw_a800.asm` ✓ | platform | Hardware and OS shadow equates |
 | `src/input.asm` ✓ | platform | `INPUT_POLL` → `JOY0/1`, `FIRE0/1`, `KEY`, console keys |
-| `src/display.asm` ✓ | services | Display list, DLI palette, VBI hook, map drawing (`MAP_ROWS`, `MAP_DRAW`, `MAP_PUT`), grid↔screen helpers (`MAP_IDX`, `HPOS_COL`, `PMY_ROW`) |
+| `src/display.asm` ✓ | services | Display list, DLI palette, VBI hook, map drawing (`MAP_DRAW`, `MAP_PUT`; screen addresses per square row in `ROWLO`/`ROWHI` and `ROWBLO`/`ROWBHI`, the corner rows wide, D67), grid↔screen helpers (`MAP_IDX`, `HPOS_COL`, `PMY_ROW`) |
 | `src/shade.asm` ✓ | services | Per-row sea and grass colours (`VD_SHADE` → `ROWBK` / `ROWPF0`, from `SEADEL` / `GRNDEL`; in the corner rows PF0 is the dark corners' sea, D55, D67) and moving waves (`WAVE_ANI`, main loop, every 16 frames copies the next phase of `WVDATA` into each map font) (D51); `BND_TILE` (from `MAP_PUT`: a boat or wreck in a corner row is drawn as that row's `BNDVAR` tile; all 0 since D67, so the usual tiles) |
 | `src/trail.asm` ✓ | services | Boat wakes (D59): `TRAIL_TIC` (main loop, after `WAVE_ANI`) draws a wave tile on each plain sea square a steered boat leaves and draws the square again when that wave goes calm; `TRAIL_INIT` (from `GAME_START`) |
 | `src/status.asm` ✓ | services | The status bar's look (T-GFX-3, D54): `ST_COLS` (status font and palette into the shadows; `DISP_INIT`, `GAME_START`), `ST_VBI` (from `VBI_D`: the two lines' backgrounds and PF1 into `STBK` with attract mode, `VDSLST` = `DLI_ST`), `DLI_ST` / `DLI_ST2` (line 1 / line 2 background and PF1), `ST_DEC` (`TXT_DEC` with `TXCOL` = Y, then white) |
@@ -88,7 +88,7 @@ and `tools/mkstat.py`, which still test that fonts fit).
 | `$00CB-$00CE` | `ZPTR` (2), `OLDVBD` (2) — in use |
 | `$2000-$2FFF` | Code: start-up, services, map, the stats screen's first part (`stats.asm`, D61) and display (`acadia.asm` up to `display.asm`) |
 | `$3000-$33FF` | The corner font `MFNTC` (1K aligned): fixed tiles + character rows 0-2 and 19-21, the same on every map, not animated (D65) |
-| `$3400-$37FF` | Map screen memory (`$3400-$376F` used: 22 character rows × 40); the setup screen uses `$3400-$35F3` while it is up (D65), the stats screen `$3400-$362F` for chart lines 50-63 (`GAME_START` redraws the map) |
+| `$3400-$37FF` | Map screen memory (`$3400-$379F` used: character rows 0-2 and 19-21 are wide lines of 48, the others 40, D67); the setup screen uses `$3400-$35F3` while it is up (D65), the stats screen `$3400-$362F` for chart lines 50-63 (`GAME_START` redraws the map) |
 | `$3800-$38FF` | Display lists: `DLIST` (map), `SUDLIST` (setup), `HDLIST` (help), `TDLIST` (title) and `CTDLIST` (stats, D61), same page so one store to `SDLSTL` switches |
 | `$3900-$3FFF` | RAM variables (`src/vars.asm`), cleared by `VARS_INIT` at start-up |
 | `$4000-$43FF` | P/M graphics, double-line resolution, 1K aligned (`PMAREA`) |
@@ -126,7 +126,7 @@ Set in `src/mem_5200.asm`. RAM is `$0000-$3FFF`; only reserved blocks
 | `$0220-$023F` | `PLATRAM` (`PLATSZ` bytes): `CHBAS`, `GPRIOR`, `COLRSH`, `DRKMSK`; `PLAT_5200`'s `PV_OLD`, `PM_ORG`, `PM_I`, `PM_N`; `INPUT5200`'s `IN_CTL` ... `IN_J` |
 | `$0400-$07FF` | P/M graphics (`PMAREA`, 1K aligned, double-line) |
 | `$0800-$13FF` | `RMFONT0-2`: RAM copies of the live map's fonts (`PLAT_MAP`), 1K each |
-| `$1400-$17FF` | `MAPSCR` (880 bytes used); setup and title text; chart lines 50-63 (`CTBM2`) |
+| `$1400-$17FF` | `MAPSCR` (928 bytes used, D67); setup and title text; chart lines 50-63 (`CTBM2`) |
 | `$1800-$19B7` | `HELPSCR`; `ML_STEPS`'s queue; the stats text lines (`CTTXT`) |
 | `$1A00-$203F` | `ISLDATA`: the live map's tables (`isl_live5200.asm`) |
 | `$2100-$27FF` | `VARBASE`: RAM variables (`vars.asm`, 7 pages cleared by `VARS_INIT`) |
@@ -374,6 +374,10 @@ mode 4 character DMA delays them and cuts off the top of a shape),
 then the shades and the missiles; each sets `VDSLST` to the other,
 except that after row 20 `DLI_ROW` sets it to `DLI_END`, which at the
 end of row 21 makes COLBK the dark corner sea below the map (D67).
+The corner rows (0-2, 19-21) are wide playfield lines (D67): `DLI_MAP`
+and `DLI_ROW` write `DMACTL` (`DMWIDE` / `DMNORM`, from `SDMCTL` by
+`VD_DMA` in the VBI) as their first store after `WSYNC`, before the
+row's DMA starts, and `DLI_END` sets normal width again.
 Where a square row starts (even character rows) `DLI_MAP` and `DLI_SQ` load `HPOSP3` from
 `HP3ROW` (the fish player's position for that row, 0 = off screen),
 `HPOSP2` from `HP2ROW` and `COLPM2` from `WCROW` (the weather's),

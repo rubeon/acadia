@@ -8,12 +8,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 from run6502 import Machine  # noqa: E402
 
 COLS = 20
-MAPSCR = 0x3400
 I_PTBT, I_FORT = 8, 1
 
 m = Machine()
 m.call("VARS_INIT")
-m.call("MAP_ROWS")
 m.call("MAP_DRAW")
 m.call("MAP_INIT")
 m.call("TRAIL_INIT")
@@ -30,8 +28,9 @@ def fail(msg):
 
 
 def chars(col, row):
-    a = MAPSCR + row * 80 + col * 2
-    return m.mem[a], m.mem[a + 1], m.mem[a + 40], m.mem[a + 41]
+    a = (m.byte("ROWLO", row) | m.byte("ROWHI", row) << 8) + col * 2     # top and bottom character rows:
+    b = (m.byte("ROWBLO", row) | m.byte("ROWBHI", row) << 8) + col * 2     # not always 40 apart (D67)
+    return m.mem[a], m.mem[a + 1], m.mem[b], m.mem[b + 1]
 
 
 def tile(t):

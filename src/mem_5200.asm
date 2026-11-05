@@ -25,7 +25,7 @@ PMAREA  =  $0400        ; P/M graphics, 1K aligned (double-line)
 RMFONT0 =  $0800        ; the live map's fonts: RAM copies of the map's
 RMFONT1 =  $0C00        ; ROM fonts, made by PLAT_MAP, so WAVE_ANI can
 RMFONT2 =  $1000        ; write them (1K aligned)
-MAPSCR  =  $1400        ; map screen memory (MAPCROWS x MAPCOLS, 880)
+MAPSCR  =  $1400        ; map screen memory, 928 bytes (DISPLAY.ASM, D67)
 HELPSCR =  $1800        ; 11 x 40 help screen (440)
 ISLDATA =  $1A00        ; the live map's tables (ISL_LIVE5200.ASM),
                         ; $1A00-$203F

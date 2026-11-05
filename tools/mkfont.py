@@ -1188,6 +1188,11 @@ def main():
         out.append("%-11s= %-4d ; %s" % (equ, n, comment))
     out.append("%-11s= %-4d ; item k (1-9) is tile T_ITEM+k-1" % ("T_ITEM", T["T_FORT"]))
     out.append("%-11s= %-4d ; fixed tiles, same character codes in every font" % ("N_FIXED", NFIX))
+    # the character all in PF0, for the wide corner rows' borders (D67)
+    pf0 = tuple([0x55] * 8)
+    codes_pf0 = {q["fixed_chars"].index(pf0) for q in ps}
+    assert len(codes_pf0) == 1, codes_pf0
+    out.append("%-11s= $%02X  ; character all PF0: the corner rows' borders" % ("CH_PF0", codes_pf0.pop()))
     out.append("")
     out.append("; Cell kinds (ISLKIND); bit 7 set = square belongs to player 1")
     for nm, v, what in (("K_SEA", K_SEA, "open sea"),
