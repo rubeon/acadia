@@ -139,6 +139,56 @@ BND_TILE
 BT_DONE RTS
 
 ; ---------------------------------------------------------------------
+;  DLI_R3, DLI_R19 -- DISPLAY.ASM's DLIs for the rows where the width
+;  changes (D67); here in code block 2 for room on the 5200
+; ---------------------------------------------------------------------
+; DLI_R3 -- DLI_ROW for character row 3, the first normal-width row
+; after the wide ones (D67).  Its DLI runs in a wide line, where ANTIC
+; leaves the CPU so few cycles that DLI_ROW's work before WSYNC could
+; miss the line's end (row 3 then fetched wide: the map below it shifted,
+; now and then).  So WSYNC first, then the width at once.
+DLI_R3  STA WSYNC
+        PHA
+        LDA #DMA_N
+        STA DMACTL      ; row 3: normal width, before its DMA starts
+        TXA
+        PHA
+        LDX DL_NFN      ; then its font and shades, as DLI_ROW
+        STX CHBASE
+        LDA DL_NBK
+        STA COLBK
+        LDA DL_NPF
+        STA COLPF0
+        TYA
+        PHA
+        JMP DR_LOOK
+
+; DLI_R19 -- DLI_ROW for character row 19, the first bottom wide row
+; (D67).  Row 19's first line is a wide first line: once its DMA starts
+; the CPU does not run again until the line has been drawn, so whatever
+; DLI_ROW writes after PF0 lands a line late.  Row 19 has a new font
+; (the corners) with the same character codes as other tiles in row
+; 18's, so a late font drew row 18's tiles on row 19's top line, at the
+; corners.  This DLI runs in row 18, a normal-width line with time
+; before WSYNC, so all three registers are loaded first and written
+; straight after WSYNC: width, font, PF0.  COLBK may come a line late.
+DLI_R19 PHA
+        TXA
+        PHA
+        TYA
+        PHA
+        LDA DL_NDM      ; the wide width
+        LDX DL_NFN      ; the corner font
+        LDY DL_NPF      ; the dark corner blue
+        STA WSYNC
+        STA DMACTL
+        STX CHBASE
+        STY COLPF0
+        LDA DL_NBK
+        STA COLBK
+        JMP DR_LOOK
+
+; ---------------------------------------------------------------------
 ;  Map screen memory (D67; DISPLAY.ASM draws it; here in code block 2
 ;  for room).  The corner rows (character rows 0-2 and
 ;  19-21) are wide playfield lines of WROW bytes: CH_PF0 in the 4
