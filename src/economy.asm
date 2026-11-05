@@ -158,6 +158,7 @@ ECO_ROUND
         JSR ECO_SCORE
         LDX #1
         JSR ECO_SCORE
+        JSR CT_REC      ; for the stats screen, before RGOLD is cleared (D61, D66)
         LDA #0          ; earned gold starts again ($5B6C)
         LDX #3
 ER_RG   STA RGOLD,X
