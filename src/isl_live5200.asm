@@ -5,10 +5,10 @@
 ;  PLAT_INIT's first MAP_LOAD fills them (D62).
 ; =====================================================================
 
-TILECH  *= *+113
-TILECTR *= *+113
-TILECBL *= *+113
-TILECBR *= *+113
+TILECH  *= *+101
+TILECTR *= *+101
+TILECBL *= *+101
+TILECBR *= *+101
 ROWFONT *= *+22
 ISLKIND *= *+220
 ISLTILE *= *+220

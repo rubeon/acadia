@@ -102,11 +102,12 @@ DLI_MAP
         TYA
         PHA
         LDX ROWPF0      ; map palette from RAM (VBI_D: MAPPAL, attract;
-        LDA HELPON      ; sea and grass shaded per row, D51)
+        LDA ROWBK       ; sea and grass shaded per row, D51)
+        LDY HELPON
         BEQ DM_PF0
-        LDX MAPCOL+1    ; help: grass, not row 0's sea (D55)
-DM_PF0  LDA ROWBK
-        LDY MAPCOL+2
+        LDX MAPCOL+1    ; help: grass, not row 0's corner sea (D55),
+        LDA MAPCOL      ; and the darker sea behind it, as before D67
+DM_PF0  LDY MAPCOL+2
         STA WSYNC
         STA COLBK
         STX COLPF0
@@ -203,12 +204,16 @@ DLI_ROW
         STA COLPF0
         TYA
         PHA
-        LDA #<DLI_SQ    ; the next DLI starts a square row
-        STA VDSLST
-        LDA #>DLI_SQ
-        STA VDSLST+1
         LDX DLIROW      ; look up its fish and weather now
         INC DLIROW
+        LDA #<DLI_SQ    ; the next DLI starts a square row, or after
+        LDY #>DLI_SQ    ; the last row is the one below the map (D67)
+        CPX #MAPCROWS-1
+        BNE DR_VEC
+        LDA #<DLI_END
+        LDY #>DLI_END
+DR_VEC  STA VDSLST
+        STY VDSLST+1
         TXA
         LSR A
         TAX
@@ -220,6 +225,16 @@ DLI_ROW
         LDA WCROW,X
         STA DL_NC
         JMP DL_RDONE
+
+; DLI_END -- the map's last line ends: below it the background is the
+; dark corner sea (row 0's PF0), as the corners run into it (D55);
+; COLBK in the map is the light sea since D67
+DLI_END PHA
+        LDA ROWPF0
+        STA WSYNC
+        STA COLBK
+        PLA
+        RTI
 
 ; DLI_SQ -- a square row's first character row starts: the fish and
 ; weather positions first, looked up by DLI_ROW, from zero page, with
@@ -530,7 +545,7 @@ DLIST
         .BYTE DL_DLI+DL_MODE4,DL_DLI+DL_MODE4,DL_DLI+DL_MODE4
         .BYTE DL_DLI+DL_MODE4,DL_DLI+DL_MODE4,DL_DLI+DL_MODE4
         .BYTE DL_DLI+DL_MODE4,DL_DLI+DL_MODE4
-        .BYTE DL_MODE4                  ; character row 21
+        .BYTE DL_DLI+DL_MODE4           ; character row 21; DLI_END below
         .BYTE DL_JVB
         .WORD DLIST
 

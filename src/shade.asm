@@ -6,8 +6,8 @@
 ;  VD_SHADE -- ROWBK / ROWPF0: the sea and grass colours of each
 ;  character row (D51): MAPPAL's, luminance + SEADEL / GRNDEL (kept
 ;  0-14), attract mode applied.  In the corner rows (GRNDEL = GR_SEA,
-;  D55) PF0 is the light sea instead of grass.  Notes what it was built from in AP_SH,
-;  AP_MSK, AP_BK, AP_GR.  Trashes A, X, Y.
+;  D55) PF0 is the dark corner sea instead of grass (D67).  Notes what
+;  it was built from in AP_SH, AP_MSK, AP_BK, AP_GR.  Trashes A, X, Y.
 ; ---------------------------------------------------------------------
 VD_SHADE
         LDA COLRSH
@@ -27,8 +27,8 @@ VS_ROW  LDA MAPPAL      ; sea
         LDY GRNDEL,X
         CPY #GR_SEA
         BNE VS_GR
-        LDA MAPPAL      ; a corner row: PF0 is the light sea (D55)
-        LDY #SEA_LT
+        LDA MAPPAL      ; a corner row: PF0 is the dark corners'
+        LDY #0          ; sea, MAPPAL's (D55, D67)
 VS_GR   JSR VS_LUM
         STA ROWPF0,X
         DEX
@@ -56,15 +56,16 @@ VL_OK   AND #$0E
         AND DRKMSK
         RTS
 
-; Luminance change per character row.  The sea is the light blue
-; (MAPPAL + SEA_LT) everywhere; the top and bottom 3 rows (D55) have
-; MAPPAL's blue as COLBK for the rounded corners and the light sea in
-; PF0 (GRNDEL = GR_SEA), since they hold no land.  The grass is lit
-; from the north.  Every band starts on an odd (mid-square) row, where
-; DLI_ROW sets the shades first (D52)
+; Luminance change per character row.  The sea, COLBK, is the light
+; blue (MAPPAL + SEA_LT) everywhere.  The top and bottom 3 rows (D55)
+; hold no land, so their PF0 (GRNDEL = GR_SEA) is MAPPAL's darker blue
+; for the rounded corners; the corners were COLBK and the sea PF0
+; until D67, which hid the pirates (the fifth player, under PF0) there.
+; The grass is lit from the north.  Every band starts on an odd
+; (mid-square) row, where DLI_ROW sets the shades first (D52)
 SEA_LT  =  2            ; the light sea: MAPPAL's sea, 2 lighter
-GR_SEA  =  $80          ; GRNDEL: PF0 is the light sea
-SEADEL  .BYTE 0,0,0,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,0,0,0
+GR_SEA  =  $80          ; GRNDEL: PF0 is the dark corner sea
+SEADEL  .BYTE 2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2
 GRNDEL  .BYTE GR_SEA,GR_SEA,GR_SEA,2,2,2,2,0,0,0,0,0,0,0,0,$FE,$FE,$FE,$FE
         .BYTE GR_SEA,GR_SEA,GR_SEA
 
