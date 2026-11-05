@@ -43,7 +43,7 @@ F_TOP   =  8            ; FYH of the top band, + 0-7: lines 0-14 (rows 0-1)
 F_BOT   =  80           ; FYH of the bottom band, + 0-7: lines 72-86 (rows 9-10)
 F_CATCH =  50           ; touches for 1 gold
 F_ANIM  =  4            ; tics per animation frame
-C_FISH  =  $C6          ; school colour (PCOLR3): green
+C_FISH  =  $C2          ; school colour (PCOLR3): dark green (D64)
 PM_P3   =  PMAREA+$380
 
 ; ---------------------------------------------------------------------
