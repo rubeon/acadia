@@ -183,8 +183,7 @@ GS_DONE RTS
 ; ROUND_END -- tone, income/population/score, then the summary
 ROUND_END
         JSR SND_ROUND
-        JSR ECO_ROUND
-        JSR CT_REC      ; for the stats screen (D61)
+        JSR ECO_ROUND   ; (records the round for the stats screen, D61)
         JSR REB_ROUND   ; then a rebel more or less for each player
         INC CURTRN
         LDA #0

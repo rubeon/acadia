@@ -2,11 +2,11 @@
 ;  STATS.ASM -- the stats screen at the end of a game (T-SCR-5, D61)
 ;
 ;  Each round, CT_REC keeps both players' round score, population and
-;  gold (up to CT_MAXR rounds).  After the final scores, fire or a key
+;  income, the gold earned in the round (up to CT_MAXR rounds).  After the final scores, fire or a key
 ;  shows this screen: the status bar (final scores and the winner), the
 ;  page names, a line chart of one value over the rounds and, under it,
 ;  the round numbers and each player's total and best round.  The stick
-;  flips the page: SCORE (each round's score, 0-100), PEOPLE, GOLD.
+;  flips the page: SCORE (each round's score, 0-100), PEOPLE, INCOME.
 ;  Fire or a key goes on to the setup screen.
 ;
 ;  The chart is 64 lines of ANTIC mode D (160 x 2-line pixels, 4
@@ -37,7 +37,7 @@ CT_GCOL =  6            ; grid lines start at this byte column
 CT_DOTS =  $44          ; a byte of grid line: a PF0 dot every 2 pixels
 CT_COL1 =  $AA          ; a byte of 10 pixels: player 1's line
 CT_COL2 =  $FF          ; a byte of 11 pixels: player 2's line
-CT_NPGS =  3            ; pages: score, people, gold
+CT_NPGS =  3            ; pages: score, people, income
 CT_NDLI =  6            ; DLIs in CTDLIST
 CT_WLEN =  17           ; the winner's part of status line 2 (TX_W1)
 
@@ -45,7 +45,7 @@ CT_WLEN =  17           ; the winner's part of status line 2 (TX_W1)
 CT_TAB  =  CTTXT        ; the page names
 CT_XL   =  CTTXT+40     ; the round numbers
 CT_LEG  =  CTTXT+80     ; the legend: pawns, totals, best rounds
-CT_TAB0 =  5            ; column of the first page name
+CT_TAB0 =  4            ; column of the first page name
 
 ; colours (status bar colours: STATUS.ASM)
 C_CTBK  =  $82          ; the chart's background
@@ -56,8 +56,9 @@ C_CTXL  =  $88          ; the round numbers
 
 ; ---------------------------------------------------------------------
 ;  CT_REC -- at the end of a round (ROUND_END, before CURTRN counts
-;  it): keep each player's round score, population and gold.
-;  Trashes A, Y.
+;  it; from ECO_ROUND, before RGOLD is cleared): keep each player's round
+;  score, population and income (RGOLD: gold earned, D66).
+;  Trashes A, X, Y.
 ; ---------------------------------------------------------------------
 CT_REC
         LDY CURTRN
@@ -75,15 +76,32 @@ CT_REC
         STA HPOPL+CT_MAXR,Y
         LDA POP+3
         STA HPOPH+CT_MAXR,Y
-        LDA GOLD
-        STA HGLDL,Y
-        LDA GOLD+1
-        STA HGLDH,Y
-        LDA GOLD+2
-        STA HGLDL+CT_MAXR,Y
-        LDA GOLD+3
-        STA HGLDH+CT_MAXR,Y
+        LDX #0          ; income: the gold each earned this round
+        JSR CT_RINC
+        STA HINCL,Y
+        TXA
+        STA HINCH,Y
+        LDX #2
+        JSR CT_RINC
+        STA HINCL+CT_MAXR,Y
+        TXA
+        STA HINCH+CT_MAXR,Y
 CR_DONE RTS
+
+; CT_RINC -- A = low, X = high byte of RGOLD,X (X = player x 2), 9999
+; for $2700 up, so the chart's steps (up to 2000) reach it.  Keeps Y.
+CT_RINC LDA RGOLD+1,X
+        CMP #$27
+        BCS CI_MAX
+        LDA RGOLD,X
+        PHA
+        LDA RGOLD+1,X
+        TAX
+        PLA
+        RTS
+CI_MAX  LDA #$0F        ; 9999
+        LDX #$27
+        RTS
 
 ; ---------------------------------------------------------------------
 ;  CT_ENTER -- show the stats screen (OVER_FRAME).  Trashes A, X, Y.
@@ -321,7 +339,7 @@ CM_NEXT LDY CT_I
 
 ; ---------------------------------------------------------------------
 ;  CT_GET -- a recorded value
-;  In: X = series (0-1 score, 2-3 population, 4-5 gold; even: player
+;  In: X = series (0-1 score, 2-3 population, 4-5 income; even: player
 ;      1), Y = round (0 up).  Out: A = low byte, X = high byte.
 ;  Trashes Y.
 ; ---------------------------------------------------------------------
@@ -342,8 +360,8 @@ CG_P1   TAY
 CG_POP  LDA HPOPL,Y
         LDX HPOPH,Y
         RTS
-CG_GLD  LDA HGLDL,Y
-        LDX HGLDH,Y
+CG_GLD  LDA HINCL,Y
+        LDX HINCH,Y
         RTS
 
 ; ---------------------------------------------------------------------
@@ -577,10 +595,10 @@ CTGLY   .BYTE $54,$44,$44,$44,$54   ; 0
         .BYTE $54,$44,$54,$04,$50   ; 9
 
 ; page names, from column CT_TAB0; each page's first and last column
-TX_TABS .SBYTE "SCORE        PEOPLE        GOLD"
-CT_TABL =  31
-CTTABS  .BYTE 5,18,32
-CTTABE  .BYTE 9,23,35
+TX_TABS .SBYTE "SCORE        PEOPLE        INCOME"
+CT_TABL =  33
+CTTABS  .BYTE 4,17,31
+CTTABE  .BYTE 8,22,36
 
 ; legend: each player's pawn (STFONT icons), its column, its colour
 CTPWN   .BYTE $62,$E4

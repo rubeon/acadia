@@ -101,7 +101,7 @@ for rnd in range(52):
     m.poke("CURTRN", rnd)
     m.poke("RSCORE", rnd + 1, 99 - rnd)
     m.poke("POP", (1000 + rnd) & 0xFF, (1000 + rnd) >> 8, (2000 + rnd) & 0xFF, (2000 + rnd) >> 8)
-    m.poke("GOLD", (300 + rnd) & 0xFF, (300 + rnd) >> 8, (9000 + rnd) & 0xFF, (9000 + rnd) >> 8)
+    m.poke("RGOLD", (300 + rnd) & 0xFF, (300 + rnd) >> 8, (9000 + rnd) & 0xFF, (9000 + rnd) >> 8)
     m.call("CT_REC")
 for rnd in (0, 7, 49):
     got = []
@@ -111,6 +111,23 @@ for rnd in (0, 7, 49):
     want = [rnd + 1, 99 - rnd, 1000 + rnd, 2000 + rnd, 300 + rnd, 9000 + rnd]
     if got != want:
         fail("round %d kept %r, want %r" % (rnd, got, want))
+
+# income over 9999 is charted as 9999 (the scale's steps reach 10000)
+m.poke("CURTRN", 3)
+m.poke("RGOLD", 0x10, 0x27, 0xE0, 0x2E)    # 10000, 12000
+m.call("CT_REC")
+got = [m.call("CT_GET", x=s, y=3)[0] | m.call("CT_GET", x=s, y=3)[1] << 8 for s in (4, 5)]
+if got != [9999, 9999]:
+    fail("income 10000 / 12000 kept as %r" % got)
+
+# ECO_ROUND records the round's earned gold before clearing it (D66)
+m.call("GAME_NEW")
+m.poke("CURTRN", 0)
+m.poke("RGOLD", 55, 0, 7, 0)
+m.call("ECO_ROUND", limit=BIG)
+got = [m.call("CT_GET", x=s, y=0)[0] for s in (4, 5)]
+if got != [55, 7] or m.word("RGOLD") != 0:
+    fail("ECO_ROUND: income %r, RGOLD after %d" % (got, m.word("RGOLD")))
 
 
 # --- the scale and the lines on random games ----------------------------
@@ -124,8 +141,8 @@ def game(n, seed):
             m.mem[m.addr("HSC") + p * MAXR + i] = sc[p][i]
             m.mem[m.addr("HPOPL") + p * MAXR + i] = pop[p][i] & 0xFF
             m.mem[m.addr("HPOPH") + p * MAXR + i] = pop[p][i] >> 8
-            m.mem[m.addr("HGLDL") + p * MAXR + i] = gold[p][i] & 0xFF
-            m.mem[m.addr("HGLDH") + p * MAXR + i] = gold[p][i] >> 8
+            m.mem[m.addr("HINCL") + p * MAXR + i] = gold[p][i] & 0xFF
+            m.mem[m.addr("HINCH") + p * MAXR + i] = gold[p][i] >> 8
     return [sc, pop, gold]
 
 
@@ -163,7 +180,7 @@ for n, seed in ((10, 1), (50, 2), (2, 3), (1, 4), (23, 5)):
             if sum(pixel(x, y) == 1 for x in range(X0, X0 + W, 2)) < 10:
                 fail("n %d page %d: no grid line at %d" % (n, pg, y))
         # page names: this one inverse
-        tabs = [m.byte("CT_TAB", c) for c in (5, 18, 32)]
+        tabs = [m.byte("CT_TAB", c) for c in (4, 17, 31)]
         if [t >= 0x80 for t in tabs] != [i == pg for i in range(3)]:
             fail("page %d names: %r" % (pg, ["%02X" % t for t in tabs]))
     xl = text(40)
