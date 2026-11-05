@@ -87,7 +87,6 @@ DI_STAT LDA STATTPL,X
 
         LDA #DMA_NORM+DMA_PM
         STA SDMCTL
-        JSR VD_DMA      ; the DLIs' playfield widths, before the first VBI
         LDA #NMI_VBI+NMI_DLI
         STA NMIEN
         RTS
@@ -103,7 +102,7 @@ DLI_MAP
         PHA
         LDA HELPON
         BNE DM_HPRE
-        LDA DMWIDE      ; the map: rows 0-2 in a wide playfield, so the
+        LDA #DMA_W      ; the map: rows 0-2 in a wide playfield, so the
         LDX ROWFONT     ; dark corners reach the screen's edge (D67);
         LDY ROWPF0      ; first, before row 0's DMA starts; its font
         STA WSYNC       ; and PF0 (the border) next
@@ -136,6 +135,8 @@ DM_ROWS         LDA #1
         STA DL_NPF
         LDA ROWFONT+1
         STA DL_NFN
+        LDA ROWDMA+1    ; and width (D67)
+        STA DL_NDM
         LDA #<DLI_ROW   ; the rest of this frame's DLIs are map rows
         STA VDSLST
         LDA #>DLI_ROW
@@ -201,23 +202,17 @@ DLI_ROW
         PHA             ; a square's second character row starts:
         TXA             ; its width, font and shades, looked up by the
         PHA             ; DLI before, so they are set before its first
-        TYA             ; line (a band of colour starts on such a row,
-        PHA             ; D52; set later, the line would keep the old)
-        LDY DMNORM      ; width: wide in the corner rows (D67), set
-        LDX DLIROW      ; first, before the row's DMA starts
-        CPX #CR_TOP
-        BCC DR_WIDE
-        CPX #CR_BOT
-        BCC DR_NORM
-DR_WIDE LDY DMWIDE
-DR_NORM LDA DL_NFN
-        LDX DL_NBK
-        STA WSYNC
-        STY DMACTL
-        STA CHBASE
-        STX COLBK
+        LDA DL_NDM      ; line (a band of colour starts on such a row,
+        LDX DL_NFN      ; D52; set later, the line would keep the old).
+        STA WSYNC       ; Little before WSYNC: in a wide line the DLI
+        STA DMACTL      ; has few cycles (D67).  The width first,
+        STX CHBASE      ; before the row's DMA starts
+        LDA DL_NBK
+        STA COLBK
         LDA DL_NPF
         STA COLPF0
+        TYA
+        PHA
         LDX DLIROW      ; look up its fish and weather now
         INC DLIROW
         LDA #<DLI_SQ    ; the next DLI starts a square row, or after
@@ -247,7 +242,7 @@ DLI_END PHA
         TXA
         PHA
         LDA ROWPF0
-        LDX DMNORM      ; and the normal width again (D67)
+        LDX #DMA_N      ; and the normal width again (D67)
         STA WSYNC
         STA COLBK
         STX DMACTL
@@ -284,6 +279,8 @@ DLI_SQ  PHA
         STA DL_NPF
         LDA ROWFONT+1,X
         STA DL_NFN
+        LDA ROWDMA+1,X  ; and width (D67)
+        STA DL_NDM
         LDA #<DLI_ROW   ; the next DLI is the square's second row
         STA VDSLST
         LDA #>DLI_ROW
@@ -325,18 +322,6 @@ DLI_MSL STA HPOSM3
         RTS
 
 ; ---------------------------------------------------------------------
-;  VD_DMA -- DMNORM / DMWIDE: DMACTL for normal and wide playfield
-;  lines, from SDMCTL (wide only if the playfield is on).  Trashes A.
-; ---------------------------------------------------------------------
-VD_DMA  LDA SDMCTL
-        STA DMNORM
-        AND #$02        ; normal width (bit 1): ORed in as bit 0, wide
-        LSR A
-        ORA SDMCTL
-        STA DMWIDE
-        RTS
-
-; ---------------------------------------------------------------------
 ;  VBI_D -- deferred VBI: frame counter, sound, sprites, and the map
 ;  colours for this frame's DLI.  Attract mode (D48): INPUT_POLL clears
 ;  ATRACT on any input; once the OS timer runs out it sets COLRSH and
@@ -351,7 +336,6 @@ VBI_D
         STA HPOSP2      ; DLIs set them)
         STA HPOSP3
         JSR DLI_MSL     ; and the missiles
-        JSR VD_DMA
         LDX #4          ; map colours, attract mode applied
 VD_COL  LDA MAPPAL,X
         EOR COLRSH

@@ -151,8 +151,8 @@ BT_DONE RTS
 ; ---------------------------------------------------------------------
 WROW    =  48           ; bytes per wide line
 WBRD    =  4            ; border characters each side
-CR_TOP  =  3            ; first normal character row
-CR_BOT  =  19           ; first wide character row at the bottom
+DMA_N   =  DMA_NORM+DMA_PM ; DMACTL: normal width (as SDMCTL in play)
+DMA_W   =  DMA_N+1      ; wide (playfield width bits 11)
 SCR_WT   =  MAPSCR
 SCR_N    =  MAPSCR+[3*WROW]
 SCR_WB   =  SCR_N+[16*MAPCOLS]
@@ -169,3 +169,6 @@ ROWBLO  .BYTE <[SCR_WT+WROW+WBRD],<SCR_N,<[SCR_N+80],<[SCR_N+160]
 ROWBHI  .BYTE >[SCR_WT+WROW+WBRD],>SCR_N,>[SCR_N+80],>[SCR_N+160]
         .BYTE >[SCR_N+240],>[SCR_N+320],>[SCR_N+400],>[SCR_N+480],>[SCR_N+560]
         .BYTE >[SCR_WB+WBRD],>[SCR_WB+WROW+WROW+WBRD]
+; ROWDMA: DMACTL per character row, set by DLI_MAP / DLI_ROW from DL_NDM
+ROWDMA  .BYTE DMA_W,DMA_W,DMA_W,DMA_N,DMA_N,DMA_N,DMA_N,DMA_N,DMA_N,DMA_N,DMA_N
+        .BYTE DMA_N,DMA_N,DMA_N,DMA_N,DMA_N,DMA_N,DMA_N,DMA_N,DMA_W,DMA_W,DMA_W

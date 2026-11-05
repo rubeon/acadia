@@ -27,6 +27,7 @@ DL_NP3  =  $8D          ; and fish positions (DISPLAY.ASM, D52)
 DL_NBK  =  $8E          ; DLI_MAP / DLI_SQ -> DLI_ROW: the next row's
 DL_NPF  =  $8F          ; sea (COLBK), PF0 and font, ready before its
 DL_NFN  =  $90          ; first line (D55)
+DL_NDM  =  $91          ; and its DMACTL: playfield width (D67)
 ZPTR    =  $CB          ; 2-byte general pointer
 OLDVBD  =  $CD          ; 2-byte saved deferred VBI vector
 

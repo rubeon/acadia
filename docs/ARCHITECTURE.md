@@ -375,9 +375,11 @@ then the shades and the missiles; each sets `VDSLST` to the other,
 except that after row 20 `DLI_ROW` sets it to `DLI_END`, which at the
 end of row 21 makes COLBK the dark corner sea below the map (D67).
 The corner rows (0-2, 19-21) are wide playfield lines (D67): `DLI_MAP`
-and `DLI_ROW` write `DMACTL` (`DMWIDE` / `DMNORM`, from `SDMCTL` by
-`VD_DMA` in the VBI) as their first store after `WSYNC`, before the
-row's DMA starts, and `DLI_END` sets normal width again.
+and `DLI_ROW` write `DMACTL` (`ROWDMA` per row, looked up into `DL_NDM`
+by the DLI before) as their first store after `WSYNC`, before the
+row's DMA starts, and `DLI_END` sets normal width again. A DLI in a
+wide line has few free cycles, so `DLI_ROW` does almost nothing before
+its `WSYNC`.
 Where a square row starts (even character rows) `DLI_MAP` and `DLI_SQ` load `HPOSP3` from
 `HP3ROW` (the fish player's position for that row, 0 = off screen),
 `HPOSP2` from `HP2ROW` and `COLPM2` from `WCROW` (the weather's),
