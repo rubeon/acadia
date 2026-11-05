@@ -95,7 +95,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 | T-GFX-4 | Sea in one light blue with rounded dark corners instead of bands (D55) | T-GFX-1 | done |
 | T-GFX-5 | Boats leave a trail of waves on the squares they pass (D59) | T-GFX-1 | done (no wakes in rows 0 and 10: no font room) |
 | T-GFX-7 | Schools of fish in a darker green, to stand out from the sea on a CRT (D64) | T-GFX-4 | done |
-| T-GFX-8 | Pirates show in the corner rows (the band sea becomes COLBK); the pirate ship redrawn as a 10-line galleon with a flying flag (D67) | T-GFX-4 | in progress (Claude) |
+| T-GFX-8 | Pirates show in the corner rows (the band sea becomes COLBK); the pirate ship redrawn as a 10-line galleon with a flying flag (D67) | T-GFX-4 | done |
 | T-REL-2 | Test on MiSTer and real 800XL; PAL check | M6 | todo |
 | T-REL-3 | ATR + XEX release build, README play instructions | T-INFRA-4 | todo |
 
