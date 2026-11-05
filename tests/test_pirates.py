@@ -271,16 +271,20 @@ for wx, gone in ((80 - 16, False), (80 - 15, True)):
 clear()
 put(0, 40, 40)                           # lines 32-39: row 4
 put(1, 120, 76)                          # lines 68-75: rows 8-9
+m.poke("FRAME", 8)                       # slot 2: flag frame 2, slot 3: frame 1
 m.call("PIR_SHOW")
 hm = [m.byte("HMROW", r) for r in range(11)]
-want = [0] * 4 + [40 + HP_MAP - 8] + [0] * 3 + [120 + HP_MAP - 8] * 2 + [0]
+# the galleon's 2 lines above its box (D67) reach row 3 for the first
+want = [0] * 3 + [40 + HP_MAP - 8] * 2 + [0] * 3 + [120 + HP_MAP - 8] * 2 + [0]
 if hm != want:
     fail("HMROW %r, want %r" % (hm, want))
 msl = m.addr("PMAREA") + 0x180
-shape = [m.byte("PIRSHP", k) for k in range(8)]
-for fy in (40, 76):
-    line = fy - 8 + PM_MAP
-    if list(m.mem[msl + line:msl + line + 8]) != shape or m.mem[msl + line - 1]:
+P_H, P_TOP = 10, 2
+for i, fy in enumerate((40, 76)):
+    frame = ((P + i) * 8 + 8) & 16 and P_H
+    shape = [m.byte("PIRSHP", frame + k) for k in range(P_H)]
+    line = fy - 8 - P_TOP + PM_MAP
+    if list(m.mem[msl + line:msl + line + P_H]) != shape or m.mem[msl + line - 1]:
         fail("pirate not drawn at missile line %d" % line)
 put(1, 120, 44)
 shown = []

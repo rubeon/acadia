@@ -137,3 +137,35 @@ BND_TILE
         ADC BNDVAR,Y    ; carry clear
         STA MTILE
 BT_DONE RTS
+
+; ---------------------------------------------------------------------
+;  Map screen memory (D67; DISPLAY.ASM draws it; here in code block 2
+;  for room).  The corner rows (character rows 0-2 and
+;  19-21) are wide playfield lines of WROW bytes: CH_PF0 in the 4
+;  characters each side (the border, dark corner sea), the map's 40 in
+;  between.  The others are normal lines of MAPCOLS.  So:
+;    SCR_WT  rows 0-2 (3 x 48), SCR_N rows 3-18 (16 x 40), SCR_WB rows 19-21.
+;  ROWLO/ROWHI: the address of map column 0 in each square row's top
+;  character row, ROWBLO/ROWBHI in its bottom one (square rows 1 and
+;  9 have one wide and one normal row).
+; ---------------------------------------------------------------------
+WROW    =  48           ; bytes per wide line
+WBRD    =  4            ; border characters each side
+CR_TOP  =  3            ; first normal character row
+CR_BOT  =  19           ; first wide character row at the bottom
+SCR_WT   =  MAPSCR
+SCR_N    =  MAPSCR+[3*WROW]
+SCR_WB   =  SCR_N+[16*MAPCOLS]
+SCR_END  =  SCR_WB+[3*WROW] ; MAPSCR+928
+ROWLO   .BYTE <[SCR_WT+WBRD],<[SCR_WT+WROW+WROW+WBRD],<[SCR_N+40],<[SCR_N+120]
+        .BYTE <[SCR_N+200],<[SCR_N+280],<[SCR_N+360],<[SCR_N+440],<[SCR_N+520]
+        .BYTE <[SCR_N+600],<[SCR_WB+WROW+WBRD]
+ROWHI   .BYTE >[SCR_WT+WBRD],>[SCR_WT+WROW+WROW+WBRD],>[SCR_N+40],>[SCR_N+120]
+        .BYTE >[SCR_N+200],>[SCR_N+280],>[SCR_N+360],>[SCR_N+440],>[SCR_N+520]
+        .BYTE >[SCR_N+600],>[SCR_WB+WROW+WBRD]
+ROWBLO  .BYTE <[SCR_WT+WROW+WBRD],<SCR_N,<[SCR_N+80],<[SCR_N+160]
+        .BYTE <[SCR_N+240],<[SCR_N+320],<[SCR_N+400],<[SCR_N+480],<[SCR_N+560]
+        .BYTE <[SCR_WB+WBRD],<[SCR_WB+WROW+WROW+WBRD]
+ROWBHI  .BYTE >[SCR_WT+WROW+WBRD],>SCR_N,>[SCR_N+80],>[SCR_N+160]
+        .BYTE >[SCR_N+240],>[SCR_N+320],>[SCR_N+400],>[SCR_N+480],>[SCR_N+560]
+        .BYTE >[SCR_WB+WBRD],>[SCR_WB+WROW+WROW+WBRD]
