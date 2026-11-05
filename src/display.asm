@@ -213,7 +213,7 @@ DLI_ROW
         STA COLPF0
         TYA
         PHA
-        LDX DLIROW      ; look up its fish and weather now
+DR_LOOK LDX DLIROW      ; look up its fish and weather now
         INC DLIROW
         LDA #<DLI_SQ    ; the next DLI starts a square row, or after
         LDY #>DLI_SQ    ; the last row is the one below the map (D67)
@@ -234,6 +234,27 @@ DR_VEC  STA VDSLST
         LDA WCROW,X
         STA DL_NC
         JMP DL_RDONE
+
+; DLI_R3 -- DLI_ROW for character row 3, the first normal-width row
+; after the wide ones (D67).  Its DLI runs in a wide line, where ANTIC
+; leaves the CPU so few cycles that DLI_ROW's work before WSYNC could
+; miss the line's end (row 3 then fetched wide: the map below it shifted,
+; now and then).  So WSYNC first, then the width at once.
+DLI_R3  STA WSYNC
+        PHA
+        LDA #DMA_N
+        STA DMACTL      ; row 3: normal width, before its DMA starts
+        TXA
+        PHA
+        LDX DL_NFN      ; then its font and shades, as DLI_ROW
+        STX CHBASE
+        LDA DL_NBK
+        STA COLBK
+        LDA DL_NPF
+        STA COLPF0
+        TYA
+        PHA
+        JMP DR_LOOK
 
 ; DLI_END -- the map's last line ends: below it the background is the
 ; dark corner sea (row 0's PF0), as the corners run into it (D55);
@@ -281,10 +302,15 @@ DLI_SQ  PHA
         STA DL_NFN
         LDA ROWDMA+1,X  ; and width (D67)
         STA DL_NDM
-        LDA #<DLI_ROW   ; the next DLI is the square's second row
-        STA VDSLST
+        LDA #<DLI_ROW   ; the next DLI is the square's second row;
+        STA VDSLST      ; after row 2 (the last top wide row) DLI_R3
         LDA #>DLI_ROW
-        STA VDSLST+1
+        CPX #2
+        BNE DS_VEC
+        LDA #<DLI_R3
+        STA VDSLST
+        LDA #>DLI_R3
+DS_VEC  STA VDSLST+1
         TXA
         LSR A
         TAX             ; square row
