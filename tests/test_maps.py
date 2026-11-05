@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""D56: the choice of map (py65).
+"""D56, D65: the choice of map (py65).
 
 MAP_LOAD puts each map's data block over the live tables and works out
 the CPU's steps by sea; they must match a breadth-first search in
@@ -19,7 +19,7 @@ from run6502 import Machine  # noqa: E402
 
 K_SEA, K_LAND, K_HARB, K_KIND, K_P1 = 0, 1, 3, 0x7F, 0x80
 ROWS, COLS = 11, 20
-STANDARD, CLASSIC, RANDOM = range(3)
+STANDARD, RANDOM = range(2)
 LONG = 5000000
 fails = 0
 
@@ -65,7 +65,7 @@ def check_map(m, mp, what):
             bad = [i for i in range(ROWS * COLS) if got[i] != want[i]]
             fail("%s %s: %d squares wrong, first %d: %d want %d"
                  % (what, name, len(bad), bad[0], got[bad[0]], want[bad[0]]))
-    size = {STANDARD: 35, CLASSIC: 29, RANDOM: m.addr("RM_N")}[mp]
+    size = {STANDARD: 29, RANDOM: m.addr("RM_N")}[mp]
     for p1 in (0, K_P1):
         land = [i for i, k in enumerate(kinds) if k == K_LAND | p1]
         harb = [i for i, k in enumerate(kinds) if k == K_HARB | p1]
@@ -80,7 +80,7 @@ def check_map(m, mp, what):
     if any(k & K_KIND != K_LAND and up[i] == 255 for i, k in enumerate(kinds)):
         fail("%s: sea shut in by land" % what)
     fp = [m.byte("FONTPG", i) for i in range(m.addr("N_FONTS"))]
-    fp += [m.addr("MFNT00") >> 8, m.addr("MFNT02") >> 8]   # corner rows (D57)
+    fp += [m.addr("MFNTC") >> 8]       # the corner rows' font (D65)
     if any(m.byte("ROWFONT", r) not in fp for r in range(22)):
         fail("%s: ROWFONT uses a font not in FONTPG" % what)
     for seg, hi in (("$9C00", 0x9C), ("$BC00", 0xBC)):
@@ -134,16 +134,17 @@ blk = m.addr("MAPBLK")
 first = {t: table(m, t) for t in ("AI_HD", "AI_UP", "AI_DN")}
 live0 = [m.byte("TILECH", i) for i in range(blk)]
 
-# the fixed maps: their block in place; CLASSIC's owners from its lists
-for mp in (CLASSIC, STANDARD):
+# the fixed map: its block in place; owners from its lists (the
+# original's layout, D65)
+for mp in (STANDARD,):
     m.call("MAP_LOAD", a=mp, limit=LONG)
     src = (m.byte("MAPSH", mp) << 8) | m.byte("MAPSL", mp)
     if [m.byte("TILECH", i) for i in range(blk)] != [m.mem[src + i] for i in range(blk)]:
         fail("map %d: live tables differ from its block" % (mp + 1))
     kinds = check_map(m, mp, "map %d" % (mp + 1))
-    if mp == CLASSIC and (kinds[8 * COLS + 11] != K_LAND or kinds[2 * COLS + 10] != K_LAND | K_P1
+    if mp == STANDARD and (kinds[8 * COLS + 11] != K_LAND or kinds[2 * COLS + 10] != K_LAND | K_P1
                           or kinds[6 * COLS + 2] != K_HARB or kinds[4 * COLS + 18] != K_HARB | K_P1):
-        fail("CLASSIC: owners or harbours not the original's")
+        fail("STANDARD: owners or harbours not the original's")
 if first != {t: table(m, t) for t in first}:
     fail("map 1's AI_ tables worked out differently from ISLANDS.ASM's")
 if [m.byte("TILECH", i) for i in range(blk)] != live0:
@@ -162,9 +163,9 @@ if first != {t: table(m, t) for t in first} or table(m, "ISLKIND") != [m.mem[
         for i in range(ROWS * COLS)]:
     fail("STANDARD after RANDOM is not STANDARD again")
 
-# SU_GO: the MAP line's value 1-3 is map 0-2
+# SU_GO: the MAP line's value 1-2 is map 0-1
 fmap = m.addr("SU_VAL") + m.addr("SU_FMAP")
-for v in (1, 2, 3, 3):
+for v in (1, 2, 2, 1):
     m.poke("SU_VAL", 10, 30, 2, 2)
     m.poke(fmap, v)
     m.call("SU_GO", limit=LONG)

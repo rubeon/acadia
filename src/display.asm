@@ -538,14 +538,20 @@ DLIST
 ; switches between the two by storing only the low byte of SDLSTL
 SUDLIST
         .BYTE DL_BLANK8,DL_BLANK8,DL_BLANK8
-        .BYTE DL_LMS+DL_MODE7           ; title, 16 lines
+        .BYTE DL_LMS+DL_MODE5           ; title (SU_SCR), help font
         .WORD SU_SCR
         .BYTE DL_BLANK8
-        .BYTE DL_LMS+DL_MODE2           ; 18 text lines (SU_LINES)
-        .WORD SU_TXT
-        .BYTE DL_MODE2,DL_MODE2,DL_MODE2,DL_MODE2,DL_MODE2,DL_MODE2
-        .BYTE DL_MODE2,DL_MODE2,DL_MODE2,DL_MODE2,DL_MODE2,DL_MODE2
-        .BYTE DL_MODE2,DL_MODE2,DL_MODE2,DL_MODE2,DL_MODE2
+        .BYTE DL_MODE5,DL_BLANK2        ; the five value lines (SU_TXT)
+        .BYTE DL_MODE5,DL_BLANK2
+        .BYTE DL_MODE5,DL_BLANK2
+        .BYTE DL_MODE5,DL_BLANK2
+        .BYTE DL_MODE5
+        .BYTE DL_BLANK8
+        .BYTE DL_MODEA,DL_MODEA,DL_MODEA,DL_MODEA ; the minimap (SU_MINI),
+        .BYTE DL_MODEA,DL_MODEA,DL_MODEA,DL_MODEA ; MM_ROWS lines
+        .BYTE DL_MODEA,DL_MODEA,DL_MODEA
+        .BYTE DL_BLANK8,DL_BLANK4
+        .BYTE DL_MODE5                  ; the prompt (SU_PRM)
         .BYTE DL_JVB
         .WORD SUDLIST
 

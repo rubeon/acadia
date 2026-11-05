@@ -108,7 +108,7 @@ for sr in range(11):
             fail("BND_TILE row %d tile %d: %d, want %d" % (sr, T_PT + k, m.byte("MTILE"), want))
 # a corner square's top left character: dark (00) in the very corner,
 # light sea (01) further in
-font0 = m.addr("MFNT00")
+font0 = m.byte("ROWFONT", 0) << 8    # row 0: the corner font (D65)
 code = m.byte("TILECH", m.byte("ISLTILE", 0)) & 0x7F
 top = m.mem[font0 + code * 8]
 code = m.byte("TILECH", m.byte("ISLTILE", 9)) & 0x7F

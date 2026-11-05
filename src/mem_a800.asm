@@ -35,13 +35,11 @@ VARPAGES = 7            ; $3900-$3FFF
 ;  Fonts (generated: FONT_MAP.ASM by tools/mkfont.py, FONT_STAT.ASM by
 ;  tools/mkstat.py), 1K aligned.  MFAmf = map m's font f (D56).
 ; ---------------------------------------------------------------------
-MFA00   =  $3000        ; STANDARD font 0
-MFA01   =  $4800        ; STANDARD font 1
-MFA02   =  $8800        ; STANDARD font 2 (corner rows, D55)
-MFA10   =  $8C00        ; CLASSIC font 0
-MFA11   =  $A000        ; CLASSIC font 1
-MFA12   =  $A400        ; CLASSIC font 2
-MFA20   =  $A800        ; RANDOM font
+MFAC    =  $3000        ; the corner font: rows 0-2, 19-21 on every map (D65)
+MFA00   =  $4800        ; STANDARD font 0
+MFA01   =  $8800        ; STANDARD font 1
+MFA02   =  $8C00        ; STANDARD font 2
+MFA10   =  $A800        ; RANDOM font ($A000-$A7FF free since D65)
 HLPFNTA =  $4C00        ; help font HLPFONT, then the wave frames WVDATA
 STFONTA =  $9800        ; status bar font STFONT (D54)
 

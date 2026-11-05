@@ -1,21 +1,28 @@
 ; =====================================================================
-;  SETUP.ASM -- the game setup screen (T-SCR-1: R-MODE-3, R-MODE-4)
+;  SETUP.ASM -- the game setup screen (T-SCR-1: R-MODE-3, R-MODE-4;
+;  redrawn in T-SCR-6, D65)
 ;
 ;  Shown at start-up and after every game over.  Five lines:
-;    ROUNDS              1-50     ("term of office" in the original)
-;    SECONDS PER ROUND   30-120   ("turn length")
+;    ROUNDS              1-50
+;    SECONDS PER ROUND   30-120, in steps of 5
 ;    PLAYERS             1-2
-;    CPU LEVEL           1-3      (1 player only; skipped with 2)
-;    MAP                 1-3      (STANDARD, CLASSIC, RANDOM; D56)
+;    CPU LEVEL           EASY, MEDIUM, HARD (1 player only; skipped
+;                        with 2)
+;    MAP                 STANDARD, RANDOM (N_MAPS names, MAPNAME)
 ;  Stick up/down or SELECT picks a line; stick left/right changes it
-;  (held: repeats), or digits type a number.  START or fire begins.
-;  Typed numbers are brought into range when the line is left or the
-;  game begins.  The values stay as they were for the next game.
+;  (held: repeats), going round from one end of its range to the other,
+;  or digits type a number.  START or fire begins.  Typed numbers are
+;  brought into range when the line is left or the game begins.  The
+;  values stay as they were for the next game.
 ;
 ;  The screen has its own display list (SUDLIST, next to DLIST in page
-;  $38, so switching is one store to SDLSTL) and uses the map's screen
-;  memory, which GAME_START redraws.  Lines are built in STATUS1 with
-;  the text routines (the status bar is not shown here), then copied.
+;  $38, so switching is one store to SDLSTL): mode 5 lines in the help
+;  font HLPFONT on black, yellow text and the current line in white
+;  (inverse characters), and under the lines the chosen map's minimap
+;  (MMAPL/MMAPH, generated), ANTIC mode A, green land on blue sea.  It
+;  uses the map's screen memory, which GAME_START redraws.  Lines are
+;  built in STATUS1 with the text routines (the status bar is not shown
+;  here), then copied in the help font's codes.
 ; =====================================================================
 
 GS_SETUP = 4            ; GSTATE while the setup screen is up
@@ -25,18 +32,27 @@ SU_FPLY =  2            ; PLAYERS field
 SU_FLVL =  3            ; CPU LEVEL field: 1 player only
 SU_FMAP =  4            ; MAP field: map 1 to N_MAPS
 SU_MAPW =  8            ; characters in a map's name (MAPNAME)
+SU_LVLW =  6            ; characters in a CPU level's name (SULVN)
 SU_DEFP =  2            ; default: 2 players
-SU_DEFL =  2            ; default CPU level
+SU_DEFL =  2            ; default CPU level: MEDIUM
 SU_DELAY = 20           ; frames before a held left/right repeats
 SU_RATE =  5            ; frames between repeats
 
-SU_SCR  =  MAPSCR       ; mode 7 title line (20 bytes)
-SU_TXT  =  MAPSCR+20    ; mode 2 lines, 40 bytes each
-SU_LINES = 18           ; mode 2 lines in SUDLIST
-SU_COLV =  32           ; value column (3 digits)
+SU_LW   =  40           ; bytes in a mode 5 line
+SU_MW   =  20           ; bytes in a mode A line
+SU_SCR  =  MAPSCR       ; title line, mode 5
+SU_TXT  =  MAPSCR+40    ; the five value lines
+SU_MINI =  MAPSCR+240   ; the minimap, MM_ROWS mode A lines
+SU_PRM  =  MAPSCR+460   ; the prompt line, mode 5
+SU_MCOL =  7            ; minimap: first byte in its mode A lines
+SU_CGT  =  3            ; column of the ">" on the current line
+SU_CLAB =  5            ; column of the labels
+SU_COLV =  33           ; value column (3 digits; names end there too)
 SC_GT   =  $1E          ; screen code of ">"
 SC_DASH =  $0D          ; screen code of "-"
-C_TITLE =  $1C          ; title colour (COLPF0): yellow, as C_LIGHT
+SU_WHITE = $80          ; help font: inverse = white (PF3)
+C_TITLE =  $1C          ; text colour (COLPF2): yellow
+C_SUBK  =  $00          ; background: black
 
 ; ---------------------------------------------------------------------
 ;  SETUP_INIT -- default values, once at start-up.  Trashes A.
@@ -75,39 +91,37 @@ SE_MUS
         JSR PM_HIDE     ; no cursors, fish, weather or pirates
         LDA #0
         TAX
-SE_CLR  STA SU_SCR,X    ; clear title and text lines (740 bytes)
+SE_CLR  STA SU_SCR,X    ; clear the screen (500 bytes used)
         STA SU_SCR+$100,X
-        STA SU_SCR+$200,X
         INX
         BNE SE_CLR
-        LDX #19
-SE_TTL  LDA SUS_TTL,X
-        STA SU_SCR,X
-        DEX
-        BPL SE_TTL
-        LDX #SUS_N-1    ; the fixed lines
-SE_STA  STX SU_I
-        LDA SUS_ROW,X
-        JSR SU_ROWADR
-        LDX SU_I
-        LDA SUS_LO,X
-        STA TPTR
-        LDA SUS_HI,X
-        STA TPTR+1
-        LDY #0
-SE_CHR  LDA (TPTR),Y
-        CMP #TX_END
-        BEQ SE_NXT
-        STA (ZPTR),Y
-        INY
-        BNE SE_CHR
-SE_NXT  LDX SU_I
-        DEX
-        BPL SE_STA
+        LDA #<SUS_TTL   ; the title, white
+        LDY #>SUS_TTL
+        LDX #SU_WHITE
+        JSR SU_FIX
+        LDA #<SU_SCR
+        LDY #>SU_SCR
+        JSR SU_PUT
+        LDA #<SUS_PRM   ; the prompt, yellow
+        LDY #>SUS_PRM
+        LDX #0
+        JSR SU_FIX
+        LDA #<SU_PRM
+        LDY #>SU_PRM
+        JSR SU_PUT
         JSR SU_DRAW
-        JSR TI_COLS     ; ROM font, text colours
-        LDA #C_TITLE
+        LDA #>HLPFONT   ; the help font, its colours, the minimap's
+        STA CHBAS
+        LDA #C_GRASS
         STA COLOR0
+        LDA #C_SEA
+        STA COLOR1
+        LDA #C_TITLE
+        STA COLOR2
+        LDA #C_WHITE
+        STA COLOR3
+        LDA #C_SUBK
+        STA COLOR4
         LDA #<SUDLIST   ; same page as DLIST: one store switches
         STA SDLSTL
         RTS
@@ -273,27 +287,29 @@ SC_SET  STA SU_VAL,X
         RTS
 
 ; ---------------------------------------------------------------------
-;  SU_INC / SU_DEC -- step the current line's value up / down, stopping
-;  at the ends of its range.  Trashes A, X.
+;  SU_INC / SU_DEC -- step the current line's value up / down; past an
+;  end of its range it goes round to the other end (D65).
+;  Trashes A, X.
 ; ---------------------------------------------------------------------
 SU_INC  LDX SU_FLD
         LDA SU_VAL,X
         CLC
         ADC SU_STP,X
-        BCS SI_MAX
+        BCS SI_MIN
         CMP SU_MAX,X
+        BEQ SI_SET
         BCC SI_SET
-SI_MAX  LDA SU_MAX,X
+SI_MIN  LDA SU_MIN,X    ; past the top: the bottom
 SI_SET  STA SU_VAL,X
         RTS
 SU_DEC  LDX SU_FLD
         LDA SU_VAL,X
         SEC
         SBC SU_STP,X
-        BCC SD_MIN
+        BCC SD_MAX
         CMP SU_MIN,X
         BCS SD_SET
-SD_MIN  LDA SU_MIN,X
+SD_MAX  LDA SU_MAX,X    ; past the bottom: the top
 SD_SET  STA SU_VAL,X
         RTS
 
@@ -336,37 +352,56 @@ SD_OK   STA SU_VAL,X
 SD_RTS  RTS
 
 ; ---------------------------------------------------------------------
-;  SU_DRAW -- redraw the five value lines: a ">" and an inverse value
-;  on the current one, "-" for CPU LEVEL with 2 players, the map's
-;  name (MAPNAME) for MAP.
+;  SU_DRAW -- redraw the five value lines and the minimap: the current
+;  line white with a ">", the others yellow; "-" for CPU LEVEL with 2
+;  players, a level's name (SULVN) for CPU LEVEL, a map's name
+;  (MAPNAME) for MAP.
 ;  Trashes A, X, Y, ZPTR, TPTR, M_NUM.
 ; ---------------------------------------------------------------------
-SU_DRAW LDX #SU_NF-1
+SU_DRAW LDA #0          ; plain digits from TXT_DEC
+        STA TXCOL
+        LDX #SU_NF-1
 SW_LINE STX SU_I
         LDA #0
-        LDY #39
+        LDY #SU_LW-1
 SW_CLR  STA STATUS1,Y
         DEY
         BPL SW_CLR
         CPX SU_FLD
         BNE SW_LAB
         LDA #SC_GT
-        STA STATUS1+2
+        STA STATUS1+SU_CGT
 SW_LAB  LDA SULAB_L,X
         LDY SULAB_H,X
-        LDX #4
+        LDX #SU_CLAB
         JSR TXT_STR
         LDX SU_I
         CPX #SU_FMAP
         BEQ SW_MAP
         CPX #SU_FLVL
-        BCC SW_NUM
+        BNE SW_NUM
         LDA SU_VAL+SU_FPLY
         CMP #2
-        BNE SW_NUM
+        BNE SW_LVL
         LDA #SC_DASH    ; no CPU in a 2-player game
         STA STATUS1+SU_COLV+2
-        BNE SW_INV
+        BNE SW_COPY
+SW_LVL  LDA SU_VAL+SU_FLVL ; level 1 up: x 6 = SU_LVLW
+        SEC
+        SBC #1
+        STA SU_T
+        ASL A
+        ADC SU_T        ; x 3 (carry clear: A < 3)
+        ASL A
+        TAX
+        LDY #0
+SW_LCH  LDA SULVN,X
+        STA STATUS1+SU_COLV+3-SU_LVLW,Y
+        INX
+        INY
+        CPY #SU_LVLW
+        BNE SW_LCH
+        BEQ SW_COPY
 SW_MAP  LDA SU_VAL+SU_FMAP ; name number 1 up, ending where numbers do
         SEC
         SBC #1
@@ -381,96 +416,132 @@ SW_MCH  LDA MAPNAME,X
         INY
         CPY #SU_MAPW
         BNE SW_MCH
-        BEQ SW_INV
+        BEQ SW_COPY
 SW_NUM  LDA SU_VAL,X
         LDX #0
         JSR NUM16
         LDA #3
         LDX #SU_COLV
         JSR TXT_DEC
-SW_INV  LDX SU_I
+SW_COPY LDX SU_I        ; white on the current line
+        LDA #0
         CPX SU_FLD
-        BNE SW_COPY
-        LDY #SU_COLV+3  ; inverse box, one space either side
-        LDX #4
-        LDA SU_FLD
-        CMP #SU_FMAP
-        BNE SW_INVL
-        LDX #SU_MAPW+1  ; a map's name is wider
-SW_INVL LDA STATUS1,Y
-        ORA #$80
-        STA STATUS1,Y
-        DEY
-        DEX
-        BPL SW_INVL
-SW_COPY LDX SU_I
-        LDA SUF_ROW,X
-        JSR SU_ROWADR
-        LDY #39
-SW_CPY  LDA STATUS1,Y
-        STA (ZPTR),Y
-        DEY
-        BPL SW_CPY
+        BNE SW_COL
+        LDA #SU_WHITE
+SW_COL  STA SU_C
+        LDA SUF_LO,X
+        LDY SUF_HI,X
+        JSR SU_PUT
         LDX SU_I
         DEX
-        BMI SW_RTS
+        BMI SU_MMAP
         JMP SW_LINE
-SW_RTS  RTS
 
 ; ---------------------------------------------------------------------
-;  SU_ROWADR -- ZPTR = address of mode 2 line A (0-17).  Trashes A, Y.
+;  SU_MMAP -- the chosen map's minimap (MM_ROWS rows of MM_W bytes)
+;  into its mode A lines.  Trashes A, X, Y, ZPTR, TPTR.
 ; ---------------------------------------------------------------------
-SU_ROWADR
-        STA SU_T
-        ASL A
-        ASL A
-        ADC SU_T        ; x 5 (carry clear: A <= 17)
-        LDY #0
-        STY ZPTR+1
-        ASL A           ; x 40
-        ROL ZPTR+1
-        ASL A
-        ROL ZPTR+1
-        ASL A
-        ROL ZPTR+1
-        CLC
-        ADC #<SU_TXT
+SU_MMAP LDX SU_VAL+SU_FMAP ; map 1 up
+        LDA MMAPL-1,X
+        STA TPTR
+        LDA MMAPH-1,X
+        STA TPTR+1
+        LDA #<[SU_MINI+SU_MCOL]
         STA ZPTR
-        LDA ZPTR+1
-        ADC #>SU_TXT
+        LDA #>[SU_MINI+SU_MCOL]
         STA ZPTR+1
+        LDX #MM_ROWS
+SM_ROW  LDY #MM_W-1
+SM_BYTE LDA (TPTR),Y
+        STA (ZPTR),Y
+        DEY
+        BPL SM_BYTE
+        LDA TPTR        ; next row of the map
+        CLC
+        ADC #MM_W
+        STA TPTR
+        BCC SM_SCR
+        INC TPTR+1
+SM_SCR  LDA ZPTR        ; next mode A line
+        CLC
+        ADC #SU_MW
+        STA ZPTR
+        BCC SM_NXT
+        INC ZPTR+1
+SM_NXT  DEX
+        BNE SM_ROW
+        RTS
+
+; ---------------------------------------------------------------------
+;  SU_FIX -- STATUS1 = the fixed line at A/Y (low/high: a column, then
+;  screen codes ending in TX_END), colour X for SU_PUT.
+;  Trashes A, X, Y, TPTR.
+; ---------------------------------------------------------------------
+SU_FIX  STA TPTR
+        STY TPTR+1
+        STX SU_C
+        LDA #0
+        LDY #SU_LW-1
+SX_CLR  STA STATUS1,Y
+        DEY
+        BPL SX_CLR
+        LDY #0          ; its column
+        LDA (TPTR),Y
+        TAX
+SX_CHR  INY
+        LDA (TPTR),Y
+        CMP #TX_END
+        BEQ SX_RTS
+        STA STATUS1,X
+        INX
+        BNE SX_CHR
+SX_RTS  RTS
+
+; ---------------------------------------------------------------------
+;  SU_PUT -- copy STATUS1 (screen codes) to the mode 5 line at A/Y
+;  (low/high) in help font codes, colour SU_C (0 yellow, SU_WHITE);
+;  spaces stay code 0, the blank tile.  Trashes A, Y, ZPTR.
+; ---------------------------------------------------------------------
+SU_PUT  STA ZPTR
+        STY ZPTR+1
+        LDY #SU_LW-1
+SU_PCH  LDA STATUS1,Y
+        BEQ SU_PST
+        CLC
+        ADC #HELP_OFS
+        ORA SU_C
+SU_PST  STA (ZPTR),Y
+        DEY
+        BPL SU_PCH
         RTS
 
 ; Field ranges (original: $504C, $50F3) and stick steps
 SU_MIN  .BYTE 1,30,1,1,1
 SU_MAX  .BYTE 50,120,2,3,N_MAPS
 SU_STP  .BYTE 1,5,1,1,1
-SUF_ROW .BYTE 3,5,7,9,11        ; mode 2 line of each field
+SUF_LO  .BYTE <[SU_TXT],<[SU_TXT+40],<[SU_TXT+80],<[SU_TXT+120],<[SU_TXT+160]
+SUF_HI  .BYTE >[SU_TXT],>[SU_TXT+40],>[SU_TXT+80],>[SU_TXT+120],>[SU_TXT+160]
 
 SULAB_L .BYTE <SUL_RND,<SUL_SEC,<SUL_PLY,<SUL_LVL,<SUL_MAP
 SULAB_H .BYTE >SUL_RND,>SUL_SEC,>SUL_PLY,>SUL_LVL,>SUL_MAP
-SUL_RND .SBYTE "ROUNDS (1-50)"
+SUL_RND .SBYTE "ROUNDS"
         .BYTE TX_END
-SUL_SEC .SBYTE "SECONDS PER ROUND (30-120)"
+SUL_SEC .SBYTE "SECONDS PER ROUND"
         .BYTE TX_END
-SUL_PLY .SBYTE "PLAYERS (1-2)"
+SUL_PLY .SBYTE "PLAYERS"
         .BYTE TX_END
-SUL_LVL .SBYTE "CPU LEVEL (1-3)"
+SUL_LVL .SBYTE "CPU LEVEL"
         .BYTE TX_END
-SUL_MAP .SBYTE "MAP (1-3)"
+SUL_MAP .SBYTE "MAP"
         .BYTE TX_END
+SULVN   .SBYTE "  EASY"         ; CPU levels 1-3, SU_LVLW each
+        .SBYTE "MEDIUM"
+        .SBYTE "  HARD"
 
-; Fixed text: title (mode 7, 20 characters) and mode 2 lines
-SUS_TTL .SBYTE "       ACADIA       "
-SUS_N   =  4
-SUS_ROW .BYTE 1,15,16,17
-SUS_LO  .BYTE <SUS_1,<SUS_12,<SUS_13,<SUS_15
-SUS_HI  .BYTE >SUS_1,>SUS_12,>SUS_13,>SUS_15
-SUS_1   .SBYTE "      BUILD, FEED AND KEEP THE PEACE"
+; Fixed lines: column, then the text
+SUS_TTL .BYTE 15
+        .SBYTE "GAME SETUP"
         .BYTE TX_END
-SUS_12  .SBYTE " STICK UP/DOWN OR SELECT: CHOOSE A LINE"
-        .BYTE TX_END
-SUS_13  .SBYTE " STICK LEFT/RIGHT OR 0-9: CHANGE IT"
-        .BYTE TX_END
-SUS_15  .SBYTE "     PRESS START OR FIRE TO BEGIN"
+SUS_PRM .BYTE 6
+        .SBYTE "PRESS START OR FIRE TO BEGIN"
         .BYTE TX_END

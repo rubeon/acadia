@@ -67,9 +67,9 @@ PLAT_VBI
 ;  PLAT_MAP -- the live map's fonts into RAM.  Each font page in FONTPG
 ;  is copied into RAM slot i (RANDOM lists one page N_FONTS times; it
 ;  is copied once), and FONTPG and the ROWFONT entries with that page
-;  then point at the copy.  ROWFONT pages not in FONTPG (RANDOM's and
-;  CLASSIC's corner rows on STANDARD's fonts, D57) stay on ROM: nothing
-;  writes them.  Trashes A, X, Y, ZPTR, TPTR.
+;  then point at the copy.  ROWFONT pages not in FONTPG (the corner
+;  font of every map's corner rows, D65) stay on ROM: nothing writes
+;  them.  Trashes A, X, Y, ZPTR, TPTR.
 ; ---------------------------------------------------------------------
 PLAT_MAP
         LDX #0

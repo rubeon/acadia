@@ -27,7 +27,7 @@ clocks wide and 16 scan lines tall (the same size as the old mode 5
 squares, so sprites and grid maths are unchanged).
 
 Islands are drawn at pixel level.  Each island starts as a square
-outline (LEFT and RIGHT below); a seeded, deterministic erosion pass
+outline (STANDARD below); a seeded, deterministic erosion pass
 makes the coast ragged at 160 x 88, which is doubled to 160 x 176 and
 smoothed.  Land pixels next to the sea are sand, the rest textured
 grass; sea pixels next to the land in a land square are surf.  Every
@@ -392,46 +392,14 @@ PIX = {".": 0, "G": 1, "D": 2, "Y": 3, "W": 3}
 #  count.  Rows 0-1 and 9-10 stay open sea (fish and pirate bands);
 #  screen columns 9-10 stay open sea (channel).
 # ---------------------------------------------------------------------
-LEFT = [
-    "..........",
-    "..........",
-    "..###..##.",
-    "..######..",
-    ".H#####...",
-    "..#######.",
-    "...######.",
-    "..###..##.",
-    "..#.......",
-    "..........",
-    "..........",
-]
-
-RIGHT = [
-    "..........",
-    "..........",
-    ".##..###..",
-    ".#######..",
-    "...#####H.",
-    "..######..",
-    ".####.##..",
-    "..###.##..",
-    "...#......",
-    "..........",
-    "..........",
-]
-
-# Island pair B was chosen (D24): this left island and a different,
-# non-mirrored right island with the same number of land squares.
-# It is map 1, ACADIA, on the setup screen's MAP line (D56).
-
-# Map 2, CLASSIC: the original's island squares (`$512F`, `$514C`) and
-# harbours (`$5924`) on its 20 x 12 grid, whose rows 9-11 are sea; only
+# Map 1, STANDARD (D65; CLASSIC in D56): the original's island squares
+# (`$512F`, `$514C`) and harbours (`$5924`) on its 20 x 12 grid, whose rows 9-11 are sea; only
 # the square positions are the original's, the art is ours (D56).
 # There is no channel: the left island's tail reaches column 11 and the
 # right island starts at column 10, so each square's owner comes from
 # its island's list ('#' / 'H' player 0, 'o' / 'h' player 1), not from
 # its side of the map.
-CLASSIC = [
+STANDARD = [
     "....................",
     "....................",
     "..#.......oo.o..o...",
@@ -445,20 +413,51 @@ CLASSIC = [
     "....................",
 ]
 
-# Map 3, RANDOM: the open sea only.  MAP_LOAD draws a new pair of
+# Map 2, RANDOM: the open sea only.  MAP_LOAD draws a new pair of
 # islands on it for every game, from the coast pieces (generic_art).
 SEA = ["." * 20] * 11
+
+# The setup screen's minimap (D65): each map's squares as pixels of a
+# mode A line (2 bits: 01 land, PF0 green; 10 sea, PF1 blue), MM_W
+# bytes a row with the map at pixel MM_X; RANDOM shows this instead.
+MM_W, MM_X = 6, 2
+MM_ASK = [
+    "....................",
+    "........####........",
+    ".......##..##.......",
+    "...........##.......",
+    "..........##........",
+    ".........##.........",
+    ".........##.........",
+    "....................",
+    ".........##.........",
+    "....................",
+    "....................",
+]
+
+
+def minimap(q):
+    """A map's minimap bytes, MM_W per square row."""
+    out = []
+    for r in range(ROWS):
+        land = [c == "#" for c in MM_ASK[r]] if q["generic"] else \
+               [q["kinds"][r][c] & 0x7F == K_LAND for c in range(COLS)]
+        px = [0] * (4 * MM_W)
+        for c in range(COLS):
+            px[MM_X + c] = 1 if land[c] else 2
+        out += [px[i] << 6 | px[i + 1] << 4 | px[i + 2] << 2 | px[i + 3] for i in range(0, len(px), 4)]
+    return out
+
 
 # The maps (D56): setup name (8 characters, ending where the setup
 # screen's numbers do), outline, erosion seeds (two: each half alone)
 # and the 1K font slots their coast characters go in.
 MAPS = [
-    ("STANDARD", [l + r.replace("#", "o").replace("H", "h") for l, r in zip(LEFT, RIGHT)],
-     (11, 29), [0x3000, 0x4800, 0x8800], False),
-    (" CLASSIC", CLASSIC, (17,), [0x8C00, 0xA000, 0xA400], False),
+    ("STANDARD", STANDARD, (17,), [0x4800, 0x8800, 0x8C00], False),
     ("  RANDOM", SEA, (11, 29), [0xA800], True),
 ]
-MAP_RND = 2                    # the map MAP_LOAD makes up afresh
+CORNER_ADDR = 0x3000           # the corner font (D65), MFAC
+MAP_RND = 1                    # the map MAP_LOAD makes up afresh
 N_FONTS = 3                    # fonts per map at most (FONTPG padded to this)
 MAPSRC = 0xAC00                # the maps' data blocks (MAPS0, MAPS1, ...)
 # Nothing loads at $9C00-$9FFF or $BC00-$BFFF: an XL's screen while the
@@ -812,7 +811,7 @@ def random_pair(q, seed):
     return dict(q, tgrid=tg)
 
 
-def build_pair(mapname, outline, seeds, font_addr, generic=False, base=None):
+def build_pair(mapname, outline, seeds, font_addr, generic=False, base=None, corners=False):
     bm = pair_map(outline, seeds)
     for r in BANDS:
         assert set(outline[r]) <= set(".r"), "map %s row %d must be open sea" % (mapname, r)
@@ -922,11 +921,21 @@ def build_pair(mapname, outline, seeds, font_addr, generic=False, base=None):
             for cr in crs:
                 if bs not in fixed_code and bs not in rowchars[cr]:
                     rowchars[cr].append(bs)
+    if corners:
+        # the corner font (D65): every corner row's characters (the same
+        # on every map) in one font that no map animates
+        font = []
+        for cr in CORNER_CR:
+            font += [bs for bs in rowchars[cr] if bs not in font]
+        assert nfc + len(font) <= 128, "corner font full"
+        return dict(name=mapname, fonts=[font], rowfont=[0] * CROWS, fixed_chars=fixed_list,
+                    anim=anim, font_addr=font_addr)
     # a new font only starts on an odd character row (a square's second),
     # whose DLI sets CHBASE; DLI_SQ has no time for it (D52).  So rows
     # are taken in groups: 0, then 1-2, 3-4, ... 21.
-    # With a base map (D57), the corner rows' characters (the same on
-    # every map) are taken from its fonts: rowfont -1 - f is its font f.
+    # With a base (D57; the corner font since D65), the corner rows'
+    # characters (the same on every map) are taken from its fonts:
+    # rowfont -1 - f is its font f.
     fonts, rowfont = [[]], []
     groups = [[0]] + [[cr, cr + 1] if cr + 1 < CROWS else [cr] for cr in range(1, CROWS, 2)]
     if base:
@@ -987,7 +996,7 @@ def build_pair(mapname, outline, seeds, font_addr, generic=False, base=None):
                      % (side, len(lsq), full, len(lsq) - full, px,
                         100.0 * px / (TW * TH * len(lsq)), min(rows), max(rows),
                         ", ".join("row %d, %d from the outer edge" % h for h in harb)))
-    return dict(name=mapname, font_addr=font_addr, gentile=gentile, land=land, outline=outline, tiles=tiles, bndvar=bndvar,
+    return dict(name=mapname, font_addr=font_addr, gentile=gentile, generic=generic, land=land, outline=outline, tiles=tiles, bndvar=bndvar,
                 kinds=kinds, tgrid=tgrid, fonts=fonts, rowfont=rowfont,
                 codes=codes, fixed_chars=fixed_chars, anim=anim, stats=stats)
 
@@ -1055,7 +1064,7 @@ GLYPHS = {
     "W": ["#.#", "#.#", "###", "###", "#.#"], "X": ["#.#", "#.#", ".#.", "#.#", "#.#"],
     "Y": ["#.#", "#.#", ".#.", ".#.", ".#."], "Z": ["###", "..#", ".#.", "#..", "###"],
     ":": ["...", ".#.", "...", ".#.", "..."], "-": ["...", "...", "###", "...", "..."],
-    ".": ["...", "...", "...", "...", ".#."],
+    ".": ["...", "...", "...", "...", ".#."], ">": ["#..", ".#.", "..#", ".#.", "#.."],
 }
 
 
@@ -1168,10 +1177,10 @@ def main():
     if "--preview" in sys.argv:
         prev_dir = sys.argv[sys.argv.index("--preview") + 1]
         os.makedirs(prev_dir, exist_ok=True)
-    ps = [build_pair(*MAPS[0])]
-    ps += [build_pair(*m, base=ps[0]) for m in MAPS[1:]]
+    cf = build_pair("CORNERS", SEA, (11, 29), [CORNER_ADDR], corners=True)
+    ps = [build_pair(*m, base=cf) for m in MAPS]
     p = ps[0]
-    for q in ps[1:]:
+    for q in ps[1:] + [cf]:
         assert q["fixed_chars"] == p["fixed_chars"] and q["anim"] == p["anim"]
     if prev_dir:
         for q in ps:
@@ -1203,6 +1212,12 @@ def main():
                  ";  00 COLBK sea, 01 PF0 grass, 10 PF1 dark, 11 PF2 yellow / PF3 white\n"
                  ";  %d fixed characters first (same codes in every font), then this\n"
                  ";  font's coast characters.  Each map (D56) has its own fonts." % nfc)
+    out.append("; the corner font (D65): character rows %s on every map, not animated"
+               % ",".join(str(r) for r in CORNER_CR))
+    out.append("        *= MFAC           ; $%04X on the 800 (MEM_A800.ASM)" % CORNER_ADDR)
+    out.append("MFNTC")
+    for bs in cf["fixed_chars"] + cf["fonts"][0]:
+        out.append("        .BYTE " + hexes(bs))
     for mi, q in enumerate(ps):
         for fi, f in enumerate(q["fonts"]):
             out.append("; map %d (%s) font %d: character rows %s, %d coast characters"
@@ -1253,7 +1268,7 @@ def main():
         if live:
             o.append("; ROWFONT: font page (CHBASE) for each character row (2 per square row)")
             o.append("ROWFONT")
-        names = [">MFNT%d%d" % (mi, f) if f >= 0 else ">MFNT0%d" % (-1 - f) for f in q["rowfont"]]
+        names = [">MFNT%d%d" % (mi, f) if f >= 0 else ">MFNTC" for f in q["rowfont"]]
         o.append("        .BYTE " + ",".join(names[:11]))
         o.append("        .BYTE " + ",".join(names[11:]))
         if live:
@@ -1354,6 +1369,19 @@ def main():
     out.append("MAPNAME")
     for q in ps:
         out.append('        .SBYTE "%s"' % q["name"])
+    out.append("; MMAPL / MMAPH: each map's minimap on the setup screen (D65):")
+    out.append("; MM_ROWS rows of MM_W bytes, ANTIC mode A (01 land, 10 sea)")
+    out.append("MMAPL   .BYTE " + ",".join("<MMAP%d" % i for i in range(len(ps))))
+    out.append("MMAPH   .BYTE " + ",".join(">MMAP%d" % i for i in range(len(ps))))
+    out.append("MM_W    = %d" % MM_W)
+    out.append("MM_ROWS = %d" % ROWS)
+    for mi, q in enumerate(ps):
+        mm = minimap(q)
+        out.append("MMAP%d" % mi)
+        for r in range(ROWS):
+            row = (MM_ASK[r] if q["generic"] else "".join(
+                "#" if q["kinds"][r][c] & 0x7F == K_LAND else "." for c in range(COLS)))
+            out.append("        .BYTE " + hexes(mm[r * MM_W:(r + 1) * MM_W]) + "   ; " + row)
     out.append("; RNDTILE: RANDOM's coast piece for each mask of land neighbours")
     out.append("; (1 N, 2 E, 4 S, 8 W) but 15; GRSTL: its grass tile by row AND 3")
     out.append("; x 4 + column AND 3 (grass_pick); for RM_GEN")

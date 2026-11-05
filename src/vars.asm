@@ -393,6 +393,7 @@ SU_OLDC *= *+1          ; last frame's CONKEY
 SU_I    *= *+1          ; work: line index
 SU_T    *= *+1          ; work
 SU_D    *= *+1          ; SU_DIGIT: the digit
+SU_C    *= *+1          ; SU_PUT: colour bit (0 yellow, $80 white)
 
 ; ---------------------------------------------------------------------
 ;  Maps (MAPS.ASM, D56)
