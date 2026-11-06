@@ -80,8 +80,6 @@ C_TSHD  =  $00          ; the island and the logo's shadow (COLPF2)
 ; ---------------------------------------------------------------------
 TITLE_ENTER
         JSR MUS_TITLE
-        LDA #GS_TITLE
-        STA GSTATE
         LDA #0
         STA TI_ARM
         STA TI_SEC
@@ -139,7 +137,9 @@ TE_CLD  LDA TC_X0,X
         STA COLOR4
         LDA #<TDLIST    ; same page as DLIST: one store switches
         STA SDLSTL
-        RTS
+        LDA #GS_TITLE   ; last: from now on ST_VBI points the DLIs at
+        STA GSTATE      ; TT_DLI, which must not run on the game's
+        RTS             ; display list (it would starve the main loop)
 
 ; ---------------------------------------------------------------------
 ;  TITLE_FRAME -- each frame of the title screen: once everything is
