@@ -36,11 +36,14 @@ if m.byte("CHBAS") != stfont or pal != [0x2C, 0x48, 0x0C, 0xAC, 0x00]:
 # both display lists: 2 blank lines (DLIST's first is 6 lines, D67), a
 # third with a DLI, then two mode 4 status lines from STATUS1, each with
 # a DLI
-for name, top in (("DLIST", 0x50), ("HDLIST", 0x70)):
+# (DLIST's line 2 DLI is on a 2-line blank after it instead, D67)
+for name, top, tail in (("DLIST", 0x50, [4, DL_DLI + 0x10]), ("HDLIST", 0x70, [DL_DLI + 4])):
     dl = m.addr(name)
-    got = [m.mem[dl + i] for i in range(7)]
+    want = [top, 0x70, 0xF0, DL_DLI + DL_LMS + 4, 0, 0] + tail
+    got = [m.mem[dl + i] for i in range(len(want))]
     st = m.addr("STATUS1")
-    if got != [top, 0x70, 0xF0, DL_DLI + DL_LMS + 4, st & 0xFF, st >> 8, DL_DLI + 4]:
+    want[4:6] = [st & 0xFF, st >> 8]
+    if got != want:
         fail("%s starts %r" % (name, ["%02X" % c for c in got]))
 
 # each frame: the backgrounds (attract mode applied), then the DLI chain
