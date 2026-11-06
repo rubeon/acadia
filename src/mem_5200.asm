@@ -46,13 +46,14 @@ MFA00   =  $5400        ; STANDARD fonts 0-2
 MFA01   =  $5800
 MFA02   =  $5C00
 MFA10   =  $6000        ; RANDOM font
-PSFONTA =  $6400        ; pause band font PSFONT (D69); $6800-$6BFF free
+PSFONTA =  $6400        ; pause band font PSFONT (D69)
+TTFONTA =  $6800        ; title screen font TTFONT (D70)
 HLPFNTA =  $6C00        ; help font HLPFONT, then the wave frames WVDATA
 STFONTA =  $7000        ; status bar font STFONT (D54)
 DLBASE  =  $7400        ; display list page (DISPLAY.ASM); island
                         ; constants (ISLANDS.ASM) follow, to ~$752F
 MAPSRC  =  $7540        ; each map's data block MAPS0 ...; then code
                         ; block 2 (ACADIA5200.ASM)
-TITLEGFX = $B800        ; title logo, ANTIC mode D, 46 x 40 bytes, to
-                        ; $BF2F (inside one 4K block)
+TITLEGFX = $B800        ; title graphics (D70): logo, scene, colour
+                        ; tables, 1808 bytes, to $BF0F (one 4K block)
 CARTHDR =  $BFE8        ; cartridge header (ACADIA5200.ASM)
