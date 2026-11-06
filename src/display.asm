@@ -235,24 +235,7 @@ DR_VEC  STA VDSLST
         STA DL_NC
         JMP DL_RDONE
 
-; DLI_END -- the map's last line ends: below it the background is the
-; dark corner sea (row 0's PF0), as the corners run into it (D55);
-; COLBK in the map is the light sea since D67
-; Row 21 is wide, so WSYNC first (D67): with work before it, the DLI
-; missed the line's end and left one light line below the corners.
-; Nothing is drawn below the map, so the width can come after COLBK.
-DLI_END STA WSYNC
-        PHA
-        LDA ROWPF0
-        STA COLBK
-        LDA #DMA_N      ; and the normal width again (D67)
-        STA DMACTL
-        LDA #<DLI_ST    ; the next frame's first DLI, in case the
-        STA VDSLST      ; deferred VBI is late or skipped (D69)
-        LDA #>DLI_ST
-        STA VDSLST+1
-        PLA
-        RTI
+; DLI_END: in SHADE.ASM (code block 1 is full)
 
 ; DLI_SQ -- a square row's first character row starts: the fish and
 ; weather positions first, looked up by DLI_ROW, from zero page, with
