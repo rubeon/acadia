@@ -139,7 +139,7 @@ BND_TILE
 BT_DONE RTS
 
 ; ---------------------------------------------------------------------
-;  DLI_R3, DLI_R19 -- DISPLAY.ASM's DLIs for the rows where the width
+;  DLI_R3, DLI_R19 -- DISPLAY.ASM's DLI code for the rows where the width
 ;  changes (D67); here in code block 2 for room on the 5200
 ; ---------------------------------------------------------------------
 ; DLI_R3 -- DLI_ROW for character row 3, the first normal-width row
@@ -163,24 +163,34 @@ DLI_R3  STA WSYNC
         PHA
         JMP DR_LOOK
 
-; DLI_R19 -- DLI_ROW for character row 19, the first bottom wide row
-; (D67).  Row 19's first line is a wide first line: once its DMA starts
-; the CPU does not run again until the line has been drawn, so whatever
-; DLI_ROW writes after PF0 lands a line late.  Row 19 has a new font
-; (the corners) with the same character codes as other tiles in row
-; 18's, so a late font drew row 18's tiles on row 19's top line, at the
-; corners.  This DLI runs in row 18, a normal-width line with time
-; before WSYNC, so all three registers are loaded first and written
-; straight after WSYNC: width, font, PF0.  COLBK may come a line late.
-DLI_R19 PHA
-        TXA
+; DLI_R19 -- start character row 19, the first bottom wide row (D67).
+; Row 19 changes width, font (the corners) and PF0 at once, and all
+; three must be stored before its first line's DMA starts.  A DLI at
+; the end of row 18 sometimes reached its WSYNC too late (row 19 then
+; came out at normal width with row 18's font and green: the bottom
+; corners flickered).  So row 18 has no DLI: DLI_SQ, which starts row
+; 18 with time to spare, comes here with A and X saved, waits for
+; row 18's last 2 lines on VCOUNT, loads all three, and stores them
+; straight after the WSYNC at the end of row 18, as DLI_MAP does for
+; row 0.  Then DR_LOOK does what row 18's DLI_ROW did.  This costs
+; about 5 lines of CPU time a frame.
+MAPLN0  =  48           ; first scan line of map row 0 (8 + DLIST's
+                        ; 22 blank lines, 2 x 8 status, 2 blank)
+VC_R18  =  [MAPLN0+[19*8]-2]/2 ; VCOUNT on row 18's last 2 lines
+R19SQ   =  9            ; DLI_SQ's square row for character row 18
+DLI_R19 TYA             ; Y too, for DL_RDONE
         PHA
-        TYA
-        PHA
+DT_WAIT LDA VCOUNT      ; to row 18's 7th line (or the end of its 6th)
+        CMP #VC_R18
+        BCC DT_WAIT
+        LDX #3          ; ~16 cycles: surely inside the 7th line
+DT_DLY  DEX
+        BNE DT_DLY
+        STA WSYNC       ; end of the 7th line
         LDA DL_NDM      ; the wide width
         LDX DL_NFN      ; the corner font
         LDY DL_NPF      ; the dark corner blue
-        STA WSYNC
+        STA WSYNC       ; end of row 18
         STA DMACTL
         STX CHBASE
         STY COLPF0

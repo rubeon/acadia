@@ -238,16 +238,15 @@ DR_VEC  STA VDSLST
 ; DLI_END -- the map's last line ends: below it the background is the
 ; dark corner sea (row 0's PF0), as the corners run into it (D55);
 ; COLBK in the map is the light sea since D67
-DLI_END PHA
-        TXA
+; Row 21 is wide, so WSYNC first (D67): with work before it, the DLI
+; missed the line's end and left one light line below the corners.
+; Nothing is drawn below the map, so the width can come after COLBK.
+DLI_END STA WSYNC
         PHA
         LDA ROWPF0
-        LDX #DMA_N      ; and the normal width again (D67)
-        STA WSYNC
         STA COLBK
-        STX DMACTL
-        PLA
-        TAX
+        LDA #DMA_N      ; and the normal width again (D67)
+        STA DMACTL
         PLA
         RTI
 
@@ -282,19 +281,13 @@ DLI_SQ  PHA
         LDA ROWDMA+1,X  ; and width (D67)
         STA DL_NDM
         LDA #<DLI_ROW   ; the next DLI is the square's second row;
-        STA VDSLST      ; after row 2 (the last top wide row) DLI_R3,
-        LDA #>DLI_ROW   ; after row 18 (before the first bottom wide
-        CPX #2          ; row) DLI_R19
-        BNE DS_V19
+        STA VDSLST      ; after row 2 (the last top wide row) DLI_R3
+        LDA #>DLI_ROW   ; (row 18 has no DLI: DS_R19 below)
+        CPX #2
+        BNE DS_VEC
         LDA #<DLI_R3
         STA VDSLST
         LDA #>DLI_R3
-        BNE DS_VEC      ; always: a high byte is never 0
-DS_V19  CPX #MAPCROWS-4
-        BNE DS_VEC
-        LDA #<DLI_R19
-        STA VDSLST
-        LDA #>DLI_R19
 DS_VEC  STA VDSLST+1
         TXA
         LSR A
@@ -308,10 +301,13 @@ DS_VEC  STA VDSLST+1
         STA HPOSM1
         ADC #2
         STA HPOSM0
+        CPX #R19SQ      ; row 18: stay, and start row 19 (DLI_R19)
+        BEQ DS_R19
         PLA
         TAX
         PLA
         RTI
+DS_R19  JMP DLI_R19
 
 DL_RDONE PLA
         TAY
@@ -578,7 +574,9 @@ DLIST
         .BYTE DL_DLI+DL_MODE4,DL_DLI+DL_MODE4,DL_DLI+DL_MODE4
         .BYTE DL_DLI+DL_MODE4,DL_DLI+DL_MODE4,DL_DLI+DL_MODE4
         .BYTE DL_DLI+DL_MODE4,DL_DLI+DL_MODE4,DL_DLI+DL_MODE4
-        .BYTE DL_DLI+DL_MODE4,DL_DLI+DL_MODE4,DL_DLI+DL_MODE4 ; to row 18
+        .BYTE DL_DLI+DL_MODE4,DL_DLI+DL_MODE4,DL_MODE4 ; to row 18,
+                                        ; no DLI: DLI_SQ waits in row 18
+                                        ; and starts row 19 (DLI_R19)
         .BYTE DL_DLI+DL_LMS+DL_MODE4    ; row 19, wide again
         .WORD SCR_WB
         .BYTE DL_DLI+DL_MODE4
