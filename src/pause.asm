@@ -22,12 +22,9 @@
 ;  set and rewrites its voices every frame, so play picks up again.
 ; =====================================================================
 
-PB_ROW  =  11           ; the band's first character row (odd)
-PB_COL  =  17           ; PAUSED's first column
-PB_ADDR =  SCR_N+[[PB_ROW-3]*MAPCOLS] ; its screen memory (normal width)
-PB_LEN  =  2*MAPCOLS    ; two rows
-C_PBK   =  C_SBK1       ; band: status line 1's dark blue
-C_PTX   =  C_WHITE      ; text: white, as the status bar's numbers
+; PB_ROW, PB_COL, PB_ADDR, PB_LEN, C_PBK, C_PTX: in DISPLAY.ASM, as
+; equates must come before their first use (a forward one made ATasm
+; size the stores differently in its two passes)
 
 ; ---------------------------------------------------------------------
 ;  PAUSE_KEY -- toggle pause if P was pressed this frame

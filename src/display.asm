@@ -44,6 +44,15 @@ C_LIGHT =  $2C          ; COLPF2 -- sand: beach, crops, sails
 C_WHITE =  $0E          ; COLPF3 -- white (inverse chars): fort, school,
                         ;           hospital, walls, smoke, surf, waves
 
+; Pause band (PAUSE.ASM, D69): character rows PB_ROW, PB_ROW+1
+PB_ROW  =  11           ; the band's first character row (odd)
+PB_COL  =  17           ; PAUSED's first column
+PB_ADDR =  MAPSCR+[3*48]+[[PB_ROW-3]*MAPCOLS] ; its screen memory: after
+                        ; the 3 wide rows (SCR_N, SHADE.ASM), normal width
+PB_LEN  =  2*MAPCOLS    ; two rows
+C_PBK   =  $84          ; band: status line 1's dark blue (C_SBK1)
+C_PTX   =  C_WHITE      ; text: white, as the status bar's numbers
+
 ; ---------------------------------------------------------------------
 ;  DISP_INIT -- install display list, DLI and VBI.
 ;  Writes only RAM vectors and shadows; calls no OS routines.
