@@ -54,11 +54,11 @@ def line1():
 
 
 PB_ROW, PB_COL = m.sym["PB_ROW"], m.sym["PB_COL"]
-PB_ADDR = m.sym["MAPSCR"] + 3 * 48 + (PB_ROW - 3) * 40   # rows 0-2 are wide (D67)
+PB_ADDR = m.sym["MAPSCR"] + 3 * 48 + 16 * 40   # SCR_WB: rows 19-21, wide (D67)
 
 
 def band():
-    return bytes(m.byte(PB_ADDR + i) for i in range(80))
+    return bytes(m.byte(PB_ADDR + i) for i in range(144))
 
 
 def vbi():
@@ -77,7 +77,7 @@ for _ in range(90):                       # 1.5 s of play
     frame()
 before_line = line1()
 before_band = band()
-before_font = m.byte("ROWFONT", PB_ROW)
+before_font = (m.byte("ROWFONT", PB_ROW), m.byte("ROWFONT", PB_ROW + 2))
 m.poke("AUDC1", 0xAF)
 tap(KC_P)
 if m.byte("PAUSED") != 1:
@@ -85,17 +85,17 @@ if m.byte("PAUSED") != 1:
 if line1() != before_line:
     fail("status line 1 changed on pause (D69): %r" % line1())
 vbi()
-want = bytearray(80)
-for n in range(6):                         # P A U S E D: top 1+2n, bottom 2+2n
-    want[PB_COL + n] = 1 + 2 * n
-    want[40 + PB_COL + n] = 2 + 2 * n
+want = bytearray(144)                      # all black, borders too
+for n in range(6):                         # P A U S E D: 1+3n, 2+3n, 3+3n
+    for r in range(3):
+        want[48 * r + PB_COL + n] = 1 + 3 * n + r
 if band() != bytes(want):
     fail("band rows do not say PAUSED: %r" % band())
-if m.byte("ROWFONT", PB_ROW) != m.sym["PSFONT"] >> 8:
-    fail("band row not in the pause font")
-bk = [m.byte("ROWBK", PB_ROW + i) for i in (0, 1)]
-pf = [m.byte("ROWPF0", PB_ROW + i) for i in (0, 1)]
-if bk != [m.sym["C_PBK"]] * 2 or pf != [m.sym["C_PTX"]] * 2:
+if (m.byte("ROWFONT", PB_ROW), m.byte("ROWFONT", PB_ROW + 2)) != (m.sym["PSFONT"] >> 8,) * 2:
+    fail("band rows not in the pause font")
+bk = [m.byte("ROWBK", PB_ROW + i) for i in (0, 1, 2)]
+pf = [m.byte("ROWPF0", PB_ROW + i) for i in (0, 1, 2)]
+if bk != [m.sym["C_PBK"]] * 3 or pf != [m.sym["C_PTX"]] * 3:
     fail("band colours %r %r" % (bk, pf))
 if m.byte("AUDC1") != 0:
     fail("sound not silenced")
@@ -125,7 +125,7 @@ frame(stick=RIGHT)                         # no VBI yet: the band is up,
 if state() != held:                        # so the game still waits
     fail("game ran before the band was taken down")
 vbi()
-if band() != before_band or m.byte("ROWFONT", PB_ROW) != before_font:
+if band() != before_band or (m.byte("ROWFONT", PB_ROW), m.byte("ROWFONT", PB_ROW + 2)) != before_font:
     fail("map rows or font not restored")
 m.call("TIC_SYNC")
 if [m.byte("MAPPAL", i) for i in range(5)] != norm:

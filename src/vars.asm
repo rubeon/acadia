@@ -130,8 +130,8 @@ SV1     *= *+2          ; SHOW_PAIR: player 2's number (must follow SV0)
 ; ---------------------------------------------------------------------
 PAUSED  *= *+1          ; 1 while the game is paused
 PB_ON   *= *+1          ; 1 while the pause band is shown (PB_VBI)
-PB_FNT  *= *+1          ; ROWFONT+PB_ROW while the band is shown
-PSAVE   *= *+80         ; the band's two map rows while it is shown
+PB_FNT  *= *+2          ; ROWFONT+PB_ROW, +PB_ROW+2 while it is shown
+PSAVE   *= *+144        ; the band's three map rows while it is shown
 
 ; ---------------------------------------------------------------------
 ;  Sound driver (SOUND.ASM): per channel 0-3

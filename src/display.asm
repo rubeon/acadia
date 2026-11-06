@@ -44,13 +44,13 @@ C_LIGHT =  $2C          ; COLPF2 -- sand: beach, crops, sails
 C_WHITE =  $0E          ; COLPF3 -- white (inverse chars): fort, school,
                         ;           hospital, walls, smoke, surf, waves
 
-; Pause band (PAUSE.ASM, D69): character rows PB_ROW, PB_ROW+1
-PB_ROW  =  11           ; the band's first character row (odd)
-PB_COL  =  17           ; PAUSED's first column
-PB_ADDR =  MAPSCR+[3*48]+[[PB_ROW-3]*MAPCOLS] ; its screen memory: after
-                        ; the 3 wide rows (SCR_N, SHADE.ASM), normal width
-PB_LEN  =  2*MAPCOLS    ; two rows
-C_PBK   =  $84          ; band: status line 1's dark blue (C_SBK1)
+; Pause band (PAUSE.ASM, D69): the bottom corner rows PB_ROW-PB_ROW+2
+PB_ROW  =  19           ; the band's first character row (odd)
+PB_RLEN =  48           ; bytes per row: wide (WROW, SHADE.ASM)
+PB_COL  =  4+17         ; PAUSED's first column: border + 17
+PB_ADDR =  MAPSCR+[3*PB_RLEN]+[16*MAPCOLS] ; its screen memory (SCR_WB)
+PB_LEN  =  3*PB_RLEN    ; three rows
+C_PBK   =  $00          ; band: black
 C_PTX   =  C_WHITE      ; text: white, as the status bar's numbers
 
 ; ---------------------------------------------------------------------

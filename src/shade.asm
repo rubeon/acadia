@@ -33,18 +33,20 @@ VS_GR   JSR VS_LUM
         STA ROWPF0,X
         DEX
         BPL VS_ROW
-        LDA PB_ON       ; the pause band's rows (PAUSE.ASM, D69): dark
-        BEQ VS_RTS      ; blue, PF0 the text's white
+        LDA PB_ON       ; the pause band's rows (PAUSE.ASM, D69): black,
+        BEQ VS_RTS      ; PF0 the text's white
         LDA #C_PBK
         EOR COLRSH
         AND DRKMSK
         STA ROWBK+PB_ROW
         STA ROWBK+PB_ROW+1
+        STA ROWBK+PB_ROW+2
         LDA #C_PTX
         EOR COLRSH
         AND DRKMSK
         STA ROWPF0+PB_ROW
         STA ROWPF0+PB_ROW+1
+        STA ROWPF0+PB_ROW+2
 VS_RTS  RTS
 
 ; VS_LUM -- colour A with luminance + Y (signed), kept 0-14, attract
