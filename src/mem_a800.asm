@@ -39,7 +39,8 @@ MFAC    =  $3000        ; the corner font: rows 0-2, 19-21 on every map (D65)
 MFA00   =  $4800        ; STANDARD font 0
 MFA01   =  $8800        ; STANDARD font 1
 MFA02   =  $8C00        ; STANDARD font 2
-MFA10   =  $A800        ; RANDOM font ($A000-$A7FF free since D65)
+MFA10   =  $A800        ; RANDOM font
+PSFONTA =  $A000        ; pause band font PSFONT (D69); $A400-$A7FF free
 HLPFNTA =  $4C00        ; help font HLPFONT, then the wave frames WVDATA
 STFONTA =  $9800        ; status bar font STFONT (D54)
 

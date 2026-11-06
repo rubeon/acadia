@@ -24,6 +24,8 @@ def fail(msg):
 
 
 m.poke("PAL", 0x0F)                       # NTSC
+m.poke("COLRSH", 0)                       # no attract mode
+m.poke("DRKMSK", 0xFF)
 for r in ("VARS_INIT", "MAP_INIT", "DISP_INIT", "CUR_INIT", "TIC_INIT", "GAME_NEW"):
     m.call(r)
 
@@ -51,6 +53,19 @@ def line1():
     return "".join(chr(m.byte("STATUS1", i) + 0x20) for i in range(40))
 
 
+PB_ROW, PB_COL = m.sym["PB_ROW"], m.sym["PB_COL"]
+PB_ADDR = m.sym["MAPSCR"] + 3 * 48 + (PB_ROW - 3) * 40   # rows 0-2 are wide (D67)
+
+
+def band():
+    return bytes(m.byte(PB_ADDR + i) for i in range(80))
+
+
+def vbi():
+    """What VBI_D does for the band (PB_VBI and the shades after it)."""
+    m.call("PB_VBI")
+
+
 def state():
     return dict(remsec=m.byte("REMSEC"), ticsec=m.byte("TICSEC"), gold=m.word("GOLD"),
                 curx=m.byte("CURX"), cury=m.byte("CURY"),
@@ -61,12 +76,27 @@ def state():
 for _ in range(90):                       # 1.5 s of play
     frame()
 before_line = line1()
+before_band = band()
+before_font = m.byte("ROWFONT", PB_ROW)
 m.poke("AUDC1", 0xAF)
 tap(KC_P)
 if m.byte("PAUSED") != 1:
     fail("P did not pause")
-if "PAUSED" not in line1():
-    fail("status line 1 does not say PAUSED: %r" % line1())
+if line1() != before_line:
+    fail("status line 1 changed on pause (D69): %r" % line1())
+vbi()
+want = bytearray(80)
+for n in range(6):                         # P A U S E D: top 1+2n, bottom 2+2n
+    want[PB_COL + n] = 1 + 2 * n
+    want[40 + PB_COL + n] = 2 + 2 * n
+if band() != bytes(want):
+    fail("band rows do not say PAUSED: %r" % band())
+if m.byte("ROWFONT", PB_ROW) != m.sym["PSFONT"] >> 8:
+    fail("band row not in the pause font")
+bk = [m.byte("ROWBK", PB_ROW + i) for i in (0, 1)]
+pf = [m.byte("ROWPF0", PB_ROW + i) for i in (0, 1)]
+if bk != [m.sym["C_PBK"]] * 2 or pf != [m.sym["C_PTX"]] * 2:
+    fail("band colours %r %r" % (bk, pf))
 if m.byte("AUDC1") != 0:
     fail("sound not silenced")
 norm = [m.byte("PALTAB", i) for i in range(5)]
@@ -84,14 +114,20 @@ for i in range(600):
 if state() != frozen:
     changed = [k for k in frozen if state()[k] != frozen[k]]
     fail("game state changed while paused: %s" % changed)
-if "PAUSED" not in line1():
-    fail("PAUSED overwritten while paused")
+if band() != bytes(want) or line1() != before_line:
+    fail("band or status line changed while paused")
 
 tap(KC_P)
 if m.byte("PAUSED") != 0:
     fail("P did not resume")
-if line1() != before_line:
-    fail("status line 1 not restored: %r" % line1())
+held = state()
+frame(stick=RIGHT)                         # no VBI yet: the band is up,
+if state() != held:                        # so the game still waits
+    fail("game ran before the band was taken down")
+vbi()
+if band() != before_band or m.byte("ROWFONT", PB_ROW) != before_font:
+    fail("map rows or font not restored")
+m.call("TIC_SYNC")
 if [m.byte("MAPPAL", i) for i in range(5)] != norm:
     fail("map colours not restored")
 

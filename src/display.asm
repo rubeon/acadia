@@ -247,6 +247,10 @@ DLI_END STA WSYNC
         STA COLBK
         LDA #DMA_N      ; and the normal width again (D67)
         STA DMACTL
+        LDA #<DLI_ST    ; the next frame's first DLI, in case the
+        STA VDSLST      ; deferred VBI is late or skipped (D69)
+        LDA #>DLI_ST
+        STA VDSLST+1
         PLA
         RTI
 
@@ -334,8 +338,13 @@ DLI_MSL STA HPOSM3
 ;  ATRACT on any input; once the OS timer runs out it sets COLRSH and
 ;  DRKMSK for its shadow colours, and the map colours get the same
 ;  change here: colour EOR COLRSH AND DRKMSK.
+;  ST_VBI comes first (D69): when the palette changes (pause, attract
+;  mode) VD_SHADE makes the VBI run past the status bar's first DLI,
+;  and with VDSLST still at last frame's DLI_END every DLI of the
+;  frame ran one step out of place (wrong widths and fonts per row).
 ; ---------------------------------------------------------------------
 VBI_D
+        JSR ST_VBI      ; first: VDSLST back at the first DLI (D69)
         INC FRAME
         JSR SND_VBI
         JSR SPR_VBI
@@ -350,6 +359,7 @@ VD_COL  LDA MAPPAL,X
         STA MAPCOL,X
         DEX
         BPL VD_COL
+        JSR PB_VBI      ; the pause band up or down (D69)
         LDA COLRSH      ; the shades per row again if the palette or
         CMP AP_SH       ; attract mode changed
         BNE VD_SH
@@ -362,9 +372,8 @@ VD_COL  LDA MAPPAL,X
         LDA MAPPAL+1
         CMP AP_GR
         BEQ VD_NSH
-VD_SH   JSR VD_SHADE
-VD_NSH  JSR ST_VBI      ; status backgrounds; first DLI of the next frame
-        JMP (OLDVBD)
+VD_SH   JSR VD_SHADE    ; ~26 lines: may run into the screen (D69)
+VD_NSH  JMP (OLDVBD)
 
 ; ---------------------------------------------------------------------
 ;  MAP_DRAW -- draw the island terrain (ISLTILE) into screen memory
