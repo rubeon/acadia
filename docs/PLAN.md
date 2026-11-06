@@ -97,7 +97,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 | T-GFX-7 | Schools of fish in a darker green, to stand out from the sea on a CRT (D64) | T-GFX-4 | done |
 | T-GFX-8 | Pirates show in the corner rows (the band sea becomes COLBK); the pirate ship redrawn as a 10-line galleon with a flying flag (D67) | T-GFX-4 | done |
 | T-GFX-9 | Crop tile redrawn as two ears of wheat on tall stalks, map and help icon (D68) | T-GFX-1 | done |
-| T-GFX-10 | Pause: no map glitch on pause/resume; PAUSED in a black band across the bottom of the map, status bar kept (D69) | T-GFX-8 | in progress (Claude) |
+| T-GFX-10 | Pause: no map glitch on pause/resume; PAUSED in a black band across the bottom of the map, status bar kept (D69) | T-GFX-8 | done |
 | T-REL-2 | Test on MiSTer and real 800XL; PAL check | M6 | todo |
 | T-REL-3 | ATR + XEX release build, README play instructions | T-INFRA-4 | todo |
 
