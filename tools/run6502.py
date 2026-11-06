@@ -50,7 +50,7 @@ class Machine:
             parts = line.split()
             if len(parts) == 2:
                 self.sym[parts[1].upper()] = int(parts[0], 16)
-        equ = re.compile(r"^([A-Z_][A-Z0-9_]*)\s*=\s*([$0-9A-Z_+\-]+)\s*(;|$)", re.I)
+        equ = re.compile(r"^([A-Z_][A-Z0-9_]*)\s*=\s*([$0-9A-Z_+\-*/\[\]]+)\s*(;|$)", re.I)
         todo = {}
         for path in glob.glob(os.path.join(ROOT, "src", "*.asm")):
             base = os.path.basename(path)
@@ -81,20 +81,25 @@ class Machine:
         self.on_read("ALLPOT", lambda: 0xFF)
 
     def _expr(self, e):
-        """Value of a sum like MAPSCR+20 or $D000-1, None if a symbol in
-        it is not known (yet)."""
-        v = 0
-        for sign, t in re.findall(r"([+-]?)([^+-]+)", e):
+        """Value of an expression like MAPSCR+20, $D000-1 or
+        PM_P0+[3*PM_LEN] (MAC/65: [ ] group, * and / are integer ops),
+        None if a symbol in it is not known (yet)."""
+        out = []
+        for t in re.findall(r"\$[0-9A-F]+|[0-9]+|[A-Z_][A-Z0-9_]*|[-+*/\[\]]", e):
             if t.startswith("$"):
-                t = int(t[1:], 16)
+                out.append(str(int(t[1:], 16)))
             elif t.isdigit():
-                t = int(t)
-            elif t in self.sym:
-                t = self.sym[t]
+                out.append(t)
+            elif t[0].isalpha() or t[0] == "_":
+                if t not in self.sym:
+                    return None
+                out.append(str(self.sym[t]))
             else:
-                return None
-            v += -t if sign == "-" else t
-        return v & 0xFFFF
+                out.append({"[": "(", "]": ")", "/": "//"}.get(t, t))
+        try:
+            return eval("".join(out), {"__builtins__": {}}) & 0xFFFF
+        except Exception:
+            return None     # e.g. "*" (the location counter)
 
     def _load_xex(self, data):
         i = 0
