@@ -585,29 +585,8 @@ DLIST
         .BYTE DL_JVB
         .WORD DLIST
 
-; Setup screen (SETUP.ASM): must stay in DLIST's page, since setup
-; switches between the two by storing only the low byte of SDLSTL
-SUDLIST
-        .BYTE DL_BLANK8,DL_BLANK8,DL_BLANK8
-        .BYTE DL_LMS+DL_MODE5           ; title (SU_SCR), help font
-        .WORD SU_SCR
-        .BYTE DL_BLANK8
-        .BYTE DL_MODE5,DL_BLANK2        ; the five value lines (SU_TXT)
-        .BYTE DL_MODE5,DL_BLANK2
-        .BYTE DL_MODE5,DL_BLANK2
-        .BYTE DL_MODE5,DL_BLANK2
-        .BYTE DL_MODE5
-        .BYTE DL_BLANK8
-        .BYTE DL_MODEA,DL_MODEA,DL_MODEA,DL_MODEA ; the minimap (SU_MINI),
-        .BYTE DL_MODEA,DL_MODEA,DL_MODEA,DL_MODEA ; MM_ROWS lines
-        .BYTE DL_MODEA,DL_MODEA,DL_MODEA
-        .BYTE DL_BLANK8,DL_BLANK4
-        .BYTE DL_MODE5                  ; the prompt (SU_PRM)
-        .BYTE DL_JVB
-        .WORD SUDLIST
-
 ; Help screen (HELP.ASM): status bar, then 11 mode 5 lines in the help
-; font; same page as DLIST, like SUDLIST
+; font; same page as DLIST, so one store to SDLSTL switches
 HDLIST
         .BYTE DL_BLANK8,DL_BLANK8
         .BYTE DL_DLI+DL_BLANK8          ; status bar as in DLIST
@@ -622,7 +601,7 @@ HDLIST
         .WORD HDLIST
 
 ; Title screen (TITLE.ASM): the logo in mode D, then two text lines;
-; same page as DLIST, like SUDLIST
+; same page as DLIST, like HDLIST
 TDLIST
         .BYTE DL_BLANK8,DL_BLANK8
         .BYTE DL_DLI+DL_BLANK8          ; TT_DLI: colours for each line
@@ -650,7 +629,7 @@ TDLIST
 
 ; Stats screen (STATS.ASM, D61): the status bar, the page names, the
 ; chart (64 mode D lines from three blocks) and two text lines; a DLI
-; for each zone's colours (CT_DLI).  Same page as DLIST, like SUDLIST
+; for each zone's colours (CT_DLI).  Same page as DLIST, like HDLIST
 CTDLIST
         .BYTE DL_BLANK8,DL_BLANK8
         .BYTE DL_DLI+DL_BLANK8          ; DLI 0: status line 1's colours

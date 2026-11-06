@@ -33,7 +33,7 @@
 ;  playing.  Left alone for DM_IDLE seconds, it plays the demo
 ;  (DEMO.ASM), which comes back here.
 ;
-;  Its display list, TDLIST, sits in DLIST's page like SUDLIST.  The
+;  Its display list, TDLIST, sits in DLIST's page like HDLIST.  The
 ;  water and the prompt are built in the map's screen memory (MAPSCR),
 ;  which the setup screen clears and the game redraws.
 ; =====================================================================

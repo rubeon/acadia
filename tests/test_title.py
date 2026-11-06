@@ -128,12 +128,13 @@ for _ in range(100):
     frame()
 pos = m.byte("MZ_POS")
 frame(console=START)
-if m.byte("GSTATE") != GS_SETUP or m.byte("SDLSTL") != m.addr("SUDLIST") & 0xFF:
+if m.byte("GSTATE") != GS_SETUP or m.byte("SDLSTL") | m.byte("SDLSTH") << 8 != m.addr("SU_DL"):
     fail("START: state %d" % m.byte("GSTATE"))
 if not m.byte("MZ_ON") or m.byte("MZ_POS") < pos:
     fail("the title tune restarted: position %d, was %d" % (m.byte("MZ_POS"), pos))
-if [m.byte("COLOR1"), m.byte("COLOR2"), m.byte("COLOR4")] != [0x94, 0x1C, 0x00]:
-    fail("setup screen colours not set (D65)")
+want = [m.byte("TTP1", 3), 0x00, m.byte("TTBK")]     # the logo on its sky (D71)
+if [m.byte("COLOR1"), m.byte("COLOR2"), m.byte("COLOR4")] != want:
+    fail("setup screen colours not set (D71)")
 # left alone for 30 s the demo starts: 1 player against the CPU, player
 # 1 scripted; it goes back to the title after 15 s, setup values kept
 m.poke("PAL", 0x0F)                       # NTSC: 60 frames a second

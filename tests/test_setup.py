@@ -80,15 +80,24 @@ def check(want, what):
 m.poke("PAL", 0x0F)
 for r in ("VARS_INIT", "DISP_INIT", "TIC_INIT", "SETUP_INIT", "SETUP_ENTER"):
     m.call(r)
-if m.byte("GSTATE") != GS_SETUP or m.byte("SDLSTL") != m.addr("SUDLIST") & 0xFF:
-    fail("setup screen not shown")
-if (m.addr("SUDLIST") ^ m.addr("DLIST")) & 0xFF00:
-    fail("SUDLIST and DLIST are not in the same page")
-if m.byte("CHBAS") != m.addr("HLPFONT") >> 8 or m.byte("COLOR4") != 0:
-    fail("not the help font on black")
-title = "".join(chr(c & 0x7F) if c else " " for c in m.mem[m.addr("MAPSCR"):m.addr("MAPSCR") + 40])
-if title.strip() != "GAME SETUP":
-    fail("title %r" % title)
+# its display list: SUDLIST copied to SU_DL, past the map, inside 1K (D71)
+sudl = m.addr("SU_DL")
+dl = m.byte("SDLSTL") | m.byte("SDLSTH") << 8
+if m.byte("GSTATE") != GS_SETUP or dl != sudl:
+    fail("setup screen not shown (display list %04X)" % dl)
+n = m.addr("SU_DLE") - m.addr("SUDLIST")
+if m.mem[sudl:sudl + n] != m.mem[m.addr("SUDLIST"):m.addr("SUDLIST") + n]:
+    fail("display list not copied")
+if sudl < m.addr("MAPSCR") + 928 or (sudl ^ (sudl + n - 1)) & 0xFC00:
+    fail("display list at %04X-%04X" % (sudl, sudl + n - 1))
+if m.mem[sudl + n - 2] | m.mem[sudl + n - 1] << 8 != sudl:
+    fail("display list does not loop to itself")
+if m.mem[sudl + 4] | m.mem[sudl + 5] << 8 != m.addr("LOGO") + 40:
+    fail("logo not shown")
+if m.byte("CHBAS") != m.addr("HLPFONT") >> 8 or m.byte("COLOR4") != m.byte("TTBK"):
+    fail("not the help font under the title's sky")
+if any(m.mem[m.addr("MAPSCR"):m.addr("MAPSCR") + 40]):
+    fail("first line not empty (no GAME SETUP under the logo)")
 prompt = "".join(chr(c & 0x7F) if c else " "
                  for c in m.mem[m.addr("MAPSCR") + 460:m.addr("MAPSCR") + 500])
 if prompt.strip() != "PRESS START OR FIRE TO BEGIN":
@@ -232,7 +241,7 @@ if m.byte("GSTATE") != GS_PLAY:
     fail("START did not begin (state %d)" % m.byte("GSTATE"))
 if (m.byte("NUMTRN"), m.byte("TRNLEN"), m.byte("REMSEC")) != (3, 120, 120):
     fail("game settings %r" % [m.byte("NUMTRN"), m.byte("TRNLEN"), m.byte("REMSEC")])
-if m.byte("SDLSTL") != m.addr("DLIST") & 0xFF:
+if m.byte("SDLSTL") | m.byte("SDLSTH") << 8 != m.addr("DLIST"):
     fail("map display list not back")
 line1 = "".join(chr(m.byte("STATUS1", i) + 0x20) for i in range(40))
 if "TURNS  3  TIME 120" not in line1:
