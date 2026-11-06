@@ -21,10 +21,10 @@ MFNTC
         .BYTE $7D,$FF,$7D,$59,$59,$69,$AA,$AA
         .BYTE $AA,$BB,$AA,$BB,$AA,$AA,$55,$55
         .BYTE $AA,$BA,$AA,$BA,$AA,$AA,$55,$55
-        .BYTE $55,$7F,$6A,$7F,$6A,$7F,$6A,$7F
-        .BYTE $55,$FD,$A9,$FD,$A9,$FD,$A9,$FD
-        .BYTE $6A,$7F,$6A,$7F,$6A,$7F,$55,$55
-        .BYTE $A9,$FD,$A9,$FD,$A9,$FD,$55,$55
+        .BYTE $55,$5D,$77,$5D,$77,$5D,$77,$5D
+        .BYTE $55,$55,$5D,$77,$5D,$77,$5D,$77
+        .BYTE $5D,$5D,$5D,$5D,$5D,$5D,$6A,$55
+        .BYTE $5D,$5D,$5D,$5D,$5D,$5D,$A9,$55
         .BYTE $55,$55,$55,$56,$5A,$6A,$AA,$FF
         .BYTE $6F,$6F,$65,$A5,$A9,$AA,$AA,$FF
         .BYTE $EF,$EF,$FF,$EE,$FE,$FE,$AA,$55
@@ -114,10 +114,10 @@ MFNT00
         .BYTE $7D,$FF,$7D,$59,$59,$69,$AA,$AA
         .BYTE $AA,$BB,$AA,$BB,$AA,$AA,$55,$55
         .BYTE $AA,$BA,$AA,$BA,$AA,$AA,$55,$55
-        .BYTE $55,$7F,$6A,$7F,$6A,$7F,$6A,$7F
-        .BYTE $55,$FD,$A9,$FD,$A9,$FD,$A9,$FD
-        .BYTE $6A,$7F,$6A,$7F,$6A,$7F,$55,$55
-        .BYTE $A9,$FD,$A9,$FD,$A9,$FD,$55,$55
+        .BYTE $55,$5D,$77,$5D,$77,$5D,$77,$5D
+        .BYTE $55,$55,$5D,$77,$5D,$77,$5D,$77
+        .BYTE $5D,$5D,$5D,$5D,$5D,$5D,$6A,$55
+        .BYTE $5D,$5D,$5D,$5D,$5D,$5D,$A9,$55
         .BYTE $55,$55,$55,$56,$5A,$6A,$AA,$FF
         .BYTE $6F,$6F,$65,$A5,$A9,$AA,$AA,$FF
         .BYTE $EF,$EF,$FF,$EE,$FE,$FE,$AA,$55
@@ -236,10 +236,10 @@ MFNT01
         .BYTE $7D,$FF,$7D,$59,$59,$69,$AA,$AA
         .BYTE $AA,$BB,$AA,$BB,$AA,$AA,$55,$55
         .BYTE $AA,$BA,$AA,$BA,$AA,$AA,$55,$55
-        .BYTE $55,$7F,$6A,$7F,$6A,$7F,$6A,$7F
-        .BYTE $55,$FD,$A9,$FD,$A9,$FD,$A9,$FD
-        .BYTE $6A,$7F,$6A,$7F,$6A,$7F,$55,$55
-        .BYTE $A9,$FD,$A9,$FD,$A9,$FD,$55,$55
+        .BYTE $55,$5D,$77,$5D,$77,$5D,$77,$5D
+        .BYTE $55,$55,$5D,$77,$5D,$77,$5D,$77
+        .BYTE $5D,$5D,$5D,$5D,$5D,$5D,$6A,$55
+        .BYTE $5D,$5D,$5D,$5D,$5D,$5D,$A9,$55
         .BYTE $55,$55,$55,$56,$5A,$6A,$AA,$FF
         .BYTE $6F,$6F,$65,$A5,$A9,$AA,$AA,$FF
         .BYTE $EF,$EF,$FF,$EE,$FE,$FE,$AA,$55
@@ -353,10 +353,10 @@ MFNT02
         .BYTE $7D,$FF,$7D,$59,$59,$69,$AA,$AA
         .BYTE $AA,$BB,$AA,$BB,$AA,$AA,$55,$55
         .BYTE $AA,$BA,$AA,$BA,$AA,$AA,$55,$55
-        .BYTE $55,$7F,$6A,$7F,$6A,$7F,$6A,$7F
-        .BYTE $55,$FD,$A9,$FD,$A9,$FD,$A9,$FD
-        .BYTE $6A,$7F,$6A,$7F,$6A,$7F,$55,$55
-        .BYTE $A9,$FD,$A9,$FD,$A9,$FD,$55,$55
+        .BYTE $55,$5D,$77,$5D,$77,$5D,$77,$5D
+        .BYTE $55,$55,$5D,$77,$5D,$77,$5D,$77
+        .BYTE $5D,$5D,$5D,$5D,$5D,$5D,$6A,$55
+        .BYTE $5D,$5D,$5D,$5D,$5D,$5D,$A9,$55
         .BYTE $55,$55,$55,$56,$5A,$6A,$AA,$FF
         .BYTE $6F,$6F,$65,$A5,$A9,$AA,$AA,$FF
         .BYTE $EF,$EF,$FF,$EE,$FE,$FE,$AA,$55
@@ -432,10 +432,10 @@ MFNT10
         .BYTE $7D,$FF,$7D,$59,$59,$69,$AA,$AA
         .BYTE $AA,$BB,$AA,$BB,$AA,$AA,$55,$55
         .BYTE $AA,$BA,$AA,$BA,$AA,$AA,$55,$55
-        .BYTE $55,$7F,$6A,$7F,$6A,$7F,$6A,$7F
-        .BYTE $55,$FD,$A9,$FD,$A9,$FD,$A9,$FD
-        .BYTE $6A,$7F,$6A,$7F,$6A,$7F,$55,$55
-        .BYTE $A9,$FD,$A9,$FD,$A9,$FD,$55,$55
+        .BYTE $55,$5D,$77,$5D,$77,$5D,$77,$5D
+        .BYTE $55,$55,$5D,$77,$5D,$77,$5D,$77
+        .BYTE $5D,$5D,$5D,$5D,$5D,$5D,$6A,$55
+        .BYTE $5D,$5D,$5D,$5D,$5D,$5D,$A9,$55
         .BYTE $55,$55,$55,$56,$5A,$6A,$AA,$FF
         .BYTE $6F,$6F,$65,$A5,$A9,$AA,$AA,$FF
         .BYTE $EF,$EF,$FF,$EE,$FE,$FE,$AA,$55
@@ -539,8 +539,8 @@ HLPFONT
         .BYTE $77,$FF,$FB,$FF,$BF,$AF,$AF,$AA
         .BYTE $55,$55,$55,$65,$AA,$AA,$AA,$55
         .BYTE $7D,$F5,$65,$A5,$AA,$AA,$AA,$55
-        .BYTE $7F,$6A,$7F,$6A,$7F,$6A,$7F,$55
-        .BYTE $FD,$A9,$FD,$A9,$FD,$A9,$FD,$55
+        .BYTE $5D,$77,$5D,$77,$5D,$5D,$5D,$6A
+        .BYTE $55,$5D,$77,$5D,$5D,$5D,$5D,$A9
         .BYTE $55,$56,$6A,$AA,$FF,$EF,$FE,$AA
         .BYTE $BD,$A5,$A9,$AA,$FF,$FB,$BF,$AA
         .BYTE $FF,$FE,$EA,$FE,$FF,$EE,$FE,$AA
