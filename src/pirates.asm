@@ -264,6 +264,10 @@ PB_DONE RTS
 ;  Every frame.  Trashes A, X, Y.
 ; ---------------------------------------------------------------------
 PIR_SHOW
+        LDA PAUSED      ; the flags' clock: stands still while paused,
+        BNE PW_FC       ; so the flags stop waving (D69)
+        INC PR_FLAP
+PW_FC
         LDA FACT+P_SLOT ; which to show: both, unless they share a row
         STA PS_V
         LDA FACT+P_SLOT+1
@@ -314,11 +318,11 @@ PW_DRAW LDA PS_V-P_SLOT,X
         ADC #PM_MAP-8-P_TOP ; are off screen: VBI_D)
         STA FDRAWN,X
         TAY
-        TXA             ; flag frame: FRAME AND P_FLAP, the two pirates
-        ASL A           ; 8 frames apart (slot * 8; carry clear)
+        TXA             ; flag frame: PR_FLAP AND P_FLAP, the two
+        ASL A           ; pirates 8 frames apart (slot * 8; carry clear)
         ASL A
         ASL A
-        ADC FRAME
+        ADC PR_FLAP
         AND #P_FLAP
         BEQ PW_F0
         LDA #P_H        ; the second frame, PIRSH2

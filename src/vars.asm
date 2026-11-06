@@ -314,6 +314,7 @@ PA_C    *= *+1          ; PIR_ATK: square
 PA_R    *= *+1
 PA_O    *= *+1          ; PIR_ATK: the boat's owner
 PS_V    *= *+2          ; PIR_SHOW: show pirate 2 / 3 this frame
+PR_FLAP *= *+1          ; PIR_SHOW: frames for the flags, not while paused
 PS_I    *= *+1          ; PIR_SHOW: slot
 PS_A0   *= *+1          ; PIR_SHOW: pirate 2's rows
 PS_A1   *= *+1
