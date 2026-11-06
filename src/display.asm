@@ -641,9 +641,10 @@ TDLIST
         .BYTE DL_LMS+DL_MODE4           ; water, TT_WROWS rows (RAM)
         .WORD TT_SCR
         .BYTE DL_MODE4,DL_MODE4
-        .BYTE DL_MODE6                  ; PRESS FIRE (TT_SCR+TT_PRSO)
         .BYTE DL_LMS+DL_MODE7           ; REBUILD
         .WORD TTREB
+        .BYTE DL_LMS+DL_MODE4           ; a small PRESS FIRE under it
+        .WORD TT_SCR+TT_PRSO            ; (RAM, once shown)
         .BYTE DL_JVB
         .WORD TDLIST
 

@@ -79,7 +79,8 @@ m.call("ST_VBI")
 if m.byte("VDSLST") | m.byte("VDSLST", 1) << 8 != m.addr("TT_DLI"):
     fail("ST_VBI: VDSLST %04X on the title" % (m.byte("VDSLST") | m.byte("VDSLST", 1) << 8))
 # the generator's layout matches TITLE.ASM's equates
-for name, want in (("TT_NL", 96), ("TT_WROWS", 3), ("TT_HORL", 144), ("TT_SCOL", 35)):
+for name, want in (("TT_NL", 96), ("TT_WROWS", 3), ("TT_HORL", 144), ("TT_SCOL", 35),
+                   ("TG_SUN", 14), ("TG_BRT", 18), ("TG_SKY", 20)):
     if m.addr(name) != want:
         fail("%s = %d, mktitle.py makes %d" % (name, m.addr(name), want))
 # the sun: 8 rows of player 3 from TT_SUN, cut at the horizon
@@ -90,7 +91,7 @@ if rows != list(range(sun, min(sun + 8, hpm))):
 # glitter on the water; no prompt yet
 prs = m.addr("TT_PRSO")
 water = [m.byte("MAPSCR", i) for i in range(prs)]
-if not any(water) or any(m.byte("MAPSCR", prs + i) for i in range(20)):
+if not any(water) or any(m.byte("MAPSCR", prs + i) for i in range(40)):
     fail("water %d glints, prompt shown at once" % sum(1 for c in water if c))
 # the display list shows LOGO_H lines of the logo, starting at LOGO
 dl, n = m.addr("TDLIST"), 0
@@ -189,12 +190,12 @@ for i in range(9 * 60):
 frame(stick=1)                            # touched at 9 s
 for i in range(9 * 60):
     frame()
-if any(m.byte("MAPSCR", prs + i) for i in range(20)):
+if any(m.byte("MAPSCR", prs + i) for i in range(40)):
     fail("PRESS FIRE before 10 idle seconds")
 for i in range(2 * 60):
     frame()
-shown = [m.byte("MAPSCR", prs + i) for i in range(20)]
-if shown != [m.byte("TTPRS", i) for i in range(20)]:
+shown = [m.byte("MAPSCR", prs + i) for i in range(40)]
+if shown != [m.byte("TTPRS", i) for i in range(40)]:
     fail("no PRESS FIRE after 10 idle seconds: %r" % shown)
 if m.byte("TT_SUN") != sun0:
     fail("the sun moved: %d, was %d" % (m.byte("TT_SUN"), sun0))

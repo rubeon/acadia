@@ -14,8 +14,9 @@ water with a glitter path, and REBUILD at the bottom right.
                  PF1 lit underside), the island (PF2, black)
   lines 144-167  3 mode 4 rows of water in RAM: TITLE.ASM scatters the
                  glitter characters TG_* there every few frames
-  lines 168-175  a mode 6 row in RAM: PRESS FIRE (TTPRS), once shown
-  lines 176-191  a mode 7 row: REBUILD at the right (TTREB)
+  lines 168-183  a mode 7 row: REBUILD at the right (TTREB)
+  lines 184-191  a mode 4 row in RAM: a small PRESS FIRE under REBUILD
+                 (TTPRS, 40 bytes), once shown
 
 A DLI on the line above runs a kernel (TT_DLI): every second scan line
 it sets COLBK, COLPF0 and COLPF1 from TTBK / TTP0 / TTP1 (96 entries
@@ -23,9 +24,10 @@ each), so the sky, clouds, logo, glitter and text take their colours
 per line.  COLPF2 is black and COLPF3 the bright glitter throughout.
 The sun is player 3 (TITLE.ASM), not drawn here.
 
-TTFONT (1K): code 0 blank; codes 1-10 the caption letters, 1 bit a
-pixel for modes 6 and 7; codes 11-18 the glitter (mode 4); codes 19 up
-the scene's characters, merged where they differ least until they fit.
+TTFONT (1K): code 0 blank; codes 1-7 REBUILD's letters, 1 bit a pixel
+for mode 7; codes 8-13 PRESS FIRE's small 3 x 5 letters (mode 4);
+codes 14-21 the glitter (mode 4); codes 22 up the scene's characters,
+merged where they differ least until they fit.
 
 All art here is new (the logo is drawn by hand below); nothing comes
 from the original game.
@@ -45,8 +47,8 @@ SC_Y = TOP + 2 * BAND   # 56: first scene line
 SC_ROWS = 11            # mode 4 rows in TTSCN
 HOR = SC_Y + 8 * SC_ROWS  # 144: the horizon, first water line
 WT_ROWS = 3             # mode 4 rows of water (RAM)
-PR_Y = HOR + 8 * WT_ROWS  # 168: PRESS FIRE (mode 6)
-RB_Y = PR_Y + 8         # 176: REBUILD (mode 7, 16 lines)
+RB_Y = HOR + 8 * WT_ROWS  # 168: REBUILD (mode 7, 16 lines)
+PR_Y = RB_Y + 16        # 184: PRESS FIRE, small (mode 4, 8 lines)
 NPAIR = H // 2          # colour table entries
 GFXMAX = 1840           # bytes free at TITLEGFX (MEM_A800.ASM: $8000-$872F)
 SUN_X = 140             # the sun's centre (colour clock), TITLE.ASM's TT_SUNX
@@ -56,19 +58,22 @@ SUNSHAPE = [0x3C, 0x7E, 0xFF, 0xFF, 0xFF, 0xFF, 0x7E, 0x3C]  # TITLE.ASM's TT_SU
 # ---------------------------------------------------------------------
 #  Colours (Atari hue * 16 + luminance)
 # ---------------------------------------------------------------------
-SKY = [0x70, 0x70, 0x60, 0x60, 0x62, 0x62, 0x52, 0x52, 0x54, 0x54, 0x44, 0x44,
-       0x46, 0x36, 0x36, 0x38, 0x38, 0x38, 0x3A, 0x2A, 0x2A, 0x2A, 0x2C, 0x2C]
+# the sky from the first line given down, sampled from Rube's reference
+# (its horizon scaled to ours): near-black indigo for the top sixth, dark
+# violet and purple, then deep red, red-orange and orange to the horizon
+SKY = [(0, 0x70), (22, 0x60), (32, 0x50), (44, 0x52), (56, 0x42), (68, 0x44),
+       (80, 0x34), (90, 0x36), (100, 0x38), (110, 0x28), (120, 0x2A), (132, 0x2C)]
 LOGOC = [0x1E, 0x1E, 0x1E, 0x2E, 0x2E, 0x2E, 0x2E, 0x2C, 0x2C, 0x2C, 0x2A, 0x2A]
 WATER = [0x62, 0x62, 0x60, 0x60, 0x70, 0x70, 0x70, 0x80, 0x80, 0x80, 0x80, 0x00]
 SUNGL = [0x1E, 0x1C, 0x2C, 0x2C, 0x2A, 0x2A, 0x3A, 0x3A, 0x38, 0x38, 0x36, 0x36]
 SKYGL = [0x46, 0x46, 0x44, 0x44, 0x54, 0x54, 0x54, 0x52, 0x52, 0x62, 0x62, 0x62]
-C_TEXT = 0x00           # COLBK under the two text rows
+C_TEXT = 0x00           # COLBK under the text rows
 C_PRS = 0x1C            # PRESS FIRE
 C_REB = 0x2C            # REBUILD
 
 
 def sky(y):
-    return SKY[min(y * len(SKY) // HOR, len(SKY) - 1)]
+    return [c for y0, c in SKY if y0 <= y][-1]
 
 
 def dark(c, n):
@@ -85,12 +90,12 @@ def tables():
         y = 2 * i
         if y < HOR:
             bk.append(sky(y))
-            p0.append(dark(sky(y), 4) if sky(y) & 0x0F >= 4 else 0x50)
+            p0.append(dark(sky(y), 4) if sky(y) & 0x0F >= 4 else 0x00)
             if TOP <= y < SC_Y:
                 p1.append(LOGOC[(y - TOP) * len(LOGOC) // (SC_Y - TOP)])
             else:
                 p1.append(lite(sky(y), 2))
-        elif y < PR_Y:
+        elif y < RB_Y:
             k = (y - HOR) // 2
             bk.append(WATER[k])
             p0.append(SKYGL[k])
@@ -98,7 +103,7 @@ def tables():
         else:
             bk.append(C_TEXT)
             p0.append(C_TEXT)
-            p1.append(C_PRS if y < RB_Y else C_REB)
+            p1.append(C_REB if y < PR_Y else C_PRS)
     return bk, p0, p1
 
 
@@ -274,24 +279,34 @@ GLITTER = [   # 8 lines of 4 pixels; 2 = PF1 gold, 3 = PF3 (inverse), 1 = PF0
     ["0000", "0000", "1100", "0000", "0000", "0000", "0011", "0000"],
     ["0000", "0000", "0000", "0000", "0111", "0000", "0000", "0000"],
 ]
-TG_SUN, TG_NSUN = 11, 4     # gold glitter codes
-TG_BRT, TG_NBRT = 15, 2     # bright ones: print with bit 7 set (PF3)
-TG_SKY, TG_NSKY = 17, 2     # dim sky reflections (PF0)
-SC_FIRST = 19
+TG_SUN, TG_NSUN = 14, 4     # gold glitter codes
+TG_BRT, TG_NBRT = 18, 2     # bright ones: print with bit 7 set (PF3)
+TG_SKY, TG_NSKY = 20, 2     # dim sky reflections (PF0)
+SC_FIRST = 22
 
-LETTERS = {   # 5 x 7 capitals
-    "P": ["####.", "#...#", "#...#", "####.", "#....", "#....", "#...."],
+LETTERS = {   # 5 x 7 capitals for REBUILD (mode 7)
     "R": ["####.", "#...#", "#...#", "####.", "#.#..", "#..#.", "#...#"],
     "E": ["#####", "#....", "#....", "####.", "#....", "#....", "#####"],
-    "S": [".####", "#....", "#....", ".###.", "....#", "....#", "####."],
-    "F": ["#####", "#....", "#....", "####.", "#....", "#....", "#...."],
-    "I": [".###.", "..#..", "..#..", "..#..", "..#..", "..#..", ".###."],
     "B": ["####.", "#...#", "#...#", "####.", "#...#", "#...#", "####."],
     "U": ["#...#", "#...#", "#...#", "#...#", "#...#", "#...#", ".###."],
+    "I": [".###.", "..#..", "..#..", "..#..", "..#..", "..#..", ".###."],
     "L": ["#....", "#....", "#....", "#....", "#....", "#....", "#####"],
     "D": ["####.", "#...#", "#...#", "#...#", "#...#", "#...#", "####."],
 }
-LETTER_ORDER = "PRESFIBULD"   # codes 1-10
+LETTER_ORDER = "REBUILD"      # codes 1-7
+
+SMALLCAP = {  # 3 x 5 capitals for PRESS FIRE (mode 4, PF1), one a char
+    "P": ["##.", "#.#", "##.", "#..", "#.."],
+    "R": ["##.", "#.#", "##.", "#.#", "#.#"],
+    "E": ["###", "#..", "##.", "#..", "###"],
+    "S": [".##", "#..", ".#.", "..#", "##."],
+    "F": ["###", "#..", "##.", "#..", "#.."],
+    "I": ["###", ".#.", ".#.", ".#.", "###"],
+}
+SMALL_ORDER = "PRESFI"        # codes 8-13
+SMALL_FIRST = 1 + len(LETTER_ORDER)
+SMALL_TOP = 2                 # its first line in the char (of 8)
+assert SMALL_FIRST + len(SMALL_ORDER) == TG_SUN
 
 
 def letter_code(ch):
@@ -303,8 +318,17 @@ def text_row(s):
     return [0 if ch == " " else 0x40 | letter_code(ch) for ch in s]  # PF1
 
 
-PRS_TXT = " PRESS FIRE         "
+def small_row(s, col):
+    row = [0] * 40
+    for i, ch in enumerate(s):
+        if ch != " ":
+            row[col + i] = SMALL_FIRST + SMALL_ORDER.index(ch)
+    return row
+
+
 REB_TXT = "            REBUILD "
+PRS_TXT = "PRESS FIRE"
+PRS_COL = 26                  # centred under REBUILD (colour clocks 97-150)
 
 
 # ---------------------------------------------------------------------
@@ -362,6 +386,10 @@ def font(kept):
                 if p == "#":
                     v |= 0x40 >> x             # 1 blank column on the left
             f[base + y] = v
+    for ch in SMALL_ORDER:
+        base = 8 * (SMALL_FIRST + SMALL_ORDER.index(ch)) + SMALL_TOP
+        f[base:base + 5] = mode4_bytes([l.replace("#", "2").replace(".", "0") + "0"
+                                        for l in SMALLCAP[ch]])
     for i, g in enumerate(GLITTER):
         f[8 * (TG_SUN + i):8 * (TG_SUN + i) + 8] = mode4_bytes(g)
     for i, ch in enumerate(kept):
@@ -395,7 +423,7 @@ def main():
     kept, screen, nuniq = scene_chars(pix)
     bk, p0, p1 = tables()
     logo = band_bytes(pix)
-    prs, reb = text_row(PRS_TXT), text_row(REB_TXT)
+    prs, reb = small_row(PRS_TXT, PRS_COL), text_row(REB_TXT)
     size = len(logo) + len(screen) + len(prs) + len(reb) + 3 * NPAIR
     assert size <= GFXMAX, "title graphics: %d bytes, room for %d" % (size, GFXMAX)
     if "--preview" in sys.argv:
@@ -417,8 +445,9 @@ def main():
     w("        *= TITLEGFX\n")
     emit_bytes(out, "LOGO", logo, 20)
     emit_bytes(out, "TTSCN", screen, 20)
-    w("; the caption and the prompt, mode 6/7 codes (letters 1-10, PF1)\n")
+    w("; the caption: mode 7 codes (letters 1-7, PF1)\n")
     emit_bytes(out, "TTREB", reb, 20)
+    w("; the prompt: a mode 4 row, small letters 8-13 (PF1)\n")
     emit_bytes(out, "TTPRS", prs, 20)
     w("; per pair of scan lines: COLBK, COLPF0, COLPF1 (TT_DLI)\n")
     emit_bytes(out, "TTBK", bk)
@@ -448,7 +477,7 @@ def atari_rgb(c):
 def preview(fn, pix, kept, screen, bk, p0, p1):
     from PIL import Image
     f = font(kept)
-    img = Image.new("RGB", (168, 240), atari_rgb(SKY[0]))
+    img = Image.new("RGB", (168, 240), atari_rgb(SKY[0][1]))
     put = img.putpixel
     rnd = random.Random(1)
     water = [0] * (40 * WT_ROWS)              # one frame of glitter, as
@@ -470,17 +499,18 @@ def preview(fn, pix, kept, screen, bk, p0, p1):
             elif y < HOR:
                 ch = screen[40 * ((y - SC_Y) // 8) + x // 4]
                 v = (f[8 * ch + (y - SC_Y) % 8] >> (6 - 2 * (x % 4))) & 3
-            elif y < PR_Y:
+            elif y < RB_Y:
                 ch = water[40 * ((y - HOR) // 8) + x // 4]
                 v = (f[8 * (ch & 0x7F) + (y - HOR) % 8] >> (6 - 2 * (x % 4))) & 3
                 if v == 3 and ch & 0x80:
                     v = 4
-            else:
-                row, ly = (text_row(PRS_TXT), (y - PR_Y)) if y < RB_Y else \
-                          (text_row(REB_TXT), (y - RB_Y) // 2)
-                ch = row[x // 8]
-                bits = f[8 * (ch & 0x3F) + ly]
+            elif y < PR_Y:
+                ch = text_row(REB_TXT)[x // 8]
+                bits = f[8 * (ch & 0x3F) + (y - RB_Y) // 2]
                 v = 2 if ch and bits & (0x80 >> (x % 8)) else 0
+            else:
+                ch = small_row(PRS_TXT, PRS_COL)[x // 4]
+                v = (f[8 * ch + (y - PR_Y)] >> (6 - 2 * (x % 4))) & 3
             put((x + 4, y + 24), rgb[v])
         top = HOR - 12                         # the sun: player 3, over
         if top <= y < HOR:                     # the playfield, cut at the

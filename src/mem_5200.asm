@@ -55,5 +55,5 @@ DLBASE  =  $7400        ; display list page (DISPLAY.ASM); island
 MAPSRC  =  $7540        ; each map's data block MAPS0 ...; then code
                         ; block 2 (ACADIA5200.ASM)
 TITLEGFX = $B800        ; title graphics (D70): logo, scene, colour
-                        ; tables, 1808 bytes, to $BF0F (one 4K block)
+                        ; tables, 1828 bytes, to $BF23 (one 4K block)
 CARTHDR =  $BFE8        ; cartridge header (ACADIA5200.ASM)
