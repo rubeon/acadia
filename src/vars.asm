@@ -129,7 +129,9 @@ SV1     *= *+2          ; SHOW_PAIR: player 2's number (must follow SV0)
 ;  Pause (PAUSE.ASM)
 ; ---------------------------------------------------------------------
 PAUSED  *= *+1          ; 1 while the game is paused
-PSAVE   *= *+40         ; status line 1 while PAUSED is shown
+PB_ON   *= *+1          ; 1 while the pause band is shown (PB_VBI)
+PB_FNT  *= *+2          ; ROWFONT+PB_ROW, +PB_ROW+2 while it is shown
+PSAVE   *= *+144        ; the band's three map rows while it is shown
 
 ; ---------------------------------------------------------------------
 ;  Sound driver (SOUND.ASM): per channel 0-3
@@ -312,6 +314,7 @@ PA_C    *= *+1          ; PIR_ATK: square
 PA_R    *= *+1
 PA_O    *= *+1          ; PIR_ATK: the boat's owner
 PS_V    *= *+2          ; PIR_SHOW: show pirate 2 / 3 this frame
+PR_FLAP *= *+1          ; PIR_SHOW: frames for the flags, not while paused
 PS_I    *= *+1          ; PIR_SHOW: slot
 PS_A0   *= *+1          ; PIR_SHOW: pirate 2's rows
 PS_A1   *= *+1

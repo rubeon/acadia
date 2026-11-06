@@ -33,7 +33,21 @@ VS_GR   JSR VS_LUM
         STA ROWPF0,X
         DEX
         BPL VS_ROW
-        RTS
+        LDA PB_ON       ; the pause band's rows (PAUSE.ASM, D69): black,
+        BEQ VS_RTS      ; PF0 the text's white
+        LDA #C_PBK
+        EOR COLRSH
+        AND DRKMSK
+        STA ROWBK+PB_ROW
+        STA ROWBK+PB_ROW+1
+        STA ROWBK+PB_ROW+2
+        LDA #C_PTX
+        EOR COLRSH
+        AND DRKMSK
+        STA ROWPF0+PB_ROW
+        STA ROWPF0+PB_ROW+1
+        STA ROWPF0+PB_ROW+2
+VS_RTS  RTS
 
 ; VS_LUM -- colour A with luminance + Y (signed), kept 0-14, attract
 ; mode applied.  Keeps X.
@@ -68,6 +82,25 @@ GR_SEA  =  $80          ; GRNDEL: PF0 is the dark corner sea
 SEADEL  .BYTE 2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2
 GRNDEL  .BYTE GR_SEA,GR_SEA,GR_SEA,2,2,2,2,0,0,0,0,0,0,0,0,$FE,$FE,$FE,$FE
         .BYTE GR_SEA,GR_SEA,GR_SEA
+
+; DLI_END -- the map's last line ends: below it the background is the
+; dark corner sea (row 0's PF0), as the corners run into it (D55);
+; COLBK in the map is the light sea since D67
+; Row 21 is wide, so WSYNC first (D67): with work before it, the DLI
+; missed the line's end and left one light line below the corners.
+; Nothing is drawn below the map, so the width can come after COLBK.
+DLI_END STA WSYNC
+        PHA
+        LDA ROWPF0
+        STA COLBK
+        LDA #DMA_N      ; and the normal width again (D67)
+        STA DMACTL
+        LDA #<DLI_ST    ; the next frame's first DLI, in case the
+        STA VDSLST      ; deferred VBI is late or skipped (D69)
+        LDA #>DLI_ST
+        STA VDSLST+1
+        PLA
+        RTI
 
 ; ---------------------------------------------------------------------
 ;  WAVE_ANI -- every WV_RATE frames, the next phase of the wave glints:

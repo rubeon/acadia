@@ -85,6 +85,11 @@ ROMEND                          ; must stay below TITLEGFX (MKCART.PY)
         .INCLUDE "title_gfx.asm"
 
 ; ---------------------------------------------------------------------
+;  The pause band's font (D69), 1K aligned, in the gap after RANDOM's
+; ---------------------------------------------------------------------
+        .INCLUDE "font_pause.asm"
+
+; ---------------------------------------------------------------------
 ;  RAM: the variables and the live map's tables, reserved only
 ; ---------------------------------------------------------------------
         .INCLUDE "vars.asm"

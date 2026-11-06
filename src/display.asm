@@ -44,6 +44,15 @@ C_LIGHT =  $2C          ; COLPF2 -- sand: beach, crops, sails
 C_WHITE =  $0E          ; COLPF3 -- white (inverse chars): fort, school,
                         ;           hospital, walls, smoke, surf, waves
 
+; Pause band (PAUSE.ASM, D69): the bottom corner rows PB_ROW-PB_ROW+2
+PB_ROW  =  19           ; the band's first character row (odd)
+PB_RLEN =  48           ; bytes per row: wide (WROW, SHADE.ASM)
+PB_COL  =  4+17         ; PAUSED's first column: border + 17
+PB_ADDR =  MAPSCR+[3*PB_RLEN]+[16*MAPCOLS] ; its screen memory (SCR_WB)
+PB_LEN  =  3*PB_RLEN    ; three rows
+C_PBK   =  $00          ; band: black
+C_PTX   =  C_WHITE      ; text: white, as the status bar's numbers
+
 ; ---------------------------------------------------------------------
 ;  DISP_INIT -- install display list, DLI and VBI.
 ;  Writes only RAM vectors and shadows; calls no OS routines.
@@ -235,20 +244,7 @@ DR_VEC  STA VDSLST
         STA DL_NC
         JMP DL_RDONE
 
-; DLI_END -- the map's last line ends: below it the background is the
-; dark corner sea (row 0's PF0), as the corners run into it (D55);
-; COLBK in the map is the light sea since D67
-; Row 21 is wide, so WSYNC first (D67): with work before it, the DLI
-; missed the line's end and left one light line below the corners.
-; Nothing is drawn below the map, so the width can come after COLBK.
-DLI_END STA WSYNC
-        PHA
-        LDA ROWPF0
-        STA COLBK
-        LDA #DMA_N      ; and the normal width again (D67)
-        STA DMACTL
-        PLA
-        RTI
+; DLI_END: in SHADE.ASM (code block 1 is full)
 
 ; DLI_SQ -- a square row's first character row starts: the fish and
 ; weather positions first, looked up by DLI_ROW, from zero page, with
@@ -334,8 +330,13 @@ DLI_MSL STA HPOSM3
 ;  ATRACT on any input; once the OS timer runs out it sets COLRSH and
 ;  DRKMSK for its shadow colours, and the map colours get the same
 ;  change here: colour EOR COLRSH AND DRKMSK.
+;  ST_VBI comes first (D69): when the palette changes (pause, attract
+;  mode) VD_SHADE makes the VBI run past the status bar's first DLI,
+;  and with VDSLST still at last frame's DLI_END every DLI of the
+;  frame ran one step out of place (wrong widths and fonts per row).
 ; ---------------------------------------------------------------------
 VBI_D
+        JSR ST_VBI      ; first: VDSLST back at the first DLI (D69)
         INC FRAME
         JSR SND_VBI
         JSR SPR_VBI
@@ -350,6 +351,7 @@ VD_COL  LDA MAPPAL,X
         STA MAPCOL,X
         DEX
         BPL VD_COL
+        JSR PB_VBI      ; the pause band up or down (D69)
         LDA COLRSH      ; the shades per row again if the palette or
         CMP AP_SH       ; attract mode changed
         BNE VD_SH
@@ -362,9 +364,8 @@ VD_COL  LDA MAPPAL,X
         LDA MAPPAL+1
         CMP AP_GR
         BEQ VD_NSH
-VD_SH   JSR VD_SHADE
-VD_NSH  JSR ST_VBI      ; status backgrounds; first DLI of the next frame
-        JMP (OLDVBD)
+VD_SH   JSR VD_SHADE    ; ~26 lines: may run into the screen (D69)
+VD_NSH  JMP (OLDVBD)
 
 ; ---------------------------------------------------------------------
 ;  MAP_DRAW -- draw the island terrain (ISLTILE) into screen memory

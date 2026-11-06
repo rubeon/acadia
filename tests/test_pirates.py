@@ -271,8 +271,8 @@ for wx, gone in ((80 - 16, False), (80 - 15, True)):
 clear()
 put(0, 40, 40)                           # lines 32-39: row 4
 put(1, 120, 76)                          # lines 68-75: rows 8-9
-m.poke("FRAME", 8)                       # slot 2: flag frame 2, slot 3: frame 1
-m.call("PIR_SHOW")
+m.poke("PR_FLAP", 7)                     # PIR_SHOW counts it to 8: slot 2
+m.call("PIR_SHOW")                       # flag frame 2, slot 3: frame 1
 hm = [m.byte("HMROW", r) for r in range(11)]
 # the galleon's 2 lines above its box (D67) reach row 3 for the first
 want = [0] * 3 + [40 + HP_MAP - 8] * 2 + [0] * 3 + [120 + HP_MAP - 8] * 2 + [0]
@@ -286,6 +286,12 @@ for i, fy in enumerate((40, 76)):
     line = fy - 8 - P_TOP + PM_MAP
     if list(m.mem[msl + line:msl + line + P_H]) != shape or m.mem[msl + line - 1]:
         fail("pirate not drawn at missile line %d" % line)
+m.poke("PAUSED", 1)                      # paused: the flags stand still (D69)
+for _ in range(20):
+    m.call("PIR_SHOW")
+if m.byte("PR_FLAP") != 8:
+    fail("flag clock ran while paused: %d" % m.byte("PR_FLAP"))
+m.poke("PAUSED", 0)
 put(1, 120, 44)
 shown = []
 for f in range(2):
