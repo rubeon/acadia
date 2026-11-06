@@ -94,8 +94,9 @@ if m.byte("CHBAS") != m.addr("TTFONT") >> 8:
     fail("TITLE_ENTER: CHBAS %02X" % m.byte("CHBAS"))
 m.call("ST_COLS")
 m.call("SETUP_ENTER")
-if m.byte("CHBAS") != m.addr("HLPFONT") >> 8 or [m.byte("COLOR1"), m.byte("COLOR2"), m.byte("COLOR4")] != [0x94, 0x1C, 0x00]:
-    fail("SETUP_ENTER: CHBAS %02X" % m.byte("CHBAS"))
+su_cols = [m.byte("COLOR1"), m.byte("COLOR2"), m.byte("COLOR4")]
+if m.byte("CHBAS") != m.addr("HLPFONT") >> 8 or su_cols != [m.byte("TTP1", 3), 0x00, m.byte("TTBK")]:
+    fail("SETUP_ENTER: CHBAS %02X, colours %r (the logo on its sky, D71)" % (m.byte("CHBAS"), su_cols))
 m.poke("SU_VAL", 10, 30, 2, 2)
 m.call("SU_GO")
 if m.byte("CHBAS") != stfont or m.byte("COLOR1") != 0x48:
