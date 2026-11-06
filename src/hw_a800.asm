@@ -120,6 +120,7 @@ GR_PM     = $03         ; enable players and missiles
 
 ; PRIOR values
 PRI_MAP   = $01         ; all players over the playfield (D35)
+PRI_PF    = $04         ; the playfield over all players (title clouds, D70)
 PRI_5TH   = $10         ; missiles form a fifth player in COLPF3
 
 ; NMIEN values

@@ -3,7 +3,8 @@
 ;
 ;  Shown at start-up and after the demo: a sunset over the sea after
 ;  Rube's reference picture.  "Acadia" in pale gold at the top left, a
-;  sky in bands of colour with dark cloud streaks, a black island with
+;  sky in bands of colour with dark clouds drifting left, the high ones
+;  faster than the low ones (players 0-2, TITLE_CLD.ASM), a black island with
 ;  the game's fort, the sun (player 3) setting to its right, a glitter
 ;  path on the water and REBUILD at the bottom right, a small PRESS
 ;  FIRE under it.  The graphics,
@@ -11,11 +12,21 @@
 ;  (TITLE_GFX.ASM).
 ;
 ;  A DLI on the last blank line runs TT_DLI, which sets COLBK, COLPF0
-;  and COLPF1 every second scan line for the whole picture; ST_VBI
-;  (STATUS.ASM) points VDSLST at it while GSTATE is GS_TITLE.  Each
-;  frame TT_ANIM scatters new glitter on one row of the water every
-;  TT_GRT frames (the rows in turn; the sun stays put, Rube) and,
-;  after TT_PSEC seconds with nothing touched, shows PRESS FIRE.
+;  and COLPF1 every second scan line for the whole picture, and moves
+;  and colours the cloud players; ST_VBI (STATUS.ASM) points VDSLST at
+;  it while GSTATE is GS_TITLE.  Each frame TT_CLD moves the clouds
+;  that are due, and TT_ANIM scatters new glitter on one row of the
+;  water every TT_GRT frames (the rows in turn; the sun stays put,
+;  Rube) and, after TT_PSEC seconds with nothing touched, shows PRESS
+;  FIRE.
+;
+;  The clouds are players at quadruple width behind the playfield
+;  (PRI_PF): P0 and P1 side by side for the long ones (lane 0), P2 for
+;  the short ones (lane 1), each player reused down the sky.  TT_HA and
+;  TT_HB hold each lane's horizontal position for every pair of lines;
+;  TT_DLI writes them in the horizontal blank, so a cloud's position
+;  can change anywhere.  Positions wrap at 256: a cloud that leaves on
+;  the left comes back on the right.
 ;
 ;  The title tune plays.  Fire, START or any key, once everything has
 ;  been let go, goes on to the setup screen, with the tune still
@@ -45,6 +56,12 @@ TG_NSKY =  2
 
 TT_SCR  =  MAPSCR       ; water: TT_WROWS mode 4 rows of 40, then the
 TT_PRSO =  40*TT_WROWS  ; small PRESS FIRE, a mode 4 row (40), here
+TT_HA   =  TT_SCR+TT_PRSO+40 ; per pair of lines: lane 0's position
+TT_HB   =  TT_HA+TT_NL  ; and lane 1's (TT_DLI)
+TT_CX   =  TT_HB+TT_NL  ; per cloud: its position
+TT_CT   =  TT_CX+TC_NUM ; and frames until it moves on
+TT_QUAD =  3            ; SIZEP: quadruple width (the clouds)
+TT_PMC  =  PM_P0+16+TC_PAIR ; the clouds' first P/M line (P0)
 TT_PSEC =  10           ; idle seconds before PRESS FIRE shows
 TT_GRT  =  12           ; frames between glitter changes (one row)
 TT_SUNX =  HP_MAP+136   ; the sun's left edge (P/M): its centre is
@@ -72,13 +89,38 @@ TITLE_ENTER
         STA TT_GR       ; glitter: row 0 changes first
         LDA #TT_GRT-1
         STA TT_GFC
-        JSR PM_HIDE     ; no cursors, fish, weather or pirates
+        JSR PM_INIT     ; P/M memory empty: no cursors, fish, weather
+        JSR PM_HIDE     ; or pirates
+        LDA #TT_QUAD    ; the clouds: players 0-2, wide, behind the
+        STA SIZEP0      ; playfield
+        STA SIZEP1
+        STA SIZEP2
+        LDA #PRI_PF
+        STA GPRIOR
         JSR TIC_SYNC    ; idle time counts from now
-        LDA #0          ; the water and prompt rows empty
-        LDX #TT_PRSO+40
-TE_CLR  DEX
-        STA TT_SCR,X
+        LDA #0          ; the water, the prompt and the clouds' tables
+        TAX             ; empty (512 bytes)
+TE_CLR  STA TT_SCR,X
+        STA TT_SCR+256,X
+        INX
         BNE TE_CLR
+        LDX #TC_NPR-1   ; the clouds' shapes
+TE_CLP  LDA TCP0,X
+        STA TT_PMC,X
+        LDA TCP1,X
+        STA TT_PMC+PM_LEN,X
+        LDA TCP2,X
+        STA TT_PMC+PM_LEN+PM_LEN,X
+        DEX
+        BPL TE_CLP
+        LDX #TC_NUM-1   ; and their places
+TE_CLD  LDA TC_X0,X
+        STA TT_CX,X
+        LDA TC_PER,X
+        STA TT_CT,X
+        JSR TK_FILL
+        DEX
+        BPL TE_CLD
         LDA #TT_SUN0
         STA TT_SUN
         JSR TT_SUND     ; the sun in player 3
@@ -120,7 +162,8 @@ TF_TIC  JSR TIC_NEXT
         BNE TF_TIC      ; not a new second
         INC TI_SEC
         BNE TF_TIC
-TF_TDON JSR TT_ANIM     ; the sun, the glitter, the prompt
+TF_TDON JSR TT_CLD      ; the clouds
+        JSR TT_ANIM     ; the glitter, the prompt
         LDA TI_SEC
         CMP #DM_IDLE
         BCC TF_KEYS
@@ -173,11 +216,10 @@ TA_ROW  STY TT_GR
 TA_DONE RTS
 
 ; ---------------------------------------------------------------------
-;  TT_SUND -- draw the sun in player 3 from P/M line TT_SUN down, cut
-;  off at the horizon (TT_HPM).  Trashes A, X, Y.
+;  TT_SUND -- draw the sun in player 3 (empty) from P/M line TT_SUN
+;  down, cut off at the horizon (TT_HPM).  Trashes A, X, Y.
 ; ---------------------------------------------------------------------
 TT_SUND
-        JSR TT_LEAVE    ; player 3 empty
         LDX TT_SUN
         LDY #0
 TV_ROW  CPX #TT_HPM
@@ -193,15 +235,52 @@ TV_DONE RTS
 TT_SUNS .BYTE $3C,$7E,$FF,$FF,$FF,$FF,$7E,$3C   ; 8 x 16 scan lines
 
 ; ---------------------------------------------------------------------
-;  TT_LEAVE -- player 3 empty again (the sun off), before the title
-;  screen hands over: the fish use player 3.  Trashes A, X.
+;  TT_LEAVE -- before the title screen hands over: P/M memory empty
+;  (the sun, the clouds), the players' widths and priority as the game
+;  has them (PM_INIT).  Trashes A, X.
 ; ---------------------------------------------------------------------
 TT_LEAVE
-        LDA #0
-        LDX #PM_LEN-1
-TL_CLR  STA TT_P3,X
-        DEX
-        BPL TL_CLR
+        JMP PM_INIT
+
+; ---------------------------------------------------------------------
+;  TT_CLD -- each frame: every cloud whose time has come moves one
+;  colour clock left (every TC_PER+1 frames: the high ones faster).
+;  Trashes A, X, Y, TT_N.
+; ---------------------------------------------------------------------
+TT_CLD
+        LDX #TC_NUM-1
+TK_LOOP DEC TT_CT,X
+        BPL TK_NEXT
+        LDA TC_PER,X
+        STA TT_CT,X
+        DEC TT_CX,X     ; wraps at 0: back in from the right
+        JSR TK_FILL
+TK_NEXT DEX
+        BPL TK_LOOP
+        RTS
+
+; ---------------------------------------------------------------------
+;  TK_FILL -- cloud X's position into its lane's table (TT_HA or TT_HB)
+;  for its pairs of lines and the two above (where TT_DLI moves the
+;  player(s) there).  Keeps X; trashes A, Y, TT_N.
+; ---------------------------------------------------------------------
+TK_FILL
+        LDA TC_E,X
+        STA TT_N
+        LDY TC_A,X
+        LDA TC_L,X
+        BNE TK_B
+        LDA TT_CX,X
+TK_A    STA TT_HA,Y
+        INY
+        CPY TT_N
+        BNE TK_A
+        RTS
+TK_B    LDA TT_CX,X
+TK_BL   STA TT_HB,Y
+        INY
+        CPY TT_N
+        BNE TK_BL
         RTS
 
 ; ---------------------------------------------------------------------
@@ -217,10 +296,12 @@ TG_ALL  JSR TT_GROW
         RTS
 
 ; ---------------------------------------------------------------------
-;  TT_GROW -- new glitter on water row Y: TG_N gold glints
-;  (TG_SUN...) and one bright one (TG_BRT..., PF3) within TG_W columns
-;  under the sun, widening down the rows, and one dim reflection of the
-;  sky (TG_SKY...) anywhere.  Keeps Y; trashes A, X, TT_N.
+;  TT_GROW -- new glitter on water row Y: gold glints (TG_SUN...) in
+;  two passes, a few close under the sun and a few further out
+;  (TG_N within TG_W columns, the path widening down the rows), one
+;  bright one (TG_BRT..., PF3) close under the sun, and one dim
+;  reflection of the sky (TG_SKY...) anywhere.  Keeps Y; trashes A,
+;  X, TT_N.
 ; ---------------------------------------------------------------------
 TT_GROW
         LDA #40         ; the row empty
@@ -231,21 +312,15 @@ TG_CLR  STA TT_SCR,X
         INX
         DEC TT_N
         BNE TG_CLR
-        LDA TG_N,Y
-        STA TT_N
-TG_GOLD LDA TG_W,Y      ; a gold glint under the sun
-        JSR RAND_N
-        CLC
-        ADC TG_X0,Y
-        TAX
-        LDA #TG_NSUN
-        JSR RAND_N
-        CLC
-        ADC #TG_SUN
-        STA TT_SCR,X
-        DEC TT_N
-        BNE TG_GOLD
-        LDA TG_W,Y      ; and a bright one
+        TYA             ; the passes: 2 * row, 2 * row + 1
+        PHA
+        ASL A
+        TAY
+        INY
+        JSR TG_PASS     ; further out
+        DEY
+        JSR TG_PASS     ; close under the sun
+        LDA TG_W,Y      ; and a bright one there
         JSR RAND_N
         CLC
         ADC TG_X0,Y
@@ -255,6 +330,8 @@ TG_GOLD LDA TG_W,Y      ; a gold glint under the sun
         CLC
         ADC #TG_BRT+$80 ; inverse: its 11 pixels are PF3
         STA TT_SCR,X
+        PLA             ; the row again
+        TAY
         LDA #40         ; a reflection of the sky, anywhere
         JSR RAND_N
         CLC
@@ -267,18 +344,43 @@ TG_GOLD LDA TG_W,Y      ; a gold glint under the sun
         STA TT_SCR,X
         RTS
 
-; per water row (TT_WROWS = 3): gold glints, columns wide, first column
-TG_N    .BYTE 1,2,3
-TG_W    .BYTE 3,5,7
-TG_X0   .BYTE TT_SCOL-1,40+TT_SCOL-2,80+TT_SCOL-3
+; TG_PASS -- pass Y's gold glints: TG_N of them within TG_W columns
+; from TG_X0.  Keeps Y; trashes A, X, TT_N.
+TG_PASS LDA TG_N,Y
+        STA TT_N
+TG_GOLD LDA TG_W,Y
+        JSR RAND_N
+        CLC
+        ADC TG_X0,Y
+        TAX
+        LDA #TG_NSUN
+        JSR RAND_N
+        CLC
+        ADC #TG_SUN
+        STA TT_SCR,X
+        DEC TT_N
+        BNE TG_GOLD
+        RTS
+
+; per pass, two for each water row (TT_WROWS = 3), first close under
+; the sun, then further out (as MKTITLE.PY's GL_PASS): gold glints,
+; columns wide, first column
+TG_N    .BYTE 3,1,2,2,2,2
+TG_W    .BYTE 3,7,3,7,5,9
+TG_X0   .BYTE TT_SCOL-1,TT_SCOL-3,40+TT_SCOL-1,40+TT_SCOL-3
+        .BYTE 80+TT_SCOL-2,80+TT_SCOL-4
+; per water row: its first byte
 TG_R0   .BYTE 0,40,80
 
 ; ---------------------------------------------------------------------
 ;  TT_DLI -- the DLI on TDLIST's last blank line: the sun's position
 ;  and colour, then COLBK, COLPF0 and COLPF1 for every pair of scan
-;  lines of the picture from TTBK, TTP0, TTP1 (TT_NL entries).  It runs
-;  through the whole picture (192 lines); the title screen does little
-;  else.  Keeps all registers.
+;  lines of the picture from TTBK, TTP0, TTP1 (TT_NL entries).  In the
+;  horizontal blank after the first line of each pair, the clouds: on
+;  even pairs their colour (COLPF0's shade) and lane 1's position
+;  (TT_HB), on odd pairs lane 0's (TT_HA; P1 32 clocks right of P0).
+;  It runs through the whole picture (192 lines); the title screen
+;  does little else.  Keeps all registers.
 ; ---------------------------------------------------------------------
 TT_DLI
         PHA
@@ -291,7 +393,7 @@ TT_DLI
         LDA #C_SUN
         STA COLPM3
         LDX #0
-TD_LINE LDA TTBK,X
+TD_LINE LDA TTBK,X      ; an even pair
         LDY TTP0,X
         STA WSYNC       ; at the end of a line: its colours for the
         STA COLBK       ; next two
@@ -299,6 +401,25 @@ TD_LINE LDA TTBK,X
         LDA TTP1,X
         STA COLPF1
         STA WSYNC
+        STY COLPM0      ; the clouds' shade
+        STY COLPM1
+        STY COLPM2
+        LDA TT_HB,X     ; lane 1
+        STA HPOSP2
+        INX
+        LDA TTBK,X      ; an odd pair
+        LDY TTP0,X
+        STA WSYNC
+        STA COLBK
+        STY COLPF0
+        LDA TTP1,X
+        STA COLPF1
+        STA WSYNC
+        LDA TT_HA,X     ; lane 0: P0, and P1 just right of it
+        STA HPOSP0
+        CLC
+        ADC #32
+        STA HPOSP1
         INX
         CPX #TT_NL
         BNE TD_LINE

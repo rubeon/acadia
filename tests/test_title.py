@@ -206,11 +206,40 @@ for i in range(m.addr("TT_GRT") + 1):
     frame()
 if before == [m.byte("MAPSCR", i) for i in range(prs)]:
     fail("the glitter did not change")
+# the clouds: quadruple-width players behind the playfield, drifting
+# left one clock every TC_PER+1 frames, their lane's table entries kept
+# in step
+pm0, plen = m.addr("PM_P0"), m.addr("PM_LEN")
+if [m.byte("SIZEP%d" % k) for k in range(3)] != [3, 3, 3] or m.byte("GPRIOR") != 4:
+    fail("clouds: sizes %r, GPRIOR %02X" % ([m.byte("SIZEP%d" % k) for k in range(3)],
+                                            m.byte("GPRIOR")))
+pc = pm0 + 16 + m.addr("TC_PAIR")
+for k in range(3):
+    want = [m.byte("TCP%d" % k, i) for i in range(m.addr("TC_NPR"))]
+    if [m.mem[pc + k * plen + i] for i in range(len(want))] != want:
+        fail("cloud shapes not in player %d" % k)
+nc, cx = m.addr("TC_NUM"), m.addr("TT_CX")
+x0 = [m.mem[cx + c] for c in range(nc)]
+for i in range(48):
+    frame()
+for c in range(nc):
+    per = m.byte("TC_PER", c) + 1
+    moved = (x0[c] - m.mem[cx + c]) & 0xFF
+    if moved not in (48 // per, 48 // per + 1):
+        fail("cloud %d moved %d in 48 frames, every %d" % (c, moved, per))
+    tab = m.addr("TT_HB" if m.byte("TC_L", c) else "TT_HA")
+    span = range(m.byte("TC_A", c), m.byte("TC_E", c))
+    if any(m.mem[tab + k] != m.mem[cx + c] for k in span):
+        fail("cloud %d: table out of step" % c)
+
 frame()                                   # armed
 frame(fire0=True)
 p3 = m.addr("TT_P3")
-if m.byte("GSTATE") != GS_SETUP or any(m.mem[p3 + i] for i in range(128)):
-    fail("leaving the title: state %d, sun left in player 3" % m.byte("GSTATE"))
+if m.byte("GSTATE") != GS_SETUP or any(m.mem[pm0 + i] for i in range(4 * plen)):
+    fail("leaving the title: state %d, sun or clouds left in the players"
+         % m.byte("GSTATE"))
+if [m.byte("SIZEP%d" % k) for k in range(3)] != [0, 0, 1] or m.byte("GPRIOR") != 0x11:
+    fail("leaving the title: player sizes or priority not the game's")
 
 print("title: %d failed" % fails)
 sys.exit(1 if fails else 0)

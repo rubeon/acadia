@@ -9,9 +9,8 @@ water with a glitter path, and REBUILD at the bottom right.
 
   lines   0-3    blank: sky
   lines   4-55   LOGO: 26 ANTIC mode D lines (2 scan lines each): the
-                 logo (PF1, with a PF2 shadow) and clouds (PF0)
-  lines  56-143  TTSCN: 11 mode 4 rows in TTFONT: clouds (PF0 dark,
-                 PF1 lit underside), the island (PF2, black)
+                 logo (PF1, with a PF2 shadow)
+  lines  56-143  TTSCN: 11 mode 4 rows in TTFONT: the island (PF2, black)
   lines 144-167  3 mode 4 rows of water in RAM: TITLE.ASM scatters the
                  glitter characters TG_* there every few frames
   lines 168-183  a mode 7 row: REBUILD at the right (TTREB)
@@ -24,6 +23,13 @@ each), so the sky, clouds, logo, glitter and text take their colours
 per line.  COLPF2 is black and COLPF3 the bright glitter throughout.
 The sun is player 3 (TITLE.ASM), not drawn here.
 
+The clouds are players 0-2 at quadruple width, behind the playfield
+(--clouds FILE writes them: TITLE_CLD.ASM).  Two lanes: P0 and P1 side
+by side for the long clouds (64 colour clocks), P2 for the short ones
+(32).  TT_DLI moves each lane's player(s) between clouds and colours
+them COLPF0's shade (a darker one of the sky's) every second line;
+TITLE.ASM drifts each cloud left, the high ones faster (parallax).
+
 TTFONT (1K): code 0 blank; codes 1-7 REBUILD's letters, 1 bit a pixel
 for mode 7; codes 8-13 PRESS FIRE's small 3 x 5 letters (mode 4);
 codes 14-21 the glitter (mode 4); codes 22 up the scene's characters,
@@ -32,7 +38,9 @@ merged where they differ least until they fit.
 All art here is new (the logo is drawn by hand below); nothing comes
 from the original game.
 
-Run from the repo root:  python3 -I tools/mktitle.py [--preview FILE]
+Run from the repo root:
+  python3 -I tools/mktitle.py --clouds src/title_cld.asm > src/title_gfx.asm
+  [--preview FILE]
 (--preview needs PIL and draws the screen with an approximate palette.)
 """
 
@@ -180,37 +188,50 @@ def logo_pixels():
 # ---------------------------------------------------------------------
 #  The picture: pix[y][x] = 0 COLBK, 1 PF0, 2 PF1, 3 PF2
 # ---------------------------------------------------------------------
-CLOUDS = [  # (top line, centre, length): long thin streaks
-    (14, 128, 46), (30, 132, 50), (46, 140, 60), (58, 36, 64), (72, 22, 78),
-    (82, 136, 66), (98, 40, 52), (104, 140, 56), (118, 18, 34)]
+# the clouds, players at quadruple width: (top line, height in pairs of
+# lines, length in player pixels of 4 colour clocks, lane, first
+# horizontal position, frames per colour clock moved left, less one).  Lane 0 is
+# P0 + P1 (16 pixels), lane 1 is P2 (8).  The higher, the faster: near
+# clouds pass quicker than far ones.  Clouds in a lane keep 2 pairs of
+# lines apart, where TT_DLI moves the lane's player(s) on.
+CLOUDS = [
+    (12, 3, 14, 0, 150, 6), (34, 2, 12, 0, 60, 8), (54, 3, 16, 0, 190, 10),
+    (78, 2, 13, 0, 100, 14), (100, 3, 15, 0, 30, 18), (122, 2, 12, 0, 170, 24),
+    (22, 2, 7, 1, 90, 7), (44, 2, 8, 1, 220, 9), (66, 2, 6, 1, 140, 12),
+    (90, 2, 8, 1, 10, 16), (112, 2, 7, 1, 120, 20)]
+HP_LEFT = 48            # horizontal position of picture clock 0
 ISLAND = (30, 128, 118)  # left, right, top line
 FORT_X = 82
 HOUSES = (62, 100)
 
 
-def clouds(pix):
+def cloud_players():
+    """The players' bytes per pair of lines (P0, P1, P2) and the table
+    rows for TITLE_CLD.ASM."""
     rnd = random.Random(5)
-    for (y, cx, ln) in CLOUDS:
-        th = 4 + ln // 20
-        a0 = cx - ln // 2
-        ph = rnd.random() * 6
-        for x in range(max(a0, 0), min(a0 + ln, W)):
-            t = (x - a0) / ln
-            ht = int(round(th * (math.sin(math.pi * t) ** 0.6)
-                           * (0.75 + 0.25 * math.sin(x * 0.45 + ph))))
-            for k in range(ht):
-                yy = y + th - k
-                edge = min(x - a0, a0 + ln - x)
-                if (edge < 5 or k == ht - 1) and (x + yy) % 2:
-                    continue                    # dithered ends and top
-                pix[yy][x] = 1
-            if ht > 0 and x % 7 != 3 and y + th + 1 >= SC_Y:
-                pix[y + th + 1][x] = 2          # lit underside (not in LOGO)
-        for _ in range(rnd.randint(2, 3)):     # wisps
-            bx = cx + rnd.randint(-ln, ln)
-            for x in range(max(0, bx), min(W, bx + rnd.randint(4, 11))):
-                if x % 2 == 0 or rnd.random() < 0.5:
-                    pix[y + th][x] = 1
+    pl = [[0] * NPAIR for _ in range(3)]
+    rows = []
+    last = [-9, -9]
+    for (y, h, ln, lane, x0, per) in CLOUDS:
+        assert y % 2 == 0 and y + 2 * h <= HOR
+        a, b = y // 2, y // 2 + h - 1
+        assert a - 2 > last[lane], "clouds too close in lane %d" % lane
+        last[lane] = b
+        wid = 16 if lane == 0 else 8
+        assert ln <= wid
+        widths = {2: [ln, ln - 3], 3: [ln - 5, ln, ln - 3]}[h]
+        offs = {2: [0, 2], 3: [3, 0, 1]}[h]
+        for r in range(h):
+            w, o = max(2, widths[r]), offs[r] + rnd.randint(0, 1)
+            w = min(w, wid - o)
+            bits = sum(1 << (wid - 1 - (o + k)) for k in range(w))
+            if lane == 0:
+                pl[0][a + r] = bits >> 8
+                pl[1][a + r] = bits & 0xFF
+            else:
+                pl[2][a + r] = bits
+        rows.append((a - 2, b + 1, lane, x0, per))
+    return pl, rows
 
 
 def island(pix):
@@ -248,7 +269,6 @@ def island(pix):
 
 def picture():
     pix = [[0] * W for _ in range(H)]
-    clouds(pix)
     island(pix)
     logo = logo_pixels()
     for (x, r) in logo:                         # shadow first, then gold
@@ -283,6 +303,9 @@ TG_SUN, TG_NSUN = 14, 4     # gold glitter codes
 TG_BRT, TG_NBRT = 18, 2     # bright ones: print with bit 7 set (PF3)
 TG_SKY, TG_NSKY = 20, 2     # dim sky reflections (PF0)
 SC_FIRST = 22
+# per water row, TITLE.ASM's TG_N / TG_W: (gold glints, columns wide)
+# close under the sun, then further out
+GL_PASS = [[(3, 3), (1, 7)], [(2, 3), (2, 7)], [(2, 5), (2, 9)]]
 
 LETTERS = {   # 5 x 7 capitals for REBUILD (mode 7)
     "R": ["####.", "#...#", "#...#", "####.", "#.#..", "#..#.", "#...#"],
@@ -426,6 +449,9 @@ def main():
     prs, reb = small_row(PRS_TXT, PRS_COL), text_row(REB_TXT)
     size = len(logo) + len(screen) + len(prs) + len(reb) + 3 * NPAIR
     assert size <= GFXMAX, "title graphics: %d bytes, room for %d" % (size, GFXMAX)
+    if "--clouds" in sys.argv:
+        with open(sys.argv[sys.argv.index("--clouds") + 1], "w") as f:
+            clouds_asm(f)
     if "--preview" in sys.argv:
         preview(sys.argv[sys.argv.index("--preview") + 1], pix, kept, screen, bk, p0, p1)
     out = sys.stdout
@@ -455,9 +481,30 @@ def main():
     emit_bytes(out, "TTP1", p1)
     w("\n        *= TTFONTA        ; 1K aligned (MEM_A800.ASM / MEM_5200.ASM)\n")
     emit_bytes(out, "TTFONT", font(kept))
-    w("\n; preview of the logo and scene: . sky  - cloud  = lit  # gold/island\n")
+    w("\n; preview of the logo and scene: . sky  = gold  # shadow/island\n")
     for y in list(range(TOP, SC_Y, 2)) + list(range(SC_Y, HOR)):
         w(";  " + "".join(".-=#"[v] for v in pix[y]) + "\n")
+
+
+def clouds_asm(out):
+    pl, rows = cloud_players()
+    used = [i for i in range(NPAIR) if pl[0][i] | pl[1][i] | pl[2][i]]
+    p0, p1 = used[0], used[-1] + 1
+    w = out.write
+    w("; =====================================================================\n")
+    w(";  TITLE_CLD.ASM -- the title screen's clouds (T-REL-4, D70), generated\n")
+    w(";  by tools/mktitle.py; do not edit.  Constant tables, with TITLE.ASM.\n")
+    w("; =====================================================================\n\n")
+    w("TC_NUM  =  %d           ; clouds\n" % len(rows))
+    w("TC_PAIR =  %d           ; the first pair of lines with a cloud\n" % p0)
+    w("TC_NPR  =  %d           ; pairs of lines in TCP0 / TCP1 / TCP2\n\n" % (p1 - p0))
+    w("; per cloud: the first and last+1 pair of lines whose TT_DLI entry is its\n")
+    w("; position, lane (0: P0 + P1, 1: P2), start position, frames a clock - 1\n")
+    for lab, k in (("TC_A", 0), ("TC_E", 1), ("TC_L", 2), ("TC_X0", 3), ("TC_PER", 4)):
+        emit_bytes(out, lab, [r[k] for r in rows], 20)
+    w("; the players, quadruple width, from pair TC_PAIR (P/M line 16+TC_PAIR)\n")
+    for k in range(3):
+        emit_bytes(out, "TCP%d" % k, pl[k][p0:p1], 16)
 
 
 # ---------------------------------------------------------------------
@@ -477,21 +524,36 @@ def atari_rgb(c):
 def preview(fn, pix, kept, screen, bk, p0, p1):
     from PIL import Image
     f = font(kept)
+    pl, rows = cloud_players()
     img = Image.new("RGB", (168, 240), atari_rgb(SKY[0][1]))
     put = img.putpixel
     rnd = random.Random(1)
     water = [0] * (40 * WT_ROWS)              # one frame of glitter, as
     for r in range(WT_ROWS):                   # TITLE.ASM makes it
-        hw = r + 1
-        for _ in range(r + 2):
-            c = rnd.randint(TG_SUN, TG_SUN + TG_NSUN - 1)
-            water[40 * r + SUN_COL - hw + rnd.randint(0, 2 * hw)] = c
-        water[40 * r + SUN_COL - hw + rnd.randint(0, 2 * hw)] = 0x80 | rnd.choice((TG_BRT, TG_BRT + 1))
+        for (n, wd) in GL_PASS[r]:             # gold: thick near the sun,
+            for _ in range(n):                 # sparser further out
+                c = rnd.randint(TG_SUN, TG_SUN + TG_NSUN - 1)
+                water[40 * r + SUN_COL - wd // 2 + rnd.randint(0, wd - 1)] = c
+        wd = GL_PASS[r][0][1]
+        water[40 * r + SUN_COL - wd // 2 + rnd.randint(0, wd - 1)] = 0x80 | rnd.choice((TG_BRT, TG_BRT + 1))
         for _ in range(2):
             water[40 * r + rnd.randint(0, 39)] = rnd.choice((TG_SKY, TG_SKY + 1))
     for y in range(H):
         cols = [bk[y // 2], p0[y // 2], p1[y // 2], 0x00, 0x1E]
         rgb = [atari_rgb(c) for c in cols]
+        cl = [None] * W                        # the clouds, behind the
+        if y < HOR:                            # playfield
+            for (cy, h, ln, lane, x0, per), (fa, fe, _, _, _) in zip(CLOUDS, rows):
+                if cy <= y < cy + 2 * h:
+                    k = (y - cy) // 2 + cy // 2
+                    bits = (pl[0][k] << 8 | pl[1][k]) if lane == 0 else pl[2][k]
+                    n = 16 if lane == 0 else 8
+                    for b in range(n):
+                        if bits & (1 << (n - 1 - b)):
+                            for d in range(4):
+                                xx = x0 - HP_LEFT + 4 * b + d
+                                if 0 <= xx < W:
+                                    cl[xx] = atari_rgb(p0[y // 2])
         for x in range(W):
             v = 0
             if y < SC_Y:
@@ -511,7 +573,7 @@ def preview(fn, pix, kept, screen, bk, p0, p1):
             else:
                 ch = small_row(PRS_TXT, PRS_COL)[x // 4]
                 v = (f[8 * ch + (y - PR_Y)] >> (6 - 2 * (x % 4))) & 3
-            put((x + 4, y + 24), rgb[v])
+            put((x + 4, y + 24), cl[x] if v == 0 and cl[x] else rgb[v])
         top = HOR - 12                         # the sun: player 3, over
         if top <= y < HOR:                     # the playfield, cut at the
             row = SUNSHAPE[(y - top) // 2]     # horizon

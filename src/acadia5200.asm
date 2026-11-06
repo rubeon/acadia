@@ -70,7 +70,8 @@ START
         .INCLUDE "screens.asm"
         .INCLUDE "news.asm"
         .INCLUDE "setup.asm"
-        .INCLUDE "title.asm"
+        .INCLUDE "title_cld.asm"        ; the title's clouds, first:
+        .INCLUDE "title.asm"            ; TITLE.ASM uses their equates
         .INCLUDE "demo.asm"
         .INCLUDE "shade.asm"
         .INCLUDE "maps.asm"
