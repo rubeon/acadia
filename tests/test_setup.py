@@ -112,7 +112,7 @@ if prompt.strip() != "PRESS START OR FIRE TO BEGIN":
     fail("prompt %r" % prompt)
 check([10, 30, 2, 2], "defaults")
 for _ in range(20):
-    frame()
+    frame(fire0=True)                     # held: nothing begins
 if m.byte("TT_CX") == cx0:
     fail("the clouds do not drift")
 if "ROUNDS" not in row(0) or row(0)[3] != ">" or row(0)[33:36] != " 10":
@@ -257,6 +257,8 @@ if m.byte("SDLSTL") | m.byte("SDLSTH") << 8 != m.addr("DLIST"):
     fail("map display list not back")
 if any(m.mem[pmc:pmc + ncp]):
     fail("clouds still in P/M memory in the game")
+if [m.byte("SIZEP%d" % k) for k in range(3)] != [0, 0, 1] or m.byte("GPRIOR") != 0x11:
+    fail("player sizes or priority not the game's")
 line1 = "".join(chr(m.byte("STATUS1", i) + 0x20) for i in range(40))
 if "TURNS  3  TIME 120" not in line1:
     fail("status line %r" % line1)

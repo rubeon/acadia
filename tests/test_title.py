@@ -236,11 +236,14 @@ for c in range(nc):
 frame()                                   # armed
 frame(fire0=True)
 p3 = m.addr("TT_P3")
-if m.byte("GSTATE") != GS_SETUP or any(m.mem[pm0 + i] for i in range(4 * plen)):
-    fail("leaving the title: state %d, sun or clouds left in the players"
+# the setup screen keeps only the clouds within its logo rows (D71)
+pmc, ncp = m.addr("TT_PMC") - m.addr("SU_SKY0"), m.addr("SU_NCP")
+keep = {pmc + k * plen + i for k in range(3) for i in range(ncp)}
+if m.byte("GSTATE") != GS_SETUP or any(m.mem[pm0 + i] for i in range(4 * plen) if pm0 + i not in keep):
+    fail("leaving the title: state %d, sun or title clouds left in the players"
          % m.byte("GSTATE"))
-if [m.byte("SIZEP%d" % k) for k in range(3)] != [0, 0, 1] or m.byte("GPRIOR") != 0x11:
-    fail("leaving the title: player sizes or priority not the game's")
+if [m.byte("SIZEP%d" % k) for k in range(3)] != [3, 3, 3] or m.byte("GPRIOR") != 0x04:
+    fail("setup: the clouds' player sizes or priority not set")
 
 print("title: %d failed" % fails)
 sys.exit(1 if fails else 0)
