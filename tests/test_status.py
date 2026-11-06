@@ -49,7 +49,7 @@ for sh, msk in ((0, 0xFF), (0x30, 0xF6)):
     m.poke("DRKMSK", msk)
     m.poke("VDSLST", 0, 0)
     m.call("ST_VBI")
-    want = [(c ^ sh) & msk for c in (0x84, 0x80, 0x26, 0x48)]
+    want = [(c ^ sh) & msk for c in (0x00, m.byte("MAPPAL"), 0x26, 0x48)]   # D69: black, the sea
     got = [m.byte("STBK", i) for i in range(4)]
     if got != want or vdslst() != m.addr("DLI_ST"):
         fail("ST_VBI attract %02X/%02X: %r, VDSLST %04X" % (sh, msk, got, vdslst()))
