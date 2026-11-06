@@ -47,7 +47,8 @@ ST_COLS
 
 ; ---------------------------------------------------------------------
 ;  ST_VBI -- each frame (VBI_D): the two backgrounds and each line's
-;  PF1 (STBK; attract mode applied), and VDSLST back at the first DLI.
+;  PF1 (STBK; attract mode applied), and VDSLST back at the first DLI
+;  (the stats screen's CT_DLI, the title screen's TT_DLI).
 ;  Trashes A.
 ; ---------------------------------------------------------------------
 ST_VBI
@@ -69,9 +70,17 @@ ST_VBI
         STA STBK+3
         LDA CT_ON       ; the stats screen: its own DLIs (D61)
         BNE SV_CT
+        LDA GSTATE      ; the title screen: its colour kernel (D70)
+        CMP #GS_TITLE
+        BEQ SV_TT
         LDA #<DLI_ST
         STA VDSLST
         LDA #>DLI_ST
+        STA VDSLST+1
+        RTS
+SV_TT   LDA #<TT_DLI
+        STA VDSLST
+        LDA #>TT_DLI
         STA VDSLST+1
         RTS
 SV_CT   LDA #0

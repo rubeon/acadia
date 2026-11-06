@@ -13,7 +13,7 @@
 ;    DLBASE    display lists, then the island constants
 ;    MAPSRC    each map's block, then code block 2, the wakes and
 ;              stats part 2
-;    TITLEGFX  the title logo
+;    TITLEGFX  the title screen graphics (D70)
 ;    CARTHDR   the cartridge header
 ;  RAM ($0000-$3FFF) holds only reserved blocks (*= *+n): nothing is
 ;  loaded there.
@@ -70,7 +70,8 @@ START
         .INCLUDE "screens.asm"
         .INCLUDE "news.asm"
         .INCLUDE "setup.asm"
-        .INCLUDE "title.asm"
+        .INCLUDE "title_cld.asm"        ; the title's clouds, first:
+        .INCLUDE "title.asm"            ; TITLE.ASM uses their equates
         .INCLUDE "demo.asm"
         .INCLUDE "shade.asm"
         .INCLUDE "maps.asm"
@@ -80,7 +81,7 @@ START
 ROMEND                          ; must stay below TITLEGFX (MKCART.PY)
 
 ; ---------------------------------------------------------------------
-;  Title logo (ROM)
+;  Title screen graphics (ROM); its font goes to TTFONTA
 ; ---------------------------------------------------------------------
         .INCLUDE "title_gfx.asm"
 

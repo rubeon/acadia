@@ -63,7 +63,6 @@ START
         .INCLUDE "screens.asm"
         .INCLUDE "news.asm"
         .INCLUDE "setup.asm"
-        .INCLUDE "title.asm"
         .INCLUDE "demo.asm"
         .INCLUDE "shade.asm"
         .INCLUDE "maps.asm"
@@ -91,6 +90,13 @@ START
 ;  end below $BC00
 ; ---------------------------------------------------------------------
         .INCLUDE "stats2.asm"
+
+; ---------------------------------------------------------------------
+;  The title screen (D70), after stats part 2, as CODE2 is full; must
+;  also end below $BC00
+; ---------------------------------------------------------------------
+        .INCLUDE "title_cld.asm"        ; its clouds (generated), first:
+        .INCLUDE "title.asm"            ; TITLE.ASM uses their equates
 
 ; ---------------------------------------------------------------------
 ;  The pause band's font (D69), 1K aligned
