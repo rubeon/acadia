@@ -287,14 +287,14 @@ SPARKS = [[(3, 1)], [(3, 1)], [(6, 3)], []]     # dots (row, column) by phase
 # Boat wakes (D59): a steered boat leaves a wave on each plain sea
 # square it passes (TRAIL.ASM).  In rows 2-8 that is T_WAVE1 or
 # T_WAVE2.  Rows 1 and 9 are half corner rows (D55): their open sea
-# gets fixed tiles, T_SEAB1 / T_SEAB9 (PF0 in the corner half), and a
-# wave each built from characters the map already has: T_WAVE2B
+# gets fixed tiles, T_SEAB1 / T_SEAB9, and a wave each: T_WAVE2B
 # (row 1: WAVE2's bottom half) and T_WAVE1C (row 9: WAVE1's top
-# half).  Rows 0 and 10 get none: a crest on PF0 would need new
-# characters, and the first map font has no code left.
+# half).  Since D67 the corner rows' sea is COLBK too, so these are the
+# same characters as T_SEA, T_WAVE2 and T_WAVE1.  Rows 0 and 10 get
+# none: the first map font has no code left.
 WAVE_GLINTS.update({"T_WAVE2B": [(10, 1)], "T_WAVE1C": [(4, 1)]})
 WAVE_LAG.update({"T_WAVE2B": WV_PH // 2, "T_WAVE1C": 0})
-WAVE_BG = {"T_WAVE2B": "G.", "T_WAVE1C": ".G"}   # sea, top / bottom half
+WAVE_BG = {"T_WAVE2B": "..", "T_WAVE1C": ".."}   # sea, top / bottom half (D67)
 
 
 def wave_frame(name, phase):
@@ -670,8 +670,8 @@ FIXED += [("T_WRECK", "wreck of a parked boat", WRECK),
           ("T_GRASS3", "plain grass, one speck", GRASS3),
           ("T_GRASS4", "plain grass, no specks", GRASS4)]
 N_HELP = len(FIXED)            # the tiles the help font holds
-FIXED += [("T_SEAB1", "open sea, row 1 (corner rows above)", ["GGGGGGGG"] * 8 + ["........"] * 8),
-          ("T_SEAB9", "open sea, row 9 (corner rows below)", ["........"] * 8 + ["GGGGGGGG"] * 8),
+FIXED += [("T_SEAB1", "open sea, row 1 (corner rows above)", ["........"] * 16),
+          ("T_SEAB9", "open sea, row 9 (corner rows below)", ["........"] * 16),
           ("T_WAVE2B", "open sea, row 1, a boat's wake", wave_frame("T_WAVE2B", 0)),
           ("T_WAVE1C", "open sea, row 9, a boat's wake", wave_frame("T_WAVE1C", 0))]
 T = {t[0]: n for n, t in enumerate(FIXED)}
@@ -694,11 +694,11 @@ def quarters(a):
 
 
 # Rounded corners (D55): the top and bottom CORNER_CR character rows hold
-# no land.  There COLBK is the darker corner blue and the sea is drawn
-# in PF0 (light sea, set per row by VD_SHADE instead of grass), except
-# a quarter ellipse CORNER_RX colour clocks wide and the rows' height
-# tall in each corner of the map, left at COLBK.  So the dark corners
-# run into the screen border and the dark area under the map.
+# no land.  In each corner of the map a quarter ellipse CORNER_RX
+# colour clocks wide and the rows' height tall is the darker corner
+# blue, drawn in PF0 (set per row by VD_SHADE instead of grass); the
+# rest of the sea stays COLBK, the light sea, as everywhere else, so
+# the pirates (the fifth player, under PF0) show there (D67).
 CORNER_CR = (0, 1, 2, 19, 20, 21)
 CORNER_RX = 32
 
@@ -720,16 +720,15 @@ def corner_dark(x, y):
 
 def corner_art(a, r, c):
     """Art a of a square in row r, column c as drawn in the corner rows:
-    its sea pixels PF0 (G), but dark (sea, COLBK) in the corners."""
+    its sea pixels in the dark corners PF0 (G), the rest as they are."""
     out = []
     for y, row in enumerate(a):
         ly = r * TH + y
         if ly // 8 not in CORNER_CR:
             out.append(row)
             continue
-        out.append("".join("." if p == "." and corner_dark(c * TW + x, ly)
-                           else "G" if p == "." else p
-                           for x, p in enumerate(row)))
+        out.append("".join("G" if p == "." and corner_dark(c * TW + x, ly)
+                           else p for x, p in enumerate(row)))
     return out
 
 
@@ -883,16 +882,10 @@ def build_pair(mapname, outline, seeds, font_addr, generic=False, base=None, cor
         for mask in range(15):
             gentile.append(len(tiles))
             tiles.append((None, "generic %d, row 5" % mask, generic_art(mask)))
-    # parked boats and wrecks in the corner rows: their sea in PF0 (the
-    # corner itself is not cut out under them); MAP_PUT picks these
-    # through BNDVAR
+    # parked boats and wrecks in the corner rows: until D67 their sea
+    # was PF0 there, drawn as variants that MAP_PUT picked through
+    # BNDVAR; now the usual tiles do (BNDVAR all 0, kept for the layout)
     bndvar = [0] * ROWS
-    for r in BANDS:
-        bndvar[r] = len(tiles)
-        for name in ("T_PTBOAT", "T_FISHBOAT", "T_WRECK"):
-            a = [row.replace(".", "G") if (r * TH + y) // 8 in CORNER_CR else row
-                 for y, row in enumerate(FIXED[T[name]][2])]
-            tiles.append((None, "%s, row %d" % (name, r), a))
     # characters: fixed ones (deduplicated) get the same codes in every
     # font; coast ones go into the font of their character row
     fixed_code, fixed_list, anim, acode, anim_code = {}, [], [], {}, {}
@@ -1195,6 +1188,11 @@ def main():
         out.append("%-11s= %-4d ; %s" % (equ, n, comment))
     out.append("%-11s= %-4d ; item k (1-9) is tile T_ITEM+k-1" % ("T_ITEM", T["T_FORT"]))
     out.append("%-11s= %-4d ; fixed tiles, same character codes in every font" % ("N_FIXED", NFIX))
+    # the character all in PF0, for the wide corner rows' borders (D67)
+    pf0 = tuple([0x55] * 8)
+    codes_pf0 = {q["fixed_chars"].index(pf0) for q in ps}
+    assert len(codes_pf0) == 1, codes_pf0
+    out.append("%-11s= $%02X  ; character all PF0: the corner rows' borders" % ("CH_PF0", codes_pf0.pop()))
     out.append("")
     out.append("; Cell kinds (ISLKIND); bit 7 set = square belongs to player 1")
     for nm, v, what in (("K_SEA", K_SEA, "open sea"),

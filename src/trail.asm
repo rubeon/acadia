@@ -193,10 +193,16 @@ TL_END  STX TL_S
         LDA (ZPTR),Y    ; top left still the wake's?
         CMP TILECH,X
         BNE TE_FREE
-        TYA
-        CLC
-        ADC #MAPCOLS    ; bottom left
-        TAY
+        LDX TL_S        ; bottom left (its own address: square rows
+        LDA TLROW,X     ; 1 and 9 have a wide row, D67)
+        TAX
+        LDA ROWBLO,X
+        STA ZPTR
+        LDA ROWBHI,X
+        STA ZPTR+1
+        LDX TL_S
+        LDA TLTILE,X
+        TAX
         LDA (ZPTR),Y
         CMP TILECBL,X
         BNE TE_FREE

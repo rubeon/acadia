@@ -63,7 +63,7 @@ def gold(p):
 
 
 def chars(col, row):
-    a = m.addr("MAPSCR") + row * 80 + col * 2
+    a = (m.byte("ROWLO", row) | m.byte("ROWHI", row) << 8) + col * 2   # top character row (D67)
     return m.mem[a], m.mem[a + 1]
 
 

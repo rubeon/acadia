@@ -79,9 +79,9 @@ GN_SC   STA SCORE,X
         STA INFOK
         TAX             ; open sea on the map while MAP_LOAD works,
 GN_SEA  STA MAPSCR,X    ; not the setup screen's text in map fonts
-        STA MAPSCR+$100,X ; (22 rows x 40 = 880 bytes)
-        STA MAPSCR+$200,X
-        STA MAPSCR+$270,X
+        STA MAPSCR+$100,X ; (SCR_END - MAPSCR = 928 bytes, D67; the
+        STA MAPSCR+$200,X ; corner rows' borders are set by MAP_DRAW)
+        STA MAPSCR+$2A0,X
         INX
         BNE GN_SEA
         LDX #39         ; and blank status lines, not the setup's text

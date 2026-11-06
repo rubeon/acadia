@@ -16,7 +16,9 @@ C_SRED  =  $48          ; COLPF1: player 1 (C_CUR0, a step brighter)
 C_SWHT  =  $0C          ; COLPF2: text
 C_STURQ =  $AC          ; COLPF3: player 2 (C_CUR1), inverse characters
 C_SBK1  =  $84          ; line 1 background
-C_SBK2  =  $80          ; line 2 background, a shade darker
+C_SBK2  =  $80          ; a shade darker (the stats screen's lines)
+C_SPOP  =  C_SEA        ; line 2 (people) background: the map's dark
+                        ; corner blue, so it runs into them (D67)
 C_SDKG  =  $26          ; COLPF1 on line 1 while it shows the gold bars:
                         ; their dark gold (ST_L1; the numbers there are
                         ; white, line 2 keeps the players' colours)
@@ -52,7 +54,7 @@ ST_VBI
         EOR COLRSH
         AND DRKMSK
         STA STBK
-        LDA #C_SBK2
+        LDA #C_SPOP
         EOR COLRSH
         AND DRKMSK
         STA STBK+1

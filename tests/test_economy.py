@@ -14,7 +14,6 @@ KBCODE_2 = 0x1E                       # keyboard code of "2"
 
 m = Machine()
 m.call("VARS_INIT")
-m.call("MAP_ROWS")
 m.call("MAP_DRAW")
 m.call("MAP_INIT")
 m.call("PM_INIT")

@@ -31,13 +31,19 @@
 ;  M3 to M0 side by side, 8 pixels wide.  PIR_SHOW (every frame)
 ;  draws them in missile memory and fills HMROW, the position for
 ;  each map row, which the DLIs load (DISPLAY.ASM).  Two pirates in
-;  one map row take turns, one per frame (D14).
+;  one map row take turns, one per frame (D14).  The ship is a galleon
+;  10 lines tall, its flag and topsails in the P_TOP lines above its
+;  8 x 8 box (the box, its centre and the hits are unchanged), with the
+;  flag flying out every other P_FLAP frames (D67).
 ; =====================================================================
 
 P_SPAWN =  100          ; 1 in 100 tics: a new pirate
 P_SINK  =  20           ; attacks that sink a parked fishing boat
 P_SLOT  =  2            ; first pirate slot in the fish arrays
 PM_MSL  =  PMAREA+$180  ; missile memory
+P_H     =  10           ; lines drawn: the ship (D67)
+P_TOP   =  2            ; of them above the 8-line box
+P_FLAP  =  16           ; frames per flag frame (a power of 2)
 
 ; ---------------------------------------------------------------------
 ;  PIR_INIT -- no pirates, no attack counts (start of a game).
@@ -265,12 +271,12 @@ PIR_SHOW
         AND FACT+P_SLOT
         BEQ PW_CLR
         LDX #P_SLOT
-        JSR FW_ROWS
+        JSR PR_ROWS
         STA PS_A1       ; pirate 2: rows FW_R0..A
         LDA FW_R0
         STA PS_A0
         LDX #P_SLOT+1
-        JSR FW_ROWS     ; pirate 3: FW_R0..A
+        JSR PR_ROWS     ; pirate 3: FW_R0..A
         CMP PS_A0
         BCC PW_CLR      ; 3 ends above 2
         LDA PS_A1
@@ -293,7 +299,7 @@ PW_ONE  STX PS_I
         BEQ PW_DRAW
         TAY
         LDA #0
-        LDX #SPR_H-1
+        LDX #P_H-1
 PW_ERA  STA PM_MSL,Y
         INY
         DEX
@@ -303,20 +309,31 @@ PW_ERA  STA PM_MSL,Y
         STA FDRAWN,X
 PW_DRAW LDA PS_V-P_SLOT,X
         BEQ PW_NEXT
-        LDA FYH,X       ; P/M line: FYH - 8 + PM_MAP
-        CLC
-        ADC #PM_MAP-8
+        LDA FYH,X       ; P/M line: FYH - 8 - P_TOP + PM_MAP (above
+        CLC             ; the map, over the status bar, the missiles
+        ADC #PM_MAP-8-P_TOP ; are off screen: VBI_D)
         STA FDRAWN,X
         TAY
-        LDX #0
+        TXA             ; flag frame: FRAME AND P_FLAP, the two pirates
+        ASL A           ; 8 frames apart (slot * 8; carry clear)
+        ASL A
+        ASL A
+        ADC FRAME
+        AND #P_FLAP
+        BEQ PW_F0
+        LDA #P_H        ; the second frame, PIRSH2
+PW_F0   TAX
+        CLC
+        ADC #P_H
+        STA PS_A1       ; where the frame ends
 PW_PUT  LDA PIRSHP,X
         STA PM_MSL,Y
         INY
         INX
-        CPX #SPR_H
+        CPX PS_A1
         BNE PW_PUT
         LDX PS_I        ; its rows get its horizontal position
-        JSR FW_ROWS
+        JSR PR_ROWS
         STA PS_A1
         LDA FXH,X       ; FXH - 8 + HP_MAP: M3, the left edge
         CLC
@@ -333,6 +350,49 @@ PW_NEXT LDX PS_I
         BCS PW_ONE
         RTS
 
-; Pirate ship, 8 x 8: a flag on the mast, a sail, a hull with ports
-; (missile bits: M3 is the left 2 pixels, M0 the right 2)
-PIRSHP  .BYTE $18,$10,$1C,$1E,$1F,$10,$FF,$5A
+; PR_ROWS -- map rows pirate X's ship covers, the P_TOP lines above
+; its box included: FW_R0..A, held to 0..10.  X kept; trashes A.
+PR_ROWS JSR FW_ROWS     ; the box's rows (A = the last)
+        PHA
+        LDA FYH,X       ; first: ((FYH - P_TOP) >> 3) - 1, at least 0
+        SEC
+        SBC #P_TOP
+        BCC PR_TOP0     ; above the top of P/M line 0's row
+        LSR A
+        LSR A
+        LSR A
+        BEQ PR_SET
+        SEC
+        SBC #1
+        CMP #MAPROWS
+        BCC PR_SET
+        LDA #MAPROWS-1  ; below the map: row 10 (nothing shows there)
+        BNE PR_SET
+PR_TOP0 LDA #0
+PR_SET  STA FW_R0
+        PLA
+        RTS
+
+; Pirate galleon, 8 x 10, 2 frames (D67): a flag on the mainmast, two
+; masts of square sails, a raised stern, a hull; frame 2 has the flag
+; flying out.  (Missile bits: M3 is the left 2 pixels, M0 the right 2.)
+PIRSHP  .BYTE $18       ; ...##...
+        .BYTE $12       ; ...#..#.
+        .BYTE $3A       ; ..###.#.
+        .BYTE $3B       ; ..###.##
+        .BYTE $7B       ; .####.##
+        .BYTE $FB       ; #####.##
+        .BYTE $12       ; ...#..#.
+        .BYTE $D3       ; ##.#..##
+        .BYTE $FF       ; ########
+        .BYTE $7E       ; .######.
+PIRSH2  .BYTE $1C       ; ...###..
+        .BYTE $12       ; ...#..#.
+        .BYTE $3A       ; ..###.#.
+        .BYTE $3B       ; ..###.##
+        .BYTE $7B       ; .####.##
+        .BYTE $FB       ; #####.##
+        .BYTE $12       ; ...#..#.
+        .BYTE $D3       ; ##.#..##
+        .BYTE $FF       ; ########
+        .BYTE $7E       ; .######.

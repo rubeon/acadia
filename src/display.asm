@@ -60,7 +60,6 @@ DI_STAT LDA STATTPL,X
         DEX
         BPL DI_STAT
 
-        JSR MAP_ROWS
         JSR MAP_DRAW
         JSR PM_INIT
         JSR PAL_NORM
@@ -101,24 +100,25 @@ DLI_MAP
         PHA
         TYA
         PHA
-        LDX ROWPF0      ; map palette from RAM (VBI_D: MAPPAL, attract;
-        LDA HELPON      ; sea and grass shaded per row, D51)
-        BEQ DM_PF0
-        LDX MAPCOL+1    ; help: grass, not row 0's sea (D55)
-DM_PF0  LDA ROWBK
-        LDY MAPCOL+2
-        STA WSYNC
-        STA COLBK
-        STX COLPF0
-        STY COLPF1
+        LDA HELPON
+        BNE DM_HPRE
+        LDA #DMA_W      ; the map: rows 0-2 in a wide playfield, so the
+        LDX ROWFONT     ; dark corners reach the screen's edge (D67);
+        LDY ROWPF0      ; first, before row 0's DMA starts; its font
+        STA WSYNC       ; and PF0 (the border) next
+        STA DMACTL
+        STX CHBASE
+        STY COLPF0
+        LDA ROWBK       ; map palette from RAM (VBI_D: MAPPAL, attract;
+        STA COLBK       ; sea and grass shaded per row, D51)
+DM_COLS LDA MAPCOL+2
+        STA COLPF1
         LDA MAPCOL+3
         STA COLPF2
         LDA MAPCOL+4
         STA COLPF3
         LDA HELPON
         BNE DM_HELP
-        LDA ROWFONT     ; font for map row 0
-        STA CHBASE
         LDA HP3ROW      ; player 3 (fish) position for row 0
         STA HPOSP3
         LDA HP2ROW      ; player 2 (weather) position and colour
@@ -135,6 +135,8 @@ DM_ROWS         LDA #1
         STA DL_NPF
         LDA ROWFONT+1
         STA DL_NFN
+        LDA ROWDMA+1    ; and width (D67)
+        STA DL_NDM
         LDA #<DLI_ROW   ; the rest of this frame's DLIs are map rows
         STA VDSLST
         LDA #>DLI_ROW
@@ -145,9 +147,15 @@ DM_ROWS         LDA #1
         TAX
         PLA
         RTI
-DM_HELP LDA #>HLPFONT     ; help screen (HELP.ASM): its font, no fish;
-        STA CHBASE      ; HDLIST has no row DLIs
-        LDA #0
+DM_HPRE LDA #>HLPFONT   ; help screen (HELP.ASM): its font, grass, not
+        LDX MAPCOL+1    ; row 0's corner sea (D55), and the darker sea
+        LDY MAPCOL      ; behind it; normal width
+        STA WSYNC
+        STA CHBASE
+        STX COLPF0
+        STY COLBK
+        JMP DM_COLS
+DM_HELP LDA #0          ; no fish (HDLIST has no row DLIs)
         STA HPOSP3
         STA HPOSP2      ; no weather either
         JSR DLI_MSL     ; nor pirates
@@ -192,23 +200,29 @@ PALTAB  .BYTE C_SEA,C_GRASS,C_DARK,C_LIGHT,C_WHITE
 ; ---------------------------------------------------------------------
 DLI_ROW
         PHA             ; a square's second character row starts:
-        TXA             ; its font and shades, looked up by the DLI
-        PHA             ; before, so they are set before its first line
-        LDA DL_NFN      ; (a band of colour starts on such a row, D52;
-        LDX DL_NBK      ; set later, the line would keep the old ones)
-        STA WSYNC
-        STA CHBASE
-        STX COLBK
-        LDA DL_NPF
-        STA COLPF0
+        TXA             ; its width, font and shades, looked up by the
+        PHA             ; DLI before, so they are set before its first
+        LDA DL_NDM      ; line (a band of colour starts on such a row,
+        LDX DL_NPF      ; D52; set later, the line would keep the old).
+        STA WSYNC       ; Little before WSYNC: in a wide line the DLI
+        STA DMACTL      ; has few cycles (D67).  The width first,
+        STX COLPF0      ; before the row's DMA starts, then PF0 (on a
+        LDA DL_NFN      ; first line the CPU barely runs once DMA
+        STA CHBASE      ; starts: later, the line keeps the old PF0);
+        LDA DL_NBK      ; the font may come a little later, as a row's
+        STA COLBK       ; first characters are fixed ones (sea, border)
         TYA
         PHA
-        LDA #<DLI_SQ    ; the next DLI starts a square row
-        STA VDSLST
-        LDA #>DLI_SQ
-        STA VDSLST+1
-        LDX DLIROW      ; look up its fish and weather now
+DR_LOOK LDX DLIROW      ; look up its fish and weather now
         INC DLIROW
+        LDA #<DLI_SQ    ; the next DLI starts a square row, or after
+        LDY #>DLI_SQ    ; the last row is the one below the map (D67)
+        CPX #MAPCROWS-1
+        BNE DR_VEC
+        LDA #<DLI_END
+        LDY #>DLI_END
+DR_VEC  STA VDSLST
+        STY VDSLST+1
         TXA
         LSR A
         TAX
@@ -220,6 +234,21 @@ DLI_ROW
         LDA WCROW,X
         STA DL_NC
         JMP DL_RDONE
+
+; DLI_END -- the map's last line ends: below it the background is the
+; dark corner sea (row 0's PF0), as the corners run into it (D55);
+; COLBK in the map is the light sea since D67
+; Row 21 is wide, so WSYNC first (D67): with work before it, the DLI
+; missed the line's end and left one light line below the corners.
+; Nothing is drawn below the map, so the width can come after COLBK.
+DLI_END STA WSYNC
+        PHA
+        LDA ROWPF0
+        STA COLBK
+        LDA #DMA_N      ; and the normal width again (D67)
+        STA DMACTL
+        PLA
+        RTI
 
 ; DLI_SQ -- a square row's first character row starts: the fish and
 ; weather positions first, looked up by DLI_ROW, from zero page, with
@@ -249,10 +278,17 @@ DLI_SQ  PHA
         STA DL_NPF
         LDA ROWFONT+1,X
         STA DL_NFN
-        LDA #<DLI_ROW   ; the next DLI is the square's second row
+        LDA ROWDMA+1,X  ; and width (D67)
+        STA DL_NDM
+        LDA #<DLI_ROW   ; the next DLI is the square's second row;
+        STA VDSLST      ; after row 2 (the last top wide row) DLI_R3
+        LDA #>DLI_ROW   ; (row 18 has no DLI: DS_R19 below)
+        CPX #2
+        BNE DS_VEC
+        LDA #<DLI_R3
         STA VDSLST
-        LDA #>DLI_ROW
-        STA VDSLST+1
+        LDA #>DLI_R3
+DS_VEC  STA VDSLST+1
         TXA
         LSR A
         TAX             ; square row
@@ -265,10 +301,13 @@ DLI_SQ  PHA
         STA HPOSM1
         ADC #2
         STA HPOSM0
+        CPX #R19SQ      ; row 18: stay, and start row 19 (DLI_R19)
+        BEQ DS_R19
         PLA
         TAX
         PLA
         RTI
+DS_R19  JMP DLI_R19
 
 DL_RDONE PLA
         TAY
@@ -328,32 +367,26 @@ VD_NSH  JSR ST_VBI      ; status backgrounds; first DLI of the next frame
         JMP (OLDVBD)
 
 ; ---------------------------------------------------------------------
-;  MAP_ROWS -- build the screen address of each map row
-;  Trashes A, X.
-; ---------------------------------------------------------------------
-MAP_ROWS
-        LDA #<MAPSCR
-        STA ROWLO
-        LDA #>MAPSCR
-        STA ROWHI
-        LDX #0
-MR_NEXT CLC
-        LDA ROWLO,X
-        ADC #MAPCOLS*2  ; 2 character rows per square row
-        STA ROWLO+1,X
-        LDA ROWHI,X
-        ADC #0
-        STA ROWHI+1,X
-        INX
-        CPX #MAPROWS-1
-        BNE MR_NEXT
-        RTS
-
-; ---------------------------------------------------------------------
 ;  MAP_DRAW -- draw the island terrain (ISLTILE) into screen memory
 ;  Trashes A, X, Y, ZPTR, MTILE.
 ; ---------------------------------------------------------------------
 MAP_DRAW
+        LDX #WBRD-1     ; the corner rows' borders (D67)
+        LDA #CH_PF0
+MD_BRD  STA SCR_WT,X
+        STA SCR_WT+WROW-WBRD,X
+        STA SCR_WT+WROW,X
+        STA SCR_WT+WROW+WROW-WBRD,X
+        STA SCR_WT+WROW+WROW,X
+        STA SCR_WT+WROW+WROW+WROW-WBRD,X
+        STA SCR_WB,X
+        STA SCR_WB+WROW-WBRD,X
+        STA SCR_WB+WROW,X
+        STA SCR_WB+WROW+WROW-WBRD,X
+        STA SCR_WB+WROW+WROW,X
+        STA SCR_WB+WROW+WROW+WROW-WBRD,X
+        DEX
+        BPL MD_BRD
         LDA #0
         STA MROW
         STA GIDX
@@ -428,7 +461,8 @@ MAP_PUT
 MAP_PUTI
         STA MTILE
 MP_GO   JSR BND_TILE    ; boats in the corner rows: their own tiles
-        LDA ROWLO,Y
+        STY MP_R
+        LDA ROWLO,Y     ; the top character row
         STA ZPTR
         LDA ROWHI,Y
         STA ZPTR+1
@@ -444,10 +478,13 @@ MP_GO   JSR BND_TILE    ; boats in the corner rows: their own tiles
         LDA TILECTR,X   ; top right
         ORA MPINV
         STA (ZPTR),Y
-        TYA
-        CLC
-        ADC #MAPCOLS-1  ; the next character row
-        TAY
+        DEY
+        LDX MP_R        ; the bottom character row (D67: not always
+        LDA ROWBLO,X    ; MAPCOLS on)
+        STA ZPTR
+        LDA ROWBHI,X
+        STA ZPTR+1
+        LDX MTILE
         LDA TILECBL,X   ; bottom left
         ORA MPINV
         STA (ZPTR),Y
@@ -516,21 +553,34 @@ PR_OFF  SEC
 ; ---------------------------------------------------------------------
         *= DLBASE         ; one page for every display list
 DLIST
-        .BYTE DL_BLANK8,DL_BLANK8
+        .BYTE DL_BLANK6,DL_BLANK8       ; (6: room for the 2 below, D67)
         .BYTE DL_DLI+DL_BLANK8          ; DLI_ST: line 1 background
         .BYTE DL_DLI+DL_LMS+DL_MODE4    ; status line 1 (D54);
         .WORD STATUS1                   ; DLI_ST2: line 2 background
-        .BYTE DL_DLI+DL_MODE4           ; line 2; DLI_MAP at its end
-        .BYTE DL_DLI+DL_LMS+DL_MODE4    ; character row 0; each DLI
-        .WORD MAPSCR                    ; sets the next row's font
+        .BYTE DL_MODE4                  ; line 2
+        .BYTE DL_DLI+DL_BLANK2          ; 2 lines in line 2's colour:
+                                        ; DLI_MAP runs in a blank line,
+                                        ; with time to set row 0's width
+                                        ; before it starts (D67)
+        .BYTE DL_DLI+DL_LMS+DL_MODE4    ; character row 0 (wide, D67);
+        .WORD SCR_WT                     ; each DLI sets the next row's
+        .BYTE DL_DLI+DL_LMS+DL_MODE4    ; font; rows 1, 2 wide, each
+        .WORD SCR_WT+WROW               ; with its own LMS, so a row
+        .BYTE DL_DLI+DL_LMS+DL_MODE4    ; fetched at the wrong width
+        .WORD SCR_WT+WROW+WROW          ; can't shift the next
+        .BYTE DL_DLI+DL_LMS+DL_MODE4    ; row 3, normal width
+        .WORD SCR_N
         .BYTE DL_DLI+DL_MODE4,DL_DLI+DL_MODE4,DL_DLI+DL_MODE4
         .BYTE DL_DLI+DL_MODE4,DL_DLI+DL_MODE4,DL_DLI+DL_MODE4
         .BYTE DL_DLI+DL_MODE4,DL_DLI+DL_MODE4,DL_DLI+DL_MODE4
         .BYTE DL_DLI+DL_MODE4,DL_DLI+DL_MODE4,DL_DLI+DL_MODE4
-        .BYTE DL_DLI+DL_MODE4,DL_DLI+DL_MODE4,DL_DLI+DL_MODE4
-        .BYTE DL_DLI+DL_MODE4,DL_DLI+DL_MODE4,DL_DLI+DL_MODE4
-        .BYTE DL_DLI+DL_MODE4,DL_DLI+DL_MODE4
-        .BYTE DL_MODE4                  ; character row 21
+        .BYTE DL_DLI+DL_MODE4,DL_DLI+DL_MODE4,DL_MODE4 ; to row 18,
+                                        ; no DLI: DLI_SQ waits in row 18
+                                        ; and starts row 19 (DLI_R19)
+        .BYTE DL_DLI+DL_LMS+DL_MODE4    ; row 19, wide again
+        .WORD SCR_WB
+        .BYTE DL_DLI+DL_MODE4
+        .BYTE DL_DLI+DL_MODE4           ; character row 21; DLI_END below
         .BYTE DL_JVB
         .WORD DLIST
 
