@@ -303,7 +303,7 @@ def text_row(s):
     return [0 if ch == " " else 0x40 | letter_code(ch) for ch in s]  # PF1
 
 
-PRS_TXT = "     PRESS FIRE     "
+PRS_TXT = " PRESS FIRE         "
 REB_TXT = "            REBUILD "
 
 
