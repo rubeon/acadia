@@ -16,10 +16,11 @@
 ;  values stay as they were for the next game.
 ;
 ;  At the top left the title screen's "Acadia" logo (LOGO, mode D) on
-;  its sunset sky (D71): SU_DLI, on the last blank line, sets COLBK and
-;  the logo's COLPF1 every second scan line from the title's colour
-;  tables (TTBK, TTP1), then black and the options' colours.  Under the
-;  logo the five lines in mode 5 in the help font HLPFONT, yellow text
+;  its sunset sky, with the title's clouds drifting behind it (D71;
+;  SU_CLDS, TT_CLD in TITLE.ASM).  SU_DLI, on the last blank line, sets
+;  COLBK and the logo's COLPF1 every second scan line from the title's
+;  colour tables (TTBK, TTP1) and moves the cloud players as TT_DLI
+;  does, then black and the options' colours.  Under the logo the five lines in mode 5 in the help font HLPFONT, yellow text
 ;  and the current line in white (inverse characters), the chosen map's
 ;  minimap (MMAPL/MMAPH, generated), ANTIC mode A, green land on blue
 ;  sea, and a small prompt in mode 4.  Lines are built in STATUS1 with
@@ -98,7 +99,8 @@ SE_MUS
         STA SU_ARM
         STA SU_FLD
         STA SU_TYPD
-        JSR PM_HIDE     ; no cursors, fish, weather or pirates
+        JSR SU_CLDS     ; the clouds; no cursors, fish, weather or
+                        ; pirates (TITLE.ASM)
         LDA #0
         TAX
 SE_CLR  STA SU_SCR,X    ; clear the screen (500 bytes used)
@@ -139,25 +141,45 @@ SE_DL   LDA SUDLIST,X
         RTS             ; screen's display list
 
 ; ---------------------------------------------------------------------
-;  SU_DLI -- the DLI on the setup display list's last blank line: COLBK
-;  and COLPF1 (the logo's gold) for each logo row from the title's
-;  tables, then black, the minimap's sea (PF1) and the text's yellow
-;  (PF2; black in the logo, its shadow).  Keeps all registers.
+;  SU_DLI -- the DLI on the setup display list's last blank line (D71):
+;  the clouds' shade, then for each logo row COLBK and COLPF1 (the
+;  logo's gold) from the title's tables and the clouds' positions as
+;  TT_DLI sets them (lane 1 on one row, lane 0 on the next); then
+;  black, the minimap's sea (PF1) and the text's yellow (PF2; black in
+;  the logo, its shadow).  Keeps all registers.
 ; ---------------------------------------------------------------------
 SU_DLI  PHA
         TXA
         PHA
         TYA
         PHA
+        LDA TTP0+SU_SKY0 ; the clouds' shade (the sky's PF0 there)
+        STA COLPM0
+        STA COLPM1
+        STA COLPM2
         LDX #SU_SKY0
 SL_ROW  LDA TTBK,X      ; a logo row: 2 scan lines
         LDY TTP1,X
         STA WSYNC
         STA COLBK
         STY COLPF1
+        LDA TT_HB,X     ; lane 1
         STA WSYNC
+        STA HPOSP2
         INX
-        CPX #SU_SKY1
+        LDA TTBK,X      ; the next row
+        LDY TTP1,X
+        STA WSYNC
+        STA COLBK
+        STY COLPF1
+        LDA TT_HA,X     ; lane 0: P0, and P1 just right of it
+        STA WSYNC
+        STA HPOSP0
+        CLC
+        ADC #32
+        STA HPOSP1
+        INX
+        CPX #SU_SKY1    ; SU_SKY1 - SU_SKY0 must be even
         BNE SL_ROW
         LDA #C_SUBK     ; under the logo
         LDX #C_SEA
@@ -177,6 +199,7 @@ SL_ROW  LDA TTBK,X      ; a logo row: 2 scan lines
 ;  SETUP_FRAME -- each frame of the setup screen.  Trashes A, X, Y.
 ; ---------------------------------------------------------------------
 SETUP_FRAME
+        JSR TT_CLD      ; the clouds drift (TITLE.ASM)
         LDA JOY0        ; either stick, either fire button
         ORA JOY1
         STA SU_J
@@ -280,7 +303,8 @@ SG_CLMP JSR SU_CLX
         STA SDLSTL
         LDA #>DLIST
         STA SDLSTH
-        JMP GAME_START
+        JSR PM_INIT     ; no clouds: P/M memory, sizes, priority as the
+        JMP GAME_START  ; game has them
 
 ; ---------------------------------------------------------------------
 ;  SU_NEXT / SU_PREV -- move to the next / previous line, bringing the

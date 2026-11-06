@@ -96,6 +96,14 @@ if m.mem[sudl + 4] | m.mem[sudl + 5] << 8 != m.addr("LOGO") + 40:
     fail("logo not shown")
 if m.byte("CHBAS") != m.addr("HLPFONT") >> 8 or m.byte("COLOR4") != m.byte("TTBK"):
     fail("not the help font under the title's sky")
+# the title's clouds within the logo rows, SU_SKY0 P/M lines higher (D71)
+pmc = m.addr("TT_PMC") - m.addr("SU_SKY0")
+ncp = m.addr("SU_NCP")
+for pl, shp in enumerate(("TCP0", "TCP1", "TCP2")):
+    base = pmc + pl * m.addr("PM_LEN")
+    if m.mem[base:base + ncp] != m.mem[m.addr(shp):m.addr(shp) + ncp] or m.mem[base + ncp]:
+        fail("cloud shapes in player %d" % pl)
+cx0 = m.byte("TT_CX")
 if any(m.mem[m.addr("MAPSCR"):m.addr("MAPSCR") + 40]):
     fail("first line not empty (no GAME SETUP under the logo)")
 prompt = "".join(chr(c & 0x7F) if c else " "
@@ -103,6 +111,10 @@ prompt = "".join(chr(c & 0x7F) if c else " "
 if prompt.strip() != "PRESS START OR FIRE TO BEGIN":
     fail("prompt %r" % prompt)
 check([10, 30, 2, 2], "defaults")
+for _ in range(20):
+    frame()
+if m.byte("TT_CX") == cx0:
+    fail("the clouds do not drift")
 if "ROUNDS" not in row(0) or row(0)[3] != ">" or row(0)[33:36] != " 10":
     fail("rounds line %r" % row(0))
 if white(0) != {1} or white(1) != {0}:
@@ -243,6 +255,8 @@ if (m.byte("NUMTRN"), m.byte("TRNLEN"), m.byte("REMSEC")) != (3, 120, 120):
     fail("game settings %r" % [m.byte("NUMTRN"), m.byte("TRNLEN"), m.byte("REMSEC")])
 if m.byte("SDLSTL") | m.byte("SDLSTH") << 8 != m.addr("DLIST"):
     fail("map display list not back")
+if any(m.mem[pmc:pmc + ncp]):
+    fail("clouds still in P/M memory in the game")
 line1 = "".join(chr(m.byte("STATUS1", i) + 0x20) for i in range(40))
 if "TURNS  3  TIME 120" not in line1:
     fail("status line %r" % line1)
