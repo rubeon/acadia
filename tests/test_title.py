@@ -180,7 +180,7 @@ for touch in ({"fire0": True}, {"console": START}, {"kb": 0x21}, {"stick": 1}):
         fail("%r held went on from the title" % touch)
 
 # PRESS FIRE shows after 10 s with nothing touched, not before; a touch
-# starts the count again; the sun sinks meanwhile
+# starts the count again; the sun stays where it is
 m.poke("PAL", 0x0F)                       # NTSC: 60 frames a second
 boot()
 prs, sun0 = m.addr("TT_PRSO"), m.byte("TT_SUN")
@@ -196,8 +196,8 @@ for i in range(2 * 60):
 shown = [m.byte("MAPSCR", prs + i) for i in range(20)]
 if shown != [m.byte("TTPRS", i) for i in range(20)]:
     fail("no PRESS FIRE after 10 idle seconds: %r" % shown)
-if m.byte("TT_SUN") <= sun0:
-    fail("the sun did not sink: %d" % m.byte("TT_SUN"))
+if m.byte("TT_SUN") != sun0:
+    fail("the sun moved: %d, was %d" % (m.byte("TT_SUN"), sun0))
 for i in range(4):                        # the glitter changes
     frame()
 before = [m.byte("MAPSCR", i) for i in range(prs)]

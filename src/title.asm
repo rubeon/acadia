@@ -12,8 +12,8 @@
 ;  A DLI on the last blank line runs TT_DLI, which sets COLBK, COLPF0
 ;  and COLPF1 every second scan line for the whole picture; ST_VBI
 ;  (STATUS.ASM) points VDSLST at it while GSTATE is GS_TITLE.  Each
-;  frame TT_ANIM sinks the sun a little (one P/M line every 256
-;  frames), scatters new glitter on the water every TT_GRT frames and,
+;  frame TT_ANIM scatters new glitter on one row of the water every
+;  TT_GRT frames (the rows in turn; the sun stays put, Rube) and,
 ;  after TT_PSEC seconds with nothing touched, shows PRESS FIRE.
 ;
 ;  The title tune plays.  Fire, START or any key, once everything has
@@ -45,13 +45,13 @@ TG_NSKY =  2
 TT_SCR  =  MAPSCR       ; water: TT_WROWS mode 4 rows of 40, then the
 TT_PRSO =  40*TT_WROWS  ; mode 6 prompt row (20) at this offset
 TT_PSEC =  10           ; idle seconds before PRESS FIRE shows
-TT_GRT  =  6            ; frames between glitter patterns
+TT_GRT  =  12           ; frames between glitter changes (one row)
 TT_SUNX =  HP_MAP+136   ; the sun's left edge (P/M): its centre is
                         ; colour clock 140, MKTITLE.PY's SUN_X
 TT_HPM  =  [32+TT_HORL]/2 ; the horizon's double-line P/M line (the
                         ; picture starts at scan line 32)
-TT_SUN0 =  TT_HPM-6     ; the sun's first P/M line at the start: 12 of
-                        ; its 16 scan lines above the horizon
+TT_SUN0 =  TT_HPM-6     ; the sun's first P/M line: 12 of its 16 scan
+                        ; lines above the horizon (it stays there)
 TT_P3   =  PM_P0+[3*PM_LEN] ; player 3's memory: the sun
 C_SUN   =  $1E          ; the sun (COLPM3, set by TT_DLI)
 C_TBRT  =  $1E          ; the bright glitter (COLPF3)
@@ -68,8 +68,9 @@ TITLE_ENTER
         STA TI_ARM
         STA TI_SEC
         STA TT_PRS      ; PRESS FIRE not shown yet
-        STA TT_SFC      ; the sun sinks 256 frames from now
-        STA TT_GFC      ; glitter at the first frame
+        STA TT_GR       ; glitter: row 0 changes first
+        LDA #TT_GRT-1
+        STA TT_GFC
         JSR PM_HIDE     ; no cursors, fish, weather or pirates
         JSR TIC_SYNC    ; idle time counts from now
         LDA #0          ; the water and prompt rows empty
@@ -142,33 +143,32 @@ TF_ARMED
 
 ; ---------------------------------------------------------------------
 ;  TT_ANIM -- each frame: PRESS FIRE once TI_SEC reaches TT_PSEC (it
-;  stays up), the sun one P/M line lower every 256 frames until it has
-;  set, new glitter every TT_GRT frames.  Trashes A, X, Y.
+;  stays up); every TT_GRT frames new glitter on the next water row.
+;  Trashes A, X, Y.
 ; ---------------------------------------------------------------------
 TT_ANIM
         LDA TT_PRS
-        BNE TA_SUN
+        BNE TA_GL
         LDA TI_SEC
         CMP #TT_PSEC
-        BCC TA_SUN
+        BCC TA_GL
         INC TT_PRS
         LDX #19
 TA_PRS  LDA TTPRS,X
         STA TT_SCR+TT_PRSO,X
         DEX
         BPL TA_PRS
-TA_SUN  DEC TT_SFC
-        BNE TA_GL
-        LDA TT_SUN
-        CMP #TT_HPM
-        BCS TA_GL       ; set already
-        INC TT_SUN
-        JSR TT_SUND
 TA_GL   DEC TT_GFC
         BPL TA_DONE
         LDA #TT_GRT-1
         STA TT_GFC
-        JMP TT_GLIT
+        LDY TT_GR       ; the next row, round and round
+        INY
+        CPY #TT_WROWS
+        BCC TA_ROW
+        LDY #0
+TA_ROW  STY TT_GR
+        JMP TT_GROW
 TA_DONE RTS
 
 ; ---------------------------------------------------------------------
@@ -204,20 +204,33 @@ TL_CLR  STA TT_P3,X
         RTS
 
 ; ---------------------------------------------------------------------
-;  TT_GLIT -- new glitter on the water: in each of the TT_WROWS rows,
-;  TG_N gold glints (TG_SUN...) and one bright one (TG_BRT..., PF3)
-;  within TG_W columns under the sun, widening down the rows, and two
-;  dim reflections of the sky (TG_SKY...) anywhere.  Trashes A, X, Y,
-;  TT_N.
+;  TT_GLIT -- glitter on every water row (TT_GROW for each).
+;  Trashes A, X, Y, TT_N.
 ; ---------------------------------------------------------------------
 TT_GLIT
+        LDY #0
+TG_ALL  JSR TT_GROW
+        INY
+        CPY #TT_WROWS
+        BNE TG_ALL
+        RTS
+
+; ---------------------------------------------------------------------
+;  TT_GROW -- new glitter on water row Y: TG_N gold glints
+;  (TG_SUN...) and one bright one (TG_BRT..., PF3) within TG_W columns
+;  under the sun, widening down the rows, and one dim reflection of the
+;  sky (TG_SKY...) anywhere.  Keeps Y; trashes A, X, TT_N.
+; ---------------------------------------------------------------------
+TT_GROW
+        LDA #40         ; the row empty
+        STA TT_N
+        LDX TG_R0,Y
         LDA #0
-        LDX #40*TT_WROWS
-TG_CLR  DEX
-        STA TT_SCR,X
+TG_CLR  STA TT_SCR,X
+        INX
+        DEC TT_N
         BNE TG_CLR
-        LDY #0          ; Y: the row
-TG_ROW  LDA TG_N,Y
+        LDA TG_N,Y
         STA TT_N
 TG_GOLD LDA TG_W,Y      ; a gold glint under the sun
         JSR RAND_N
@@ -241,9 +254,7 @@ TG_GOLD LDA TG_W,Y      ; a gold glint under the sun
         CLC
         ADC #TG_BRT+$80 ; inverse: its 11 pixels are PF3
         STA TT_SCR,X
-        LDA #2          ; two reflections of the sky, anywhere
-        STA TT_N
-TG_SKYL LDA #40
+        LDA #40         ; a reflection of the sky, anywhere
         JSR RAND_N
         CLC
         ADC TG_R0,Y
@@ -253,15 +264,10 @@ TG_SKYL LDA #40
         CLC
         ADC #TG_SKY
         STA TT_SCR,X
-        DEC TT_N
-        BNE TG_SKYL
-        INY
-        CPY #TT_WROWS
-        BNE TG_ROW
         RTS
 
 ; per water row (TT_WROWS = 3): gold glints, columns wide, first column
-TG_N    .BYTE 2,3,4
+TG_N    .BYTE 1,2,3
 TG_W    .BYTE 3,5,7
 TG_X0   .BYTE TT_SCOL-1,40+TT_SCOL-2,80+TT_SCOL-3
 TG_R0   .BYTE 0,40,80
