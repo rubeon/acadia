@@ -54,8 +54,8 @@ ST_VBI
         EOR COLRSH
         AND DRKMSK
         STA STBK
-        LDA #C_SPOP
-        EOR COLRSH
+        LDA MAPPAL      ; C_SPOP: the map's sea, so it dims with the
+        EOR COLRSH      ; dark corners when paused (D69)
         AND DRKMSK
         STA STBK+1
         LDA ST_L1
