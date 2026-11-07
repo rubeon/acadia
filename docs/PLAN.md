@@ -57,7 +57,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 | T-SCR-4 | Status line 2 in play: the input debug echo replaced by each player's population and a news slot (hurricane, boat sunk, storm damage, rebels, refused keys) | R-SCR-1 | T-SCR-2 | Populations shown and kept current; each message centred, cleared after 3 s, never hidden by a lower priority; no refusals shown for the CPU | done (D44) |
 | T-SCR-5 | End-of-game stats screen: line charts over the rounds of each player's score, population and gold | R-SCR-7 | T-SCR-2 | Every round of a game up to 50 rounds is recorded and charted; the chart scales to the values; fire goes on to the setup screen | done (D61) |
 | T-SCR-7 | Stats screen: the GOLD page becomes INCOME, the gold each player earned in each round (D66) | R-SCR-7 | T-SCR-5 | Income recorded before the round's earned gold is cleared; the page is called INCOME | done (Claude) |
-| T-SCR-8 | Setup screen with the title's "Acadia" logo and sunset sky at the top left, the options under it (D71) | R-MODE-3 | T-SCR-6, T-REL-4 | Logo and sky as on the title; every line, the minimap and the prompt visible; 800 and 5200 builds | in progress (Claude) |
+| T-SCR-8 | Setup screen with the title's "Acadia" logo and sunset sky at the top left, the options under it (D71) | R-MODE-3 | T-SCR-6, T-REL-4 | Logo and sky as on the title; every line, the minimap and the prompt visible; 800 and 5200 builds | done |
 
 ## M4 — Moving things
 
@@ -99,6 +99,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 | T-GFX-8 | Pirates show in the corner rows (the band sea becomes COLBK); the pirate ship redrawn as a 10-line galleon with a flying flag (D67) | T-GFX-4 | done |
 | T-GFX-9 | Crop tile redrawn as two ears of wheat on tall stalks, map and help icon (D68) | T-GFX-1 | done |
 | T-GFX-10 | Pause: no map glitch on pause/resume; PAUSED in a black band across the bottom of the map, status bar kept (D69) | T-GFX-8 | done |
+| T-GFX-11 | Rebel tile redrawn as a dark banner with a gold X on a pole, map and help icon (D72) | T-GFX-1 | done |
 | T-REL-4 | Sunset title screen after Rube's reference: banded sky by DLI, hand-drawn logo at the top left, island with the fort, the sun low over the horizon, calm glitter on the water, REBUILD at the bottom right, PRESS FIRE after 10 idle seconds (D70) | T-REL-1 | done |
 | T-REL-2 | Test on MiSTer and real 800XL; PAL check | M6 | todo |
 | T-REL-3 | ATR + XEX release build, README play instructions | T-INFRA-4 | todo |
