@@ -619,10 +619,12 @@ SUS_PRM .BYTE 6
         .BYTE TX_END
 
 ; The display list, copied to SU_DL (RAM) by SETUP_ENTER: the logo's
-; rows 1-24 (rows 0 and 25 are empty), then the screen in MAPSCR
+; rows 1-24 (rows 0 and 25 are empty), then the screen in MAPSCR.  The
+; 6 blank lines stand for the title's 4 sky lines and logo row 0, so
+; row 1 sits on the same scan line as on the title (D75)
 SUDLIST
-        .BYTE DL_BLANK8,DL_BLANK8
-        .BYTE DL_DLI+DL_BLANK8          ; SU_DLI: the sky, the logo
+        .BYTE DL_BLANK8,DL_BLANK8,DL_BLANK8
+        .BYTE DL_DLI+DL_BLANK6          ; SU_DLI: the sky, the logo
         .BYTE DL_LMS+DL_MODED           ; the logo, 24 mode D lines
         .WORD LOGO+40
         .BYTE DL_MODED,DL_MODED,DL_MODED,DL_MODED,DL_MODED,DL_MODED
@@ -642,4 +644,4 @@ SUDLIST
         .BYTE DL_JVB
         .WORD SU_DL
 SU_DLE                          ; its end
-SU_DLN  =  SU_DLE-SUDLIST       ; its length (54 bytes)
+SU_DLN  =  SU_DLE-SUDLIST       ; its length (55 bytes)

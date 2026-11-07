@@ -256,9 +256,8 @@ TE_CLD  LDA TC_X0,X
 ; ---------------------------------------------------------------------
 ;  SU_CLDS -- the setup screen's clouds (D71): P/M memory empty, then
 ;  the title's clouds that lie within the logo rows (pairs of lines
-;  before SU_SKY1), SU_SKY0 P/M lines higher than on the title, since
-;  the setup screen's first logo row (entry SU_SKY0) sits where the
-;  title's entry 0 does.  SETUP_FRAME moves them with TT_CLD; SU_GO
+;  before SU_SKY1), on the same P/M lines as on the title, since the
+;  setup screen's logo sits where the title's does (D75).  SETUP_FRAME moves them with TT_CLD; SU_GO
 ;  empties P/M memory again.  Trashes A, X, Y, TT_N.
 ; ---------------------------------------------------------------------
 SU_NCP  =  SU_SKY1-TC_PAIR ; pairs of shapes copied
@@ -268,11 +267,11 @@ SU_CLDS
         JSR PM_HIDE
         LDX #SU_NCP-1
 SC_SHP  LDA TCP0,X
-        STA TT_PMC-SU_SKY0,X
+        STA TT_PMC,X
         LDA TCP1,X
-        STA TT_PMC-SU_SKY0+PM_LEN,X
+        STA TT_PMC+PM_LEN,X
         LDA TCP2,X
-        STA TT_PMC-SU_SKY0+PM_LEN+PM_LEN,X
+        STA TT_PMC+PM_LEN+PM_LEN,X
         DEX
         BPL SC_SHP
         JMP TT_CINI
