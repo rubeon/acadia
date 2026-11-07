@@ -87,6 +87,7 @@ and `tools/mkstat.py`, which still test that fonts fit).
 | `$008E-$0090` | ZP: `DL_NBK`, `DL_NPF`, `DL_NFN`, the next character row's sea, PF0 and font, from `DLI_MAP` / `DLI_SQ` to `DLI_ROW` (D55) |
 | `$0091-$00CA` | Free while BASIC is off; reserved for game ZP (allocate in `main.asm`) |
 | `$00CB-$00CE` | `ZPTR` (2), `OLDVBD` (2) — in use |
+| `$0600` | One `$00` loaded here only when the joined XEX would be a multiple of 125 bytes long, which hangs the MiSTer's disk-boot loader (Makefile, D73); free at run time |
 | `$2000-$2FFF` | Code: start-up, services, map, the stats screen's first part (`stats.asm`, D61) and display (`acadia.asm` up to `display.asm`) |
 | `$3000-$33FF` | The corner font `MFNTC` (1K aligned): fixed tiles + character rows 0-2 and 19-21, the same on every map, not animated (D65) |
 | `$3400-$37FF` | Map screen memory (`$3400-$379F` used: character rows 0-2 and 19-21 are wide lines of 48, the others 40, D67); the setup screen uses `$3400-$35F3` while it is up (D65), the stats screen `$3400-$362F` for chart lines 50-63 (`GAME_START` redraws the map) |
