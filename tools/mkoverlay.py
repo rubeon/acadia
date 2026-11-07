@@ -145,8 +145,6 @@ def icon(k, x, y, size):
                            % (f(x + c * pw), f(y + r * ph), f((e - c) * pw + 0.01),
                               f(ph + 0.01), hexc(MF["PAL"][row[c]])))
             c = e
-    out.append('<rect x="%s" y="%s" width="%s" height="%s" fill="none" stroke="%s" '
-               'stroke-width="0.15"/>' % (f(x), f(y), f(size), f(size), C_GOLD))
     return out
 
 
@@ -252,9 +250,8 @@ def key_label(key, table):
 
 
 def labels(x, y, d, table, back, front, windows):
-    """Each key's label: its number (gold) and name above a printed
-    frame round the key, the item's icon (1-9) or the key's symbol
-    inside.  windows=True cuts the keys out instead (not used: the
+    """Each key's label: its number (gold) and name above the key, and
+    printed over the key the item's icon (1-9) or the key's symbol.  windows=True cuts the keys out instead (not used: the
     originals have no holes)."""
     hw, hh = d["hole_w"], d["hole_h"]
     lab = d["row_y"][1] - d["row_y"][0] - hh      # room between rows
@@ -285,13 +282,10 @@ def labels(x, y, d, table, back, front, windows):
             front.append('<rect x="%s" y="%s" width="%s" height="%s" rx="0.8" fill="none" '
                          'stroke="#000000" stroke-width="0.25"/>'
                          % (f(cx - hw / 2), f(hy), f(hw), f(hh)))
-        else:                # a printed frame round the touch area
-            back.append('<rect x="%s" y="%s" width="%s" height="%s" rx="1.2" fill="%s" '
-                        'stroke="%s" stroke-width="0.8"/>'
-                        % (f(cx - hw / 2 + 0.4), f(hy + 0.4), f(hw - 0.8), f(hh - 0.8), C_BG2, C_GOLD))
+        else:                # printed over the key, no frame
             if item:
-                sz = min(hh - 1.4, hw - 2.0)
-                back += icon(int(key), cx - sz / 2, hy + 1.1, sz)
+                sz = min(hw, hh + 0.25 * lab)
+                back += icon(int(key), cx - sz / 2, hy + hh / 2 - sz / 2, sz)
             else:
                 back.append(text(cx, hy + hh / 2 + 0.36 * hh * 0.5 - (0.12 * hh if sub else 0),
                                  key, hh * 0.5, C_TEXT))

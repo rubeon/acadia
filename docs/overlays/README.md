@@ -1,7 +1,7 @@
 # Keypad overlays
 
 Printable overlays for the two keypads Acadia can use, with the game's
-own item icons and logo. Each key shows its number and name above a frame with the item's icon.
+own item icons and logo. Each key shows its number and name, with the item's icon printed over the key.
 Each sheet holds two overlays (one for each
 5200 controller; a spare touch pad one) and a 50 mm bar to check the
 print scale.
@@ -52,7 +52,7 @@ estimates**; measure a real overlay and set them.
 | Top tabs (w × h, from left edge) | 6.9 × 2.2 mm at 11.6 and 32.6 mm | 9.4 × 3.3 mm at 9.3 and 45.3 mm |
 | Bottom tabs | 4.3 × 2.4 mm at 6.3 and 39.9 mm | 9.5 × 3.3 mm at 5.7 and 48.7 mm |
 | Key pitch (centres) | 15.9 × 15.7 mm | 19.6 × 19.6 mm |
-| Key frame | 9.7 × 5.9 mm | 14 × 9.1 mm |
+| Key area (originals' frames) | 9.7 × 5.9 mm | 14 × 9.1 mm |
 
 To change them, edit the numbers and rebuild:
 
