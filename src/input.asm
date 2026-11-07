@@ -9,8 +9,8 @@
 ;  Pad or CX50 Keyboard Controller, 12 keys) plugged into port 2 is
 ;  found by KP_AUTO at the start of the game (D49, D58).  KP_ON then
 ;  makes its stick lines outputs that select a row of keys, JOY1 and
-;  FIRE1 stay 0, and its keys come in as KEY (player 1), * as PAUSEK
-;  and # as HELPK.  Atari computers only: the 5200 has its own keypads.
+;  FIRE1 stay 0, and its keys come in as KEY (player 1), * as HELPK
+;  and # as PAUSEK, as * is help on the 5200 (D74).  Atari computers only: the 5200 has its own keypads.
 ;
 ;    JOY0, JOY1    direction bits, 1 = pressed:
 ;                  bit 0 up, bit 1 down, bit 2 left, bit 3 right
@@ -291,9 +291,9 @@ KS_KEY  STX ATRACT      ; a key held: no attract mode
 KS_SPEC LDX #1
         CMP #KP_STAR
         BNE KS_HASH
-        STX PAUSEK      ; *: pause (D19)
+        STX HELPK       ; *: help, as on the 5200 (D34, D74)
         RTS
-KS_HASH STX HELPK       ; #: help (D34)
+KS_HASH STX PAUSEK      ; #: pause (D19, D74)
         RTS
 
 PA_DATA =  $04          ; PACTL bit 2: 1 = PORTA data, 0 = direction
