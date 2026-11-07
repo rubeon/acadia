@@ -57,6 +57,6 @@ estimates**; measure a real overlay and set them.
 To change them, edit the numbers and rebuild:
 
 ```sh
-python3 -I tools/mkoverlay.py      # the SVGs
+python3 -I tools/mkoverlay.py      # the SVGs (needs: pip install potracer)
 node tools/overlay_render.js       # PDF + PNG (needs Node + Playwright with Chromium)
 ```

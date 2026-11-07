@@ -23,7 +23,7 @@ overlays (REF_5200, REF_TP); each card's width in mm (W5200_MM, WTP_MM)
 sets the scale.  The widths are estimates: measure a real overlay, set
 them, and run this again.
 
-Run from the repo root:
+Run from the repo root (needs numpy and potracer: pip install potracer):
   python3 -I tools/mkoverlay.py
 """
 
@@ -148,23 +148,50 @@ def icon(k, x, y, size):
     return out
 
 
+LOGO_PATH = []
+
+
+def logo_path():
+    """The title screen's "Acadia" pixels traced into smooth curves
+    (potrace), in logo pixels from its top left; (path, width, height)."""
+    if not LOGO_PATH:
+        import numpy
+        import potrace          # pip install potracer
+        px = MT["logo_pixels"]()
+        x0 = min(p[0] for p in px)
+        y0 = min(p[1] for p in px)
+        w = max(p[0] for p in px) - x0 + 1
+        h = max(p[1] for p in px) - y0 + 1
+        bm = numpy.ones((h + 4, w + 4), dtype=bool)  # potrace traces the False
+        for x, y in px:                               # pixels here
+            bm[y - y0 + 2, x - x0 + 2] = False
+        d = []
+        for c in potrace.Bitmap(bm).trace(turdsize=2, alphamax=1.1, opticurve=True,
+                                          opttolerance=0.2):
+            pt = c.start_point
+            d.append("M%.3f %.3f" % (pt.x - 2, pt.y - 2))
+            for g in c.segments:
+                e = g.end_point
+                if g.is_corner:
+                    d.append("L%.3f %.3fL%.3f %.3f" % (g.c.x - 2, g.c.y - 2, e.x - 2, e.y - 2))
+                else:
+                    d.append("C%.3f %.3f %.3f %.3f %.3f %.3f"
+                             % (g.c1.x - 2, g.c1.y - 2, g.c2.x - 2, g.c2.y - 2, e.x - 2, e.y - 2))
+            d.append("Z")
+        LOGO_PATH[:] = ["".join(d), w, h]
+    return LOGO_PATH
+
+
 def logo(cx, cy, height):
-    """The title screen's "Acadia" in pale gold with its black shadow,
-    centred on cx, cy, height mm tall.  Mode D pixels are square."""
-    px = MT["logo_pixels"]()
-    x0 = min(p[0] for p in px)
-    y0 = min(p[1] for p in px)
-    w = max(p[0] for p in px) - x0 + 1
-    h = max(p[1] for p in px) - y0 + 1
+    """The title screen's "Acadia", traced smooth, in pale gold with a
+    black shadow, centred on cx, cy, height mm tall."""
+    d, w, h = logo_path()
     s = height / h
     ox, oy = cx - w * s / 2, cy - h * s / 2
     out = []
-    for dx, col in ((1, "#000000"), (0, C_GOLD)):   # shadow one pixel right/down
-        d = []
-        for (x, y) in sorted(px, key=lambda p: (p[1], p[0])):
-            d.append("M%s %sh%sv%sh-%sz" % (f(ox + (x - x0 + dx) * s), f(oy + (y - y0 + dx) * s),
-                                          f(s + 0.005), f(s + 0.005), f(s + 0.005)))
-        out.append('<path fill="%s" d="%s"/>' % (col, "".join(d)))
+    for dx, col in ((0.6, "#000000"), (0, C_GOLD)):   # shadow right and down
+        out.append('<path fill="%s" fill-rule="evenodd" transform="translate(%s %s) scale(%s)" d="%s"/>'
+                   % (col, f(ox + dx * s), f(oy + dx * s), "%.5f" % s, d))
     return out
 
 
