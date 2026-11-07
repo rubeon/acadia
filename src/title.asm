@@ -234,15 +234,11 @@ TT_LEAVE
 ; ---------------------------------------------------------------------
 ;  TT_CINI -- the clouds as players 0-2, quadruple width, behind the
 ;  playfield, each cloud at its start and its lane's table filled.
-;  Trashes A, X, Y, TT_N.
+;  TT_CSZ: only the players' width and priority.  Trashes A, X, Y,
+;  TT_N (TT_CSZ: A).
 ; ---------------------------------------------------------------------
 TT_CINI
-        LDA #TT_QUAD
-        STA SIZEP0
-        STA SIZEP1
-        STA SIZEP2
-        LDA #PRI_PF
-        STA GPRIOR
+        JSR TT_CSZ
         LDX #TC_NUM-1
 TE_CLD  LDA TC_X0,X
         STA TT_CX,X
@@ -252,13 +248,22 @@ TE_CLD  LDA TC_X0,X
         DEX
         BPL TE_CLD
         RTS
+TT_CSZ  LDA #TT_QUAD
+        STA SIZEP0
+        STA SIZEP1
+        STA SIZEP2
+        LDA #PRI_PF
+        STA GPRIOR
+        RTS
 
 ; ---------------------------------------------------------------------
 ;  SU_CLDS -- the setup screen's clouds (D71): P/M memory empty, then
 ;  the title's clouds that lie within the logo rows (pairs of lines
-;  before SU_SKY1), SU_SKY0 P/M lines higher than on the title, since
-;  the setup screen's first logo row (entry SU_SKY0) sits where the
-;  title's entry 0 does.  SETUP_FRAME moves them with TT_CLD; SU_GO
+;  before SU_SKY1), on the same P/M lines as on the title, since the
+;  setup screen's logo sits where the title's does (D75).  From the
+;  title (GSTATE still GS_TITLE) the clouds stay where they are, their
+;  positions and lane tables kept; from the stats screen, whose game
+;  drew over them, they start again (TT_CINI).  SETUP_FRAME moves them with TT_CLD; SU_GO
 ;  empties P/M memory again.  Trashes A, X, Y, TT_N.
 ; ---------------------------------------------------------------------
 SU_NCP  =  SU_SKY1-TC_PAIR ; pairs of shapes copied
@@ -268,14 +273,17 @@ SU_CLDS
         JSR PM_HIDE
         LDX #SU_NCP-1
 SC_SHP  LDA TCP0,X
-        STA TT_PMC-SU_SKY0,X
+        STA TT_PMC,X
         LDA TCP1,X
-        STA TT_PMC-SU_SKY0+PM_LEN,X
+        STA TT_PMC+PM_LEN,X
         LDA TCP2,X
-        STA TT_PMC-SU_SKY0+PM_LEN+PM_LEN,X
+        STA TT_PMC+PM_LEN+PM_LEN,X
         DEX
         BPL SC_SHP
-        JMP TT_CINI
+        LDA GSTATE
+        CMP #GS_TITLE
+        BNE TT_CINI     ; after a game: from their starts
+        JMP TT_CSZ      ; from the title: where they were (D75)
 
 ; ---------------------------------------------------------------------
 ;  TT_CLD -- each frame: every cloud whose time has come moves one
