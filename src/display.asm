@@ -592,7 +592,11 @@ HDLIST
         .BYTE DL_DLI+DL_BLANK8          ; status bar doesn't move (D75)
         .BYTE DL_DLI+DL_LMS+DL_MODE4
         .WORD STATUS1
-        .BYTE DL_DLI+DL_MODE4           ; DLI_MAP: colours, help font
+        .BYTE DL_MODE4                  ; line 2
+        .BYTE DL_DLI+DL_BLANK2          ; DLI_MAP: colours, help font,
+                                        ; in a blank line as in DLIST:
+                                        ; on line 2 itself it ran past
+                                        ; the line's end (D75)
         .BYTE DL_LMS+DL_MODE5
         .WORD HELPSCR
         .BYTE DL_MODE5,DL_MODE5,DL_MODE5,DL_MODE5,DL_MODE5
