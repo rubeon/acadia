@@ -32,6 +32,12 @@ $(XEX): $(SRC) | build
 	$(ATASM) -Isrc -obuild/ldrinit.xex src/ldrinit.asm
 	$(ATASM) -Isrc -obuild/game.xex -l$(LAB) src/acadia.asm
 	cat build/loader.xex build/ldrinit.xex build/game.xex > $@
+	@# MiSTer's disk-boot XEX loader hangs (black screen) on a file whose
+	@# size is a multiple of 125 bytes (D73): then add a 1-byte segment
+	@# at $$0600 (5 bytes: start, end, one $$00), which nothing loads at
+	@size=`wc -c < $@`; if [ `expr $$size % 125` -eq 0 ]; then \
+	  printf '\000\006\000\006\000' >> $@; \
+	  echo "$@: $$size bytes is a multiple of 125, padded by 5 (D73)"; fi
 
 # the 5200 cartridge (D62): ATasm's segments, made into a 32K image by
 # tools/mkcart.py, which also checks the fit and prints the free bytes
