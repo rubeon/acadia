@@ -588,8 +588,8 @@ DLIST
 ; Help screen (HELP.ASM): status bar, then 11 mode 5 lines in the help
 ; font; same page as DLIST, so one store to SDLSTL switches
 HDLIST
-        .BYTE DL_BLANK8,DL_BLANK8
-        .BYTE DL_DLI+DL_BLANK8          ; status bar as in DLIST
+        .BYTE DL_BLANK6,DL_BLANK8       ; 22 lines as in DLIST, so the
+        .BYTE DL_DLI+DL_BLANK8          ; status bar doesn't move (D75)
         .BYTE DL_DLI+DL_LMS+DL_MODE4
         .WORD STATUS1
         .BYTE DL_DLI+DL_MODE4           ; DLI_MAP: colours, help font
@@ -631,7 +631,7 @@ TDLIST
 ; chart (64 mode D lines from three blocks) and two text lines; a DLI
 ; for each zone's colours (CT_DLI).  Same page as DLIST, like HDLIST
 CTDLIST
-        .BYTE DL_BLANK8,DL_BLANK8
+        .BYTE DL_BLANK6,DL_BLANK8       ; 22 lines as in DLIST (D75)
         .BYTE DL_DLI+DL_BLANK8          ; DLI 0: status line 1's colours
         .BYTE DL_DLI+DL_LMS+DL_MODE4    ; status line 1; DLI 1: line 2's
         .WORD STATUS1
