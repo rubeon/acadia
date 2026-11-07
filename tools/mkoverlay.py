@@ -15,7 +15,7 @@ so it stays in step with the game.  tools/overlay_render.js turns the
 SVGs into PDF and PNG.
 
 Lines on the sheet:
-  solid black   cut line (outline, and each key window on the 5200)
+  solid black   cut line
   dotted grey   bleed edge (the art runs 1.5 mm past the cut line)
 
 The outlines, tabs and key positions are traced from scans of original
@@ -252,31 +252,34 @@ def key_label(key, table):
 
 
 def labels(x, y, d, table, back, front, windows):
-    """Each key's label above its window (5200) or frame (touch pad):
-    1-9 the item's icon and name, the others a word; a touch pad frame
-    holds the key's digit."""
+    """Each key's label: its number (gold) and name above a printed
+    frame round the key, the item's icon (1-9) or the key's symbol
+    inside.  windows=True cuts the keys out instead (not used: the
+    originals have no holes)."""
     hw, hh = d["hole_w"], d["hole_h"]
     lab = d["row_y"][1] - d["row_y"][0] - hh      # room between rows
     pitch = d["col_x"][1] - d["col_x"][0]
-    big = min(lab * 0.25, 3.2)                    # name size
+    big = min(lab * 0.22, 2.6)                    # label size
     for i, key in enumerate(KEYS):
         cx = x + d["col_x"][i % 3]
         hy = y + d["row_y"][i // 3] - hh / 2      # the window's top
-        base = hy - 0.2 * lab                     # the label's baseline
         name, sub = key_label(key, table)
-        if key.isdigit() and key != "0":
-            sz = 0.42 * lab                        # icon, then the name, centred
-            tw = min(0.68 * 0.85 * big * len(name), pitch - sz - 1.8)  # as a group
-            gx = cx - (sz + 0.6 + tw) / 2
-            back += icon(int(key), gx, base - sz + 0.4, sz)
-            fit = ' textLength="%s" lengthAdjust="spacingAndGlyphs"' % f(tw)
-            back.append(text(gx + sz + 0.6, base - sz / 2 + 0.35 * big + 0.4, name, 0.85 * big,
-                             anchor="start", extra=fit))
+        item = key.isdigit() and key != "0"
+        if windows and (item or sub):              # the icon (or sub) under the label
+            base = hy - 0.72 * lab
         else:
-            back.append(text(cx, base - (big if sub else 0.3 * big), name, big))
-            if sub:
-                back.append(text(cx, base + 0.15 * big, sub, 0.7 * big, C_GOLD, weight="normal"))
-        if windows:          # cut out; white so it shows on the print
+            base = hy - 0.25 * lab
+        s = '<tspan fill="%s">%s</tspan> %s' % (C_GOLD, key, name)
+        n = len(key) + 1 + len(name)
+        tw = min(0.66 * big * n, pitch - 1.2)
+        fit = ' textLength="%s" lengthAdjust="spacingAndGlyphs"' % f(tw) if 0.66 * big * n > tw else ""
+        back.append(text(cx, base, s, big, extra=fit))
+        if windows:
+            if item:
+                sz = 0.52 * lab
+                back += icon(int(key), cx - sz / 2, hy - 0.08 * lab - sz, sz)
+            elif sub:
+                back.append(text(cx, hy - 0.3 * lab, sub, 0.75 * big, C_GOLD, weight="normal"))
             back.append('<rect x="%s" y="%s" width="%s" height="%s" rx="0.8" fill="#ffffff"/>'
                         % (f(cx - hw / 2), f(hy), f(hw), f(hh)))
             front.append('<rect x="%s" y="%s" width="%s" height="%s" rx="0.8" fill="none" '
@@ -286,12 +289,20 @@ def labels(x, y, d, table, back, front, windows):
             back.append('<rect x="%s" y="%s" width="%s" height="%s" rx="1.2" fill="%s" '
                         'stroke="%s" stroke-width="0.8"/>'
                         % (f(cx - hw / 2 + 0.4), f(hy + 0.4), f(hw - 0.8), f(hh - 0.8), C_BG2, C_GOLD))
-            back.append(text(cx, hy + hh / 2 + 0.36 * hh * 0.55, key, hh * 0.55, C_TEXT))
+            if item:
+                sz = min(hh - 1.4, hw - 2.0)
+                back += icon(int(key), cx - sz / 2, hy + 1.1, sz)
+            else:
+                back.append(text(cx, hy + hh / 2 + 0.36 * hh * 0.5 - (0.12 * hh if sub else 0),
+                                 key, hh * 0.5, C_TEXT))
+            if sub:          # a hint under the key's symbol
+                back.append(text(cx, hy + hh - 0.9, sub, min(0.7 * big, hh * 0.2), C_GOLD,
+                                 weight="normal"))
 
 
 def overlay_5200(x, y, uid):
     back, front = card(x, y, DIM_5200, uid, None)
-    labels(x, y, DIM_5200, LABELS_5200, back, front, True)
+    labels(x, y, DIM_5200, LABELS_5200, back, front, False)
     return back + front
 
 
@@ -340,7 +351,7 @@ COMMON = [
     "Cut along the solid black lines; the art runs past them so a cut a little outside is fine.",
 ]
 NOTES_5200 = COMMON + [
-    "Cut out the 12 key windows with a craft knife, then slide the overlay into the controller.",
+    "No windows: the keys are pressed through the card. Slide it into the controller.",
     "Two copies, one for each controller. Top side button: helm a boat. Bottom: fire.",
     "START: begin / total scores. PAUSE: pause. Hold # for the score pages, press again to step.",
 ]
