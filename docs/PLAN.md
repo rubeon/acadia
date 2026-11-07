@@ -103,6 +103,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 | T-REL-4 | Sunset title screen after Rube's reference: banded sky by DLI, hand-drawn logo at the top left, island with the fort, the sun low over the horizon, calm glitter on the water, REBUILD at the bottom right, PRESS FIRE after 10 idle seconds (D70) | T-REL-1 | done |
 | T-REL-2 | Test on MiSTer and real 800XL; PAL check | M6 | todo |
 | T-REL-3 | ATR + XEX release build, README play instructions | T-INFRA-4 | todo |
+| T-DOC-1 | README for players: fresh screenshots, how to play, controls (800, touch pad, 5200), supported platforms | T-REL-4 | done |
 
 ## M8 — Atari 5200 port (later)
 
