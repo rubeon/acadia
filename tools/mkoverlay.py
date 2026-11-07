@@ -18,9 +18,10 @@ Lines on the sheet:
   solid black   cut line (outline, and each key window on the 5200)
   dotted grey   bleed edge (the art runs 1.5 mm past the cut line)
 
-The physical sizes are in DIM_5200 / DIM_TP below.  They are estimates
-(no published template was found): measure a real overlay and correct
-them there, then run this again.
+The outlines, tabs and key positions are traced from scans of original
+overlays (REF_5200, REF_TP); each card's width in mm (W5200_MM, WTP_MM)
+sets the scale.  The widths are estimates: measure a real overlay, set
+them, and run this again.
 
 Run from the repo root:
   python3 -I tools/mkoverlay.py
@@ -47,20 +48,53 @@ MT = load("mktitle.py", ["logo_pixels", "atari_rgb", "SKY", "LOGOC"])
 # ---------------------------------------------------------------------
 #  Sizes in mm (estimates: see the docstring)
 # ---------------------------------------------------------------------
-DIM_5200 = {
-    "w": 46.0, "h": 70.0,        # card, below the tab
-    "tab_w": 22.0, "tab_h": 6.0,  # pull tab, centred on the top edge
-    "head": 13.0,                # logo band at the top
-    "pitch_x": 13.5, "pitch_y": 13.5,  # key centres
-    "hole_w": 10.0, "hole_h": 7.0,     # key windows
-    "label": 6.0,                # label band above each window
+# The 5200 overlay is traced from a scan of an original (QIX, Atari,
+# 1982), in that scan's pixels with the card's top left at 0, 0; one
+# real measurement (the card's width, W5200_MM) scales it to mm.
+W5200_MM = 51.0                  # card width in mm (estimate: measure one)
+REF_5200 = {
+    "w": 296, "h": 450,          # the card, without the tabs
+    # tabs: (edge, left edge from the card's left, width, height)
+    "tabs": [("top", 67.5, 40, 13), ("top", 189.0, 40, 13),
+             ("bottom", 36.5, 25, 14), ("bottom", 231.5, 25, 14)],
+    "col_x": [56.0, 148.0, 240.0],          # window centres
+    "row_y": [88.0, 179.0, 270.0, 361.0],
+    "hole_w": 56, "hole_h": 34,             # window size
+    "radius": 6,                            # card corners
 }
-DIM_TP = {
-    "w": 64.0, "h": 83.0,
-    "tab_w": 26.0, "tab_h": 7.0,
-    "head": 13.0,
-    "pitch_x": 19.0, "pitch_y": 16.5,  # touch areas (no windows)
+
+
+# The touch pad overlay is traced the same way from a scan of a
+# keypad overlay (Codebreaker): two tabs on each edge, a title band at
+# the top, the 12 touch areas marked by frames.
+WTP_MM = 64.0                    # card width in mm (estimate: measure one)
+REF_TP = {
+    "w": 1463, "h": 2175,
+    "tabs": [("top", 213, 214, 75), ("top", 1036, 214, 75),
+             ("bottom", 131, 218, 75), ("bottom", 1114, 218, 75)],
+    "col_x": [287.0, 735.0, 1185.0],
+    "row_y": [533.5, 978.0, 1434.5, 1880.5],
+    "hole_w": 320, "hole_h": 209,           # the frames (no windows)
+    "radius": 12,
+    "band": ("top", 225),
 }
+
+
+def scaled(ref, w_mm):
+    k = w_mm / ref["w"]
+    d = {"w": w_mm, "h": ref["h"] * k, "radius": ref["radius"] * k,
+         "tabs": [(e, x * k, w * k, h * k) for e, x, w, h in ref["tabs"]],
+         "col_x": [v * k for v in ref["col_x"]], "row_y": [v * k for v in ref["row_y"]],
+         "hole_w": ref["hole_w"] * k, "hole_h": ref["hole_h"] * k}
+    if "band" in ref:
+        d["band"] = (ref["band"][0], ref["band"][1] * k)
+    else:                        # the logo band under the last row
+        d["band"] = ("bottom", d["h"] - (d["row_y"][3] + d["hole_h"] / 2) - 2.5)
+    return d
+
+
+DIM_5200 = scaled(REF_5200, W5200_MM)
+DIM_TP = scaled(REF_TP, WTP_MM)
 BLEED = 1.5
 SHEET_W, SHEET_H = 215.9, 279.4  # US Letter; A4 is 210 x 297
 
@@ -142,55 +176,72 @@ def text(x, y, s, size, col=C_TEXT, anchor="middle", weight="bold", extra=""):
             % (f(x), f(y), FONT, f(size), weight, col, anchor, extra, s))
 
 
-def outline(x, y, w, h, tw, th, grow=0.0):
-    """Card outline with a centred tab on top, rounded corners."""
-    x, y, w, h = x - grow, y - grow, w + 2 * grow, h + 2 * grow
-    tw, th = tw + 2 * grow, th
-    r, rt = 2.0 + grow, 2.0 + grow
-    tx = x + (w - tw) / 2
-    return ("M%s %s" % (f(x + r), f(y)) +
-            "H%s" % f(tx) + "V%s" % f(y - th + rt) +
-            "A%s %s 0 0 1 %s %s" % (f(rt), f(rt), f(tx + rt), f(y - th)) +
-            "H%s" % f(tx + tw - rt) +
-            "A%s %s 0 0 1 %s %s" % (f(rt), f(rt), f(tx + tw), f(y - th + rt)) +
-            "V%s" % f(y) + "H%s" % f(x + w - r) +
-            "A%s %s 0 0 1 %s %s" % (f(r), f(r), f(x + w), f(y + r)) +
-            "V%s" % f(y + h - r) +
-            "A%s %s 0 0 1 %s %s" % (f(r), f(r), f(x + w - r), f(y + h)) +
-            "H%s" % f(x + r) +
-            "A%s %s 0 0 1 %s %s" % (f(r), f(r), f(x), f(y + h - r)) +
-            "V%s" % f(y + r) +
-            "A%s %s 0 0 1 %s %s" % (f(r), f(r), f(x + r), f(y)) + "Z")
+def outline(x, y, d, grow=0.0):
+    """Card outline with its tabs, clockwise from the top left; grow
+    moves every edge out (the bleed)."""
+    w, h, r = d["w"], d["h"], d["radius"] + grow
+    x0, y0, x1, y1 = x - grow, y - grow, x + w + grow, y + h + grow
+    rt = 0.8 + grow                       # tab tip corners
+    top = sorted((t for t in d["tabs"] if t[0] == "top"), key=lambda t: t[1])
+    bot = sorted((t for t in d["tabs"] if t[0] == "bottom"), key=lambda t: -t[1])
+    p = ["M%s %s" % (f(x0 + r), f(y0))]
+    for _, tx, tw, th in top:
+        a, b, ty = x + tx - grow, x + tx + tw + grow, y0 - th
+        p.append("H%sV%sA%s %s 0 0 1 %s %sH%sA%s %s 0 0 1 %s %sV%s"
+                 % (f(a), f(ty + rt), f(rt), f(rt), f(a + rt), f(ty), f(b - rt),
+                    f(rt), f(rt), f(b), f(ty + rt), f(y0)))
+    p.append("H%sA%s %s 0 0 1 %s %sV%sA%s %s 0 0 1 %s %s"
+             % (f(x1 - r), f(r), f(r), f(x1), f(y0 + r), f(y1 - r), f(r), f(r), f(x1 - r), f(y1)))
+    for _, tx, tw, th in bot:
+        a, b, ty = x + tx + tw + grow, x + tx - grow, y1 + th
+        p.append("H%sV%sA%s %s 0 0 1 %s %sH%sA%s %s 0 0 1 %s %sV%s"
+                 % (f(a), f(ty - rt), f(rt), f(rt), f(a - rt), f(ty), f(b + rt),
+                    f(rt), f(rt), f(b), f(ty - rt), f(y1)))
+    p.append("H%sA%s %s 0 0 1 %s %sV%sA%s %s 0 0 1 %s %sZ"
+             % (f(x0 + r), f(r), f(r), f(x0), f(y1 - r), f(y0 + r), f(r), f(r), f(x0 + r), f(y0)))
+    return "".join(p)
+
+
+def tab_h(d, edge):
+    return max([t[3] for t in d["tabs"] if t[0] == edge] or [0])
 
 
 def card(x, y, d, uid, title):
-    """Background, bleed, header with the logo, tab and cut outline.
-    Returns (back, front) lists of SVG elements."""
-    back = ['<defs><linearGradient id="sky%s" x1="0" y1="0" x2="0" y2="1">' % uid]
+    """Background, bleed, the logo band (sunset sky, logo, title) and
+    the cut outline.  Returns (back, front) lists of SVG elements."""
+    edge, bh = d["band"]
     stops = [c for _, c in MT["SKY"]]
+    if edge == "bottom":                 # the sky runs up from the bottom
+        stops = stops[::-1]
+    back = ['<defs><linearGradient id="sky%s" x1="0" y1="0" x2="0" y2="1">' % uid]
     for i, c in enumerate(stops):
+        dark = (i == 0) if edge == "top" else (i == len(stops) - 1)
         back.append('<stop offset="%s" stop-color="%s"/>'
-                    % (f(i / (len(stops) - 1.0)), C_BG if i == 0 else hexc(MT["atari_rgb"](c))))
+                    % (f(i / (len(stops) - 1.0)), C_BG if dark else hexc(MT["atari_rgb"](c))))
     back.append('</linearGradient>')
     back.append('<clipPath id="clip%s"><path d="%s"/></clipPath></defs>'
-                % (uid, outline(x, y, d["w"], d["h"], d["tab_w"], d["tab_h"], BLEED)))
+                % (uid, outline(x, y, d, BLEED)))
     back.append('<g clip-path="url(#clip%s)">' % uid)
+    ty, by = tab_h(d, "top") + BLEED, tab_h(d, "bottom") + BLEED
     back.append('<rect x="%s" y="%s" width="%s" height="%s" fill="%s"/>'
-                % (f(x - BLEED), f(y - d["tab_h"] - BLEED), f(d["w"] + 2 * BLEED),
-                   f(d["h"] + d["tab_h"] + 2 * BLEED), C_BG))
+                % (f(x - BLEED), f(y - ty), f(d["w"] + 2 * BLEED), f(d["h"] + ty + by), C_BG))
+    if edge == "top":
+        gy, gh, ly = y - ty, bh + ty, y + bh
+        cy = y + bh * 0.44
+    else:
+        gy, gh, ly = y + d["h"] - bh, bh + by, y + d["h"] - bh - 0.5
+        cy = y + d["h"] - bh * 0.52
     back.append('<rect x="%s" y="%s" width="%s" height="%s" fill="url(#sky%s)"/>'
-                % (f(x - BLEED), f(y - d["tab_h"] - BLEED), f(d["w"] + 2 * BLEED),
-                   f(d["head"] + d["tab_h"] + BLEED), uid))
+                % (f(x - BLEED), f(gy), f(d["w"] + 2 * BLEED), f(gh), uid))
     back.append('<rect x="%s" y="%s" width="%s" height="0.5" fill="%s"/>'
-                % (f(x - BLEED), f(y + d["head"]), f(d["w"] + 2 * BLEED), C_GOLD))
-    back += logo(x + d["w"] / 2, y + d["head"] * 0.44, d["head"] * 0.58)
-    back.append(text(x + d["w"] / 2, y - d["tab_h"] + 3.9, title, 2.4, C_GOLD))
+                % (f(x - BLEED), f(ly), f(d["w"] + 2 * BLEED), C_GOLD))
+    back += logo(x + d["w"] / 2, cy, bh * 0.58)
+    if title and edge == "top":
+        back.append(text(x + d["w"] / 2, y - tab_h(d, "top") + 3.9, title, 2.4, C_GOLD))
     back.append('</g>')
     front = ['<path d="%s" fill="none" stroke="#9a9a9a" stroke-width="0.2" '
-             'stroke-dasharray="0.4 0.6"/>'
-             % outline(x, y, d["w"], d["h"], d["tab_w"], d["tab_h"], BLEED),
-             '<path d="%s" fill="none" stroke="#000000" stroke-width="0.25"/>'
-             % outline(x, y, d["w"], d["h"], d["tab_w"], d["tab_h"])]
+             'stroke-dasharray="0.4 0.6"/>' % outline(x, y, d, BLEED),
+             '<path d="%s" fill="none" stroke="#000000" stroke-width="0.25"/>' % outline(x, y, d)]
     return back, front
 
 
@@ -200,57 +251,53 @@ def key_label(key, table):
     return NAMES[int(key)], None
 
 
-def overlay_5200(x, y, uid):
-    d = DIM_5200
-    back, front = card(x, y, d, uid, "ATARI 5200")
-    gx = x + d["w"] / 2 - d["pitch_x"]
+def labels(x, y, d, table, back, front, windows):
+    """Each key's label above its window (5200) or frame (touch pad):
+    1-9 the item's icon and name, the others a word; a touch pad frame
+    holds the key's digit."""
+    hw, hh = d["hole_w"], d["hole_h"]
+    lab = d["row_y"][1] - d["row_y"][0] - hh      # room between rows
+    pitch = d["col_x"][1] - d["col_x"][0]
+    big = min(lab * 0.25, 3.2)                    # name size
     for i, key in enumerate(KEYS):
-        col, row = i % 3, i // 3
-        cx = gx + col * d["pitch_x"]
-        top = y + d["head"] + 1.0 + row * d["pitch_y"]
-        hy = top + d["label"]
-        name, sub = key_label(key, LABELS_5200)
+        cx = x + d["col_x"][i % 3]
+        hy = y + d["row_y"][i // 3] - hh / 2      # the window's top
+        base = hy - 0.2 * lab                     # the label's baseline
+        name, sub = key_label(key, table)
         if key.isdigit() and key != "0":
-            back += icon(int(key), cx - 6.0, top + 1.0, 3.6)
-            fit = ' textLength="7.4" lengthAdjust="spacingAndGlyphs"' if len(name) > 6 else ""
-            back.append(text(cx + 1.8, top + 3.5, name, 1.75, extra=fit))
+            sz = 0.42 * lab                        # icon, then the name, centred
+            tw = min(0.68 * 0.85 * big * len(name), pitch - sz - 1.8)  # as a group
+            gx = cx - (sz + 0.6 + tw) / 2
+            back += icon(int(key), gx, base - sz + 0.4, sz)
+            fit = ' textLength="%s" lengthAdjust="spacingAndGlyphs"' % f(tw)
+            back.append(text(gx + sz + 0.6, base - sz / 2 + 0.35 * big + 0.4, name, 0.85 * big,
+                             anchor="start", extra=fit))
         else:
-            back.append(text(cx, top + 2.9, name, 1.9))
+            back.append(text(cx, base - (big if sub else 0.3 * big), name, big))
             if sub:
-                back.append(text(cx, top + 4.9, sub, 1.4, C_GOLD, weight="normal"))
-        # the window: cut out, white so it shows on the print
-        back.append('<rect x="%s" y="%s" width="%s" height="%s" rx="0.8" fill="#ffffff"/>'
-                    % (f(cx - d["hole_w"] / 2), f(hy), f(d["hole_w"]), f(d["hole_h"])))
-        front.append('<rect x="%s" y="%s" width="%s" height="%s" rx="0.8" fill="none" '
-                     'stroke="#000000" stroke-width="0.25"/>'
-                     % (f(cx - d["hole_w"] / 2), f(hy), f(d["hole_w"]), f(d["hole_h"])))
+                back.append(text(cx, base + 0.15 * big, sub, 0.7 * big, C_GOLD, weight="normal"))
+        if windows:          # cut out; white so it shows on the print
+            back.append('<rect x="%s" y="%s" width="%s" height="%s" rx="0.8" fill="#ffffff"/>'
+                        % (f(cx - hw / 2), f(hy), f(hw), f(hh)))
+            front.append('<rect x="%s" y="%s" width="%s" height="%s" rx="0.8" fill="none" '
+                         'stroke="#000000" stroke-width="0.25"/>'
+                         % (f(cx - hw / 2), f(hy), f(hw), f(hh)))
+        else:                # a printed frame round the touch area
+            back.append('<rect x="%s" y="%s" width="%s" height="%s" rx="1.2" fill="%s" '
+                        'stroke="%s" stroke-width="0.8"/>'
+                        % (f(cx - hw / 2 + 0.4), f(hy + 0.4), f(hw - 0.8), f(hh - 0.8), C_BG2, C_GOLD))
+            back.append(text(cx, hy + hh / 2 + 0.36 * hh * 0.55, key, hh * 0.55, C_TEXT))
+
+
+def overlay_5200(x, y, uid):
+    back, front = card(x, y, DIM_5200, uid, None)
+    labels(x, y, DIM_5200, LABELS_5200, back, front, True)
     return back + front
 
 
 def overlay_tp(x, y, uid):
-    d = DIM_TP
-    back, front = card(x, y, d, uid, "VIDEO TOUCH PAD")
-    gx = x + d["w"] / 2 - 1.5 * d["pitch_x"]
-    gy = y + d["head"] + 1.5
-    for i, key in enumerate(KEYS):
-        col, row = i % 3, i // 3
-        cx0, cy0 = gx + col * d["pitch_x"], gy + row * d["pitch_y"]
-        cw, ch = d["pitch_x"], d["pitch_y"]
-        back.append('<rect x="%s" y="%s" width="%s" height="%s" rx="1.2" fill="%s" '
-                    'stroke="%s" stroke-width="0.3"/>'
-                    % (f(cx0 + 0.6), f(cy0 + 0.6), f(cw - 1.2), f(ch - 1.2), C_BG2, C_DIM))
-        back.append(text(cx0 + 2.0, cy0 + 3.8, key, 2.6, C_GOLD, anchor="start"))
-        name, sub = key_label(key, LABELS_TP)
-        cx = cx0 + cw / 2
-        if key.isdigit() and key != "0":
-            back += icon(int(key), cx - 3.0, cy0 + 2.2, 6.0)
-            back.append(text(cx, cy0 + ch - 2.6, name, 2.1))
-        else:
-            back.append(text(cx, cy0 + ch / 2 + 0.8 - (1.2 if sub else 0), name, 2.8))
-            if sub:
-                back.append(text(cx, cy0 + ch / 2 + 3.4, sub, 1.9, C_GOLD, weight="normal"))
-    back.append(text(x + d["w"] / 2, y + d["h"] - 1.1, "1 player: touch pad in port 2, stick in port 1",
-                     1.5, C_GOLD, weight="normal"))
+    back, front = card(x, y, DIM_TP, uid, None)
+    labels(x, y, DIM_TP, LABELS_TP, back, front, False)
     return back + front
 
 
@@ -261,7 +308,7 @@ def sheet(title, d, make, notes):
     gap = 14.0
     total = 2 * d["w"] + gap
     x0 = (SHEET_W - total) / 2
-    y0 = 52.0 + d["tab_h"]
+    y0 = 52.0 + tab_h(d, "top")
     out = ['<?xml version="1.0" encoding="UTF-8"?>',
            '<svg xmlns="http://www.w3.org/2000/svg" width="%smm" height="%smm" viewBox="0 0 %s %s">'
            % (f(SHEET_W), f(SHEET_H), f(SHEET_W), f(SHEET_H)),
@@ -272,7 +319,7 @@ def sheet(title, d, make, notes):
     for k in range(2):
         out += make(x0 + k * (d["w"] + gap), y0, str(k))
     # the 50 mm check bar
-    by = y0 + d["h"] + 18
+    by = y0 + d["h"] + tab_h(d, "bottom") + 16
     bx = (SHEET_W - 50) / 2
     out.append('<path d="M%s %sh50M%s %sv4M%s %sv4" stroke="#000" stroke-width="0.3"/>'
                % (f(bx), f(by), f(bx), f(by - 2), f(bx + 50), f(by - 2)))

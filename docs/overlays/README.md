@@ -37,17 +37,21 @@ fire, and START / PAUSE are the keys above the keypad.
 
 ## Sizes
 
-All sizes are in `DIM_5200` and `DIM_TP` at the top of
-[`tools/mkoverlay.py`](../../tools/mkoverlay.py). **They are estimates:**
-no published template or measurement was found, so check one against a
-real overlay before cutting a batch.
+Both outlines are traced from scans of original overlays (5200: QIX;
+keypad: Codebreaker), so the shape, the two tabs on each edge and the
+key positions keep the originals' proportions. One number sets each
+scale, the card's width: `W5200_MM` and `WTP_MM` at the top of
+[`tools/mkoverlay.py`](../../tools/mkoverlay.py). **The widths are
+estimates**; measure a real overlay and set them.
 
 | | 5200 | Touch Pad |
 |---|---|---|
-| Card (below the tab) | 46 × 70 mm | 64 × 83 mm |
-| Pull tab | 22 × 6 mm | 26 × 7 mm |
-| Key pitch (centres) | 13.5 × 13.5 mm | 19 × 16.5 mm |
-| Key window | 10 × 7 mm | none |
+| Card width (sets the scale) | 51 mm (estimate) | 64 mm (estimate) |
+| Card height, without tabs | 77.5 mm | 95.2 mm |
+| Top tabs (w × h, from left edge) | 6.9 × 2.2 mm at 11.6 and 32.6 mm | 9.4 × 3.3 mm at 9.3 and 45.3 mm |
+| Bottom tabs | 4.3 × 2.4 mm at 6.3 and 39.9 mm | 9.5 × 3.3 mm at 5.7 and 48.7 mm |
+| Key pitch (centres) | 15.9 × 15.7 mm | 19.6 × 19.6 mm |
+| Key window / frame | 9.7 × 5.9 mm window | 14 × 9.1 mm frame |
 
 To change them, edit the numbers and rebuild:
 

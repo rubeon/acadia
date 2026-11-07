@@ -8,7 +8,7 @@ const path = require('path');
 const DIR = path.join(__dirname, '..', 'docs', 'overlays');
 const W_MM = 215.9, H_MM = 279.4;
 // left overlay's box on the sheet in mm (x, y, w, h), bleed included
-const PREVIEW = { 'acadia-5200': [52.5, 49.5, 51, 81], 'acadia-touchpad': [34.5, 49.5, 69, 95] };
+const PREVIEW = { 'acadia-5200': [47.5, 49.5, 56, 88], 'acadia-touchpad': [34.5, 49.5, 69, 107] };
 
 (async () => {
   const browser = await chromium.launch();
