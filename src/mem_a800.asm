@@ -20,7 +20,7 @@ CODE2   =  $5000        ; game logic (ECONOMY.ASM ... STATUS.ASM)
 ;  Screens, display lists, P/M graphics (RAM)
 ; ---------------------------------------------------------------------
 MAPSCR  =  $3400        ; map screen memory, 928 bytes (DISPLAY.ASM, D67)
-DLBASE  =  $3800        ; display list page: DLIST, SUDLIST, HDLIST,
+DLBASE  =  $3800        ; display list page: DLIST, HDLIST,
                         ; TDLIST, CTDLIST (one page, one SDLSTL store)
 PMAREA  =  $4000        ; P/M graphics, 1K aligned (double-line)
 HELPSCR =  $4400        ; 11 x 40 help screen, after P/M memory

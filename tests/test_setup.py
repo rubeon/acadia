@@ -80,20 +80,41 @@ def check(want, what):
 m.poke("PAL", 0x0F)
 for r in ("VARS_INIT", "DISP_INIT", "TIC_INIT", "SETUP_INIT", "SETUP_ENTER"):
     m.call(r)
-if m.byte("GSTATE") != GS_SETUP or m.byte("SDLSTL") != m.addr("SUDLIST") & 0xFF:
-    fail("setup screen not shown")
-if (m.addr("SUDLIST") ^ m.addr("DLIST")) & 0xFF00:
-    fail("SUDLIST and DLIST are not in the same page")
-if m.byte("CHBAS") != m.addr("HLPFONT") >> 8 or m.byte("COLOR4") != 0:
-    fail("not the help font on black")
-title = "".join(chr(c & 0x7F) if c else " " for c in m.mem[m.addr("MAPSCR"):m.addr("MAPSCR") + 40])
-if title.strip() != "GAME SETUP":
-    fail("title %r" % title)
+# its display list: SUDLIST copied to SU_DL, past the map, inside 1K (D71)
+sudl = m.addr("SU_DL")
+dl = m.byte("SDLSTL") | m.byte("SDLSTH") << 8
+if m.byte("GSTATE") != GS_SETUP or dl != sudl:
+    fail("setup screen not shown (display list %04X)" % dl)
+n = m.addr("SU_DLE") - m.addr("SUDLIST")
+if m.mem[sudl:sudl + n] != m.mem[m.addr("SUDLIST"):m.addr("SUDLIST") + n]:
+    fail("display list not copied")
+if sudl < m.addr("MAPSCR") + 928 or (sudl ^ (sudl + n - 1)) & 0xFC00:
+    fail("display list at %04X-%04X" % (sudl, sudl + n - 1))
+if m.mem[sudl + n - 2] | m.mem[sudl + n - 1] << 8 != sudl:
+    fail("display list does not loop to itself")
+if m.mem[sudl + 4] | m.mem[sudl + 5] << 8 != m.addr("LOGO") + 40:
+    fail("logo not shown")
+if m.byte("CHBAS") != m.addr("HLPFONT") >> 8 or m.byte("COLOR4") != m.byte("TTBK"):
+    fail("not the help font under the title's sky")
+# the title's clouds within the logo rows, SU_SKY0 P/M lines higher (D71)
+pmc = m.addr("TT_PMC") - m.addr("SU_SKY0")
+ncp = m.addr("SU_NCP")
+for pl, shp in enumerate(("TCP0", "TCP1", "TCP2")):
+    base = pmc + pl * m.addr("PM_LEN")
+    if m.mem[base:base + ncp] != m.mem[m.addr(shp):m.addr(shp) + ncp] or m.mem[base + ncp]:
+        fail("cloud shapes in player %d" % pl)
+cx0 = m.byte("TT_CX")
+if any(m.mem[m.addr("MAPSCR"):m.addr("MAPSCR") + 40]):
+    fail("first line not empty (no GAME SETUP under the logo)")
 prompt = "".join(chr(c & 0x7F) if c else " "
                  for c in m.mem[m.addr("MAPSCR") + 460:m.addr("MAPSCR") + 500])
 if prompt.strip() != "PRESS START OR FIRE TO BEGIN":
     fail("prompt %r" % prompt)
 check([10, 30, 2, 2], "defaults")
+for _ in range(20):
+    frame(fire0=True)                     # held: nothing begins
+if m.byte("TT_CX") == cx0:
+    fail("the clouds do not drift")
 if "ROUNDS" not in row(0) or row(0)[3] != ">" or row(0)[33:36] != " 10":
     fail("rounds line %r" % row(0))
 if white(0) != {1} or white(1) != {0}:
@@ -232,8 +253,12 @@ if m.byte("GSTATE") != GS_PLAY:
     fail("START did not begin (state %d)" % m.byte("GSTATE"))
 if (m.byte("NUMTRN"), m.byte("TRNLEN"), m.byte("REMSEC")) != (3, 120, 120):
     fail("game settings %r" % [m.byte("NUMTRN"), m.byte("TRNLEN"), m.byte("REMSEC")])
-if m.byte("SDLSTL") != m.addr("DLIST") & 0xFF:
+if m.byte("SDLSTL") | m.byte("SDLSTH") << 8 != m.addr("DLIST"):
     fail("map display list not back")
+if any(m.mem[pmc:pmc + ncp]):
+    fail("clouds still in P/M memory in the game")
+if [m.byte("SIZEP%d" % k) for k in range(3)] != [0, 0, 1] or m.byte("GPRIOR") != 0x11:
+    fail("player sizes or priority not the game's")
 line1 = "".join(chr(m.byte("STATUS1", i) + 0x20) for i in range(40))
 if "TURNS  3  TIME 120" not in line1:
     fail("status line %r" % line1)

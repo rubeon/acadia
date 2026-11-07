@@ -128,12 +128,13 @@ for _ in range(100):
     frame()
 pos = m.byte("MZ_POS")
 frame(console=START)
-if m.byte("GSTATE") != GS_SETUP or m.byte("SDLSTL") != m.addr("SUDLIST") & 0xFF:
+if m.byte("GSTATE") != GS_SETUP or m.byte("SDLSTL") | m.byte("SDLSTH") << 8 != m.addr("SU_DL"):
     fail("START: state %d" % m.byte("GSTATE"))
 if not m.byte("MZ_ON") or m.byte("MZ_POS") < pos:
     fail("the title tune restarted: position %d, was %d" % (m.byte("MZ_POS"), pos))
-if [m.byte("COLOR1"), m.byte("COLOR2"), m.byte("COLOR4")] != [0x94, 0x1C, 0x00]:
-    fail("setup screen colours not set (D65)")
+want = [m.byte("TTP1", 3), 0x00, m.byte("TTBK")]     # the logo on its sky (D71)
+if [m.byte("COLOR1"), m.byte("COLOR2"), m.byte("COLOR4")] != want:
+    fail("setup screen colours not set (D71)")
 # left alone for 30 s the demo starts: 1 player against the CPU, player
 # 1 scripted; it goes back to the title after 15 s, setup values kept
 m.poke("PAL", 0x0F)                       # NTSC: 60 frames a second
@@ -235,11 +236,14 @@ for c in range(nc):
 frame()                                   # armed
 frame(fire0=True)
 p3 = m.addr("TT_P3")
-if m.byte("GSTATE") != GS_SETUP or any(m.mem[pm0 + i] for i in range(4 * plen)):
-    fail("leaving the title: state %d, sun or clouds left in the players"
+# the setup screen keeps only the clouds within its logo rows (D71)
+pmc, ncp = m.addr("TT_PMC") - m.addr("SU_SKY0"), m.addr("SU_NCP")
+keep = {pmc + k * plen + i for k in range(3) for i in range(ncp)}
+if m.byte("GSTATE") != GS_SETUP or any(m.mem[pm0 + i] for i in range(4 * plen) if pm0 + i not in keep):
+    fail("leaving the title: state %d, sun or title clouds left in the players"
          % m.byte("GSTATE"))
-if [m.byte("SIZEP%d" % k) for k in range(3)] != [0, 0, 1] or m.byte("GPRIOR") != 0x11:
-    fail("leaving the title: player sizes or priority not the game's")
+if [m.byte("SIZEP%d" % k) for k in range(3)] != [3, 3, 3] or m.byte("GPRIOR") != 0x04:
+    fail("setup: the clouds' player sizes or priority not set")
 
 print("title: %d failed" % fails)
 sys.exit(1 if fails else 0)

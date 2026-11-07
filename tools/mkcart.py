@@ -98,7 +98,9 @@ def main():
              sym["TITLEGFX"] - sym["ROMEND"]))
     # RAM: what MEM_5200.ASM's blocks leave between them
     ram = [(sym["PLATRAM"] + sym["PLATSZ"], sym["PMAREA"]),
-           (sym["MAPSCR"] + 22 * 40, sym["HELPSCR"]),
+           # the map (928 bytes, D67), then the setup screen's display
+           # list (SU_DL, D71)
+           (sym["MAPSCR"] + 928 + sym["SU_DLE"] - sym["SUDLIST"], sym["HELPSCR"]),
            (sym["HELPSCR"] + 11 * 40, sym["ISLDATA"]),
            (sym["AI_DN"] + 220, sym["VARBASE"]),
            (sym["VAREND"], sym["CTBM0"]),

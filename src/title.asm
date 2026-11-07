@@ -33,7 +33,7 @@
 ;  playing.  Left alone for DM_IDLE seconds, it plays the demo
 ;  (DEMO.ASM), which comes back here.
 ;
-;  Its display list, TDLIST, sits in DLIST's page like SUDLIST.  The
+;  Its display list, TDLIST, sits in DLIST's page like HDLIST.  The
 ;  water and the prompt are built in the map's screen memory (MAPSCR),
 ;  which the setup screen clears and the game redraws.
 ; =====================================================================
@@ -56,8 +56,10 @@ TG_NSKY =  2
 
 TT_SCR  =  MAPSCR       ; water: TT_WROWS mode 4 rows of 40, then the
 TT_PRSO =  40*TT_WROWS  ; small PRESS FIRE, a mode 4 row (40), here
-TT_HA   =  TT_SCR+TT_PRSO+40 ; per pair of lines: lane 0's position
-TT_HB   =  TT_HA+TT_NL  ; and lane 1's (TT_DLI)
+TT_HA   =  MAPSCR+512   ; per pair of lines: lane 0's position, past
+                        ; the setup screen's text, which shows the
+                        ; clouds too (D71)
+TT_HB   =  TT_HA+TT_NL  ; and lane 1's (TT_DLI, SU_DLI)
 TT_CX   =  TT_HB+TT_NL  ; per cloud: its position
 TT_CT   =  TT_CX+TC_NUM ; and frames until it moves on
 TT_QUAD =  3            ; SIZEP: quadruple width (the clouds)
@@ -89,15 +91,9 @@ TITLE_ENTER
         STA TT_GFC
         JSR PM_INIT     ; P/M memory empty: no cursors, fish, weather
         JSR PM_HIDE     ; or pirates
-        LDA #TT_QUAD    ; the clouds: players 0-2, wide, behind the
-        STA SIZEP0      ; playfield
-        STA SIZEP1
-        STA SIZEP2
-        LDA #PRI_PF
-        STA GPRIOR
         JSR TIC_SYNC    ; idle time counts from now
-        LDA #0          ; the water, the prompt and the clouds' tables
-        TAX             ; empty (512 bytes)
+        LDA #0          ; the water and the prompt empty (512 bytes;
+        TAX             ; the clouds' tables are past them)
 TE_CLR  STA TT_SCR,X
         STA TT_SCR+256,X
         INX
@@ -111,14 +107,7 @@ TE_CLP  LDA TCP0,X
         STA TT_PMC+PM_LEN+PM_LEN,X
         DEX
         BPL TE_CLP
-        LDX #TC_NUM-1   ; and their places
-TE_CLD  LDA TC_X0,X
-        STA TT_CX,X
-        LDA TC_PER,X
-        STA TT_CT,X
-        JSR TK_FILL
-        DEX
-        BPL TE_CLD
+        JSR TT_CINI     ; and their places
         LDA #TT_SUN0
         STA TT_SUN
         JSR TT_SUND     ; the sun in player 3
@@ -241,6 +230,52 @@ TT_SUNS .BYTE $3C,$7E,$FF,$FF,$FF,$FF,$7E,$3C   ; 8 x 16 scan lines
 ; ---------------------------------------------------------------------
 TT_LEAVE
         JMP PM_INIT
+
+; ---------------------------------------------------------------------
+;  TT_CINI -- the clouds as players 0-2, quadruple width, behind the
+;  playfield, each cloud at its start and its lane's table filled.
+;  Trashes A, X, Y, TT_N.
+; ---------------------------------------------------------------------
+TT_CINI
+        LDA #TT_QUAD
+        STA SIZEP0
+        STA SIZEP1
+        STA SIZEP2
+        LDA #PRI_PF
+        STA GPRIOR
+        LDX #TC_NUM-1
+TE_CLD  LDA TC_X0,X
+        STA TT_CX,X
+        LDA TC_PER,X
+        STA TT_CT,X
+        JSR TK_FILL
+        DEX
+        BPL TE_CLD
+        RTS
+
+; ---------------------------------------------------------------------
+;  SU_CLDS -- the setup screen's clouds (D71): P/M memory empty, then
+;  the title's clouds that lie within the logo rows (pairs of lines
+;  before SU_SKY1), SU_SKY0 P/M lines higher than on the title, since
+;  the setup screen's first logo row (entry SU_SKY0) sits where the
+;  title's entry 0 does.  SETUP_FRAME moves them with TT_CLD; SU_GO
+;  empties P/M memory again.  Trashes A, X, Y, TT_N.
+; ---------------------------------------------------------------------
+SU_NCP  =  SU_SKY1-TC_PAIR ; pairs of shapes copied
+
+SU_CLDS
+        JSR PM_INIT
+        JSR PM_HIDE
+        LDX #SU_NCP-1
+SC_SHP  LDA TCP0,X
+        STA TT_PMC-SU_SKY0,X
+        LDA TCP1,X
+        STA TT_PMC-SU_SKY0+PM_LEN,X
+        LDA TCP2,X
+        STA TT_PMC-SU_SKY0+PM_LEN+PM_LEN,X
+        DEX
+        BPL SC_SHP
+        JMP TT_CINI
 
 ; ---------------------------------------------------------------------
 ;  TT_CLD -- each frame: every cloud whose time has come moves one

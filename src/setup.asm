@@ -15,14 +15,23 @@
 ;  brought into range when the line is left or the game begins.  The
 ;  values stay as they were for the next game.
 ;
-;  The screen has its own display list (SUDLIST, next to DLIST in page
-;  $38, so switching is one store to SDLSTL): mode 5 lines in the help
-;  font HLPFONT on black, yellow text and the current line in white
-;  (inverse characters), and under the lines the chosen map's minimap
-;  (MMAPL/MMAPH, generated), ANTIC mode A, green land on blue sea.  It
-;  uses the map's screen memory, which GAME_START redraws.  Lines are
-;  built in STATUS1 with the text routines (the status bar is not shown
-;  here), then copied in the help font's codes.
+;  At the top left the title screen's "Acadia" logo (LOGO, mode D) on
+;  its sunset sky, with the title's clouds drifting behind it (D71;
+;  SU_CLDS, TT_CLD in TITLE.ASM).  SU_DLI, on the last blank line, sets
+;  COLBK and the logo's COLPF1 every second scan line from the title's
+;  colour tables (TTBK, TTP1) and moves the cloud players as TT_DLI
+;  does, then black and the options' colours.  Under the logo the five lines in mode 5 in the help font HLPFONT, yellow text
+;  and the current line in white (inverse characters), the chosen map's
+;  minimap (MMAPL/MMAPH, generated), ANTIC mode A, green land on blue
+;  sea, and a small prompt in mode 4.  Lines are built in STATUS1 with
+;  the text routines (the status bar is not shown here), then copied in
+;  the help font's codes.
+;
+;  It all lives in the map's screen memory, which GAME_START redraws,
+;  display list included: SETUP_ENTER copies SUDLIST to SU_DL, past the
+;  map's 928 bytes, so it can't cross a 1K boundary wherever the code
+;  sits (and the display list page keeps its room).  Switching to it
+;  and back stores both bytes of SDLSTL.
 ; =====================================================================
 
 GS_SETUP = 4            ; GSTATE while the setup screen is up
@@ -40,10 +49,14 @@ SU_RATE =  5            ; frames between repeats
 
 SU_LW   =  40           ; bytes in a mode 5 line
 SU_MW   =  20           ; bytes in a mode A line
-SU_SCR  =  MAPSCR       ; title line, mode 5
+SU_SCR  =  MAPSCR       ; cleared (was the title line)
 SU_TXT  =  MAPSCR+40    ; the five value lines
 SU_MINI =  MAPSCR+240   ; the minimap, MM_ROWS mode A lines
-SU_PRM  =  MAPSCR+460   ; the prompt line, mode 5
+SU_PRM  =  MAPSCR+460   ; the prompt line, mode 4
+SU_DL   =  MAPSCR+928   ; the display list, copied from SUDLIST: past
+                        ; the map (SCR_END), inside MAPSCR's 1K
+SU_SKY0 =  3            ; the logo's first row shown (1) in the title's
+SU_SKY1 =  27           ; colour tables, and its last + 1 (24 rows)
 SU_MCOL =  7            ; minimap: first byte in its mode A lines
 SU_CGT  =  3            ; column of the ">" on the current line
 SU_CLAB =  5            ; column of the labels
@@ -82,26 +95,23 @@ SETUP_ENTER
         JSR MUS_TITLE
 SE_MUS
         JSR KP_OFF      ; port 2 is a stick port again
-        LDA #GS_SETUP
-        STA GSTATE
         LDA #0
         STA SU_ARM
         STA SU_FLD
         STA SU_TYPD
-        JSR PM_HIDE     ; no cursors, fish, weather or pirates
+        JSR SU_CLDS     ; the clouds; no cursors, fish, weather or
+                        ; pirates (TITLE.ASM)
         LDA #0
         TAX
 SE_CLR  STA SU_SCR,X    ; clear the screen (500 bytes used)
         STA SU_SCR+$100,X
         INX
         BNE SE_CLR
-        LDA #<SUS_TTL   ; the title, white
-        LDY #>SUS_TTL
-        LDX #SU_WHITE
-        JSR SU_FIX
-        LDA #<SU_SCR
-        LDY #>SU_SCR
-        JSR SU_PUT
+        LDX #SU_DLN-1   ; the display list into RAM
+SE_DL   LDA SUDLIST,X
+        STA SU_DL,X
+        DEX
+        BPL SE_DL
         LDA #<SUS_PRM   ; the prompt, yellow
         LDY #>SUS_PRM
         LDX #0
@@ -110,26 +120,86 @@ SE_CLR  STA SU_SCR,X    ; clear the screen (500 bytes used)
         LDY #>SU_PRM
         JSR SU_PUT
         JSR SU_DRAW
-        LDA #>HLPFONT   ; the help font, its colours, the minimap's
-        STA CHBAS
-        LDA #C_GRASS
+        LDA #>HLPFONT   ; the help font, the minimap's green (PF0),
+        STA CHBAS       ; the logo's colours and the sky above it;
+        LDA #C_GRASS    ; SU_DLI sets the rest's
         STA COLOR0
-        LDA #C_SEA
+        LDA TTP1+SU_SKY0
         STA COLOR1
-        LDA #C_TITLE
+        LDA #C_TSHD
         STA COLOR2
         LDA #C_WHITE
         STA COLOR3
-        LDA #C_SUBK
+        LDA TTBK
         STA COLOR4
-        LDA #<SUDLIST   ; same page as DLIST: one store switches
+        LDA #<SU_DL
         STA SDLSTL
-        RTS
+        LDA #>SU_DL
+        STA SDLSTH
+        LDA #GS_SETUP   ; last: from now on ST_VBI points the DLIs at
+        STA GSTATE      ; SU_DLI, which must not run on another
+        RTS             ; screen's display list
+
+; ---------------------------------------------------------------------
+;  SU_DLI -- the DLI on the setup display list's last blank line (D71):
+;  the clouds' shade, then for each logo row COLBK and COLPF1 (the
+;  logo's gold) from the title's tables and the clouds' positions as
+;  TT_DLI sets them (lane 1 on one row, lane 0 on the next); then
+;  black, the minimap's sea (PF1) and the text's yellow (PF2; black in
+;  the logo, its shadow).  Keeps all registers.
+; ---------------------------------------------------------------------
+SU_DLI  PHA
+        TXA
+        PHA
+        TYA
+        PHA
+        LDA TTP0+SU_SKY0 ; the clouds' shade (the sky's PF0 there)
+        STA COLPM0
+        STA COLPM1
+        STA COLPM2
+        LDX #SU_SKY0
+SL_ROW  LDA TTBK,X      ; a logo row: 2 scan lines
+        LDY TTP1,X
+        STA WSYNC
+        STA COLBK
+        STY COLPF1
+        LDA TT_HB,X     ; lane 1
+        STA WSYNC
+        STA HPOSP2
+        INX
+        LDA TTBK,X      ; the next row
+        LDY TTP1,X
+        STA WSYNC
+        STA COLBK
+        STY COLPF1
+        LDA TT_HA,X     ; lane 0: P0, and P1 just right of it
+        STA WSYNC
+        STA HPOSP0
+        CLC
+        ADC #32
+        STA HPOSP1
+        INX
+        CPX #SU_SKY1    ; SU_SKY1 - SU_SKY0 must be even
+        BNE SL_ROW
+        LDA #C_SUBK     ; under the logo
+        LDX #C_SEA
+        LDY #C_TITLE
+        STA WSYNC
+        STA COLBK
+        STX COLPF1
+        STY COLPF2
+        PLA
+        TAY
+        PLA
+        TAX
+        PLA
+        RTI
 
 ; ---------------------------------------------------------------------
 ;  SETUP_FRAME -- each frame of the setup screen.  Trashes A, X, Y.
 ; ---------------------------------------------------------------------
 SETUP_FRAME
+        JSR TT_CLD      ; the clouds drift (TITLE.ASM)
         LDA JOY0        ; either stick, either fire button
         ORA JOY1
         STA SU_J
@@ -227,9 +297,14 @@ SG_CLMP JSR SU_CLX
         LDX SU_VAL+SU_FMAP ; map 1 to N_MAPS: map number 0 up
         DEX
         STX MAPNO
+        LDA #GS_PLAY    ; first: SU_DLI never runs on DLIST
+        STA GSTATE
         LDA #<DLIST     ; back to the map display list
         STA SDLSTL
-        JMP GAME_START
+        LDA #>DLIST
+        STA SDLSTH
+        JSR PM_INIT     ; no clouds: P/M memory, sizes, priority as the
+        JMP GAME_START  ; game has them
 
 ; ---------------------------------------------------------------------
 ;  SU_NEXT / SU_PREV -- move to the next / previous line, bringing the
@@ -539,9 +614,32 @@ SULVN   .SBYTE "  EASY"         ; CPU levels 1-3, SU_LVLW each
         .SBYTE "  HARD"
 
 ; Fixed lines: column, then the text
-SUS_TTL .BYTE 15
-        .SBYTE "GAME SETUP"
-        .BYTE TX_END
 SUS_PRM .BYTE 6
         .SBYTE "PRESS START OR FIRE TO BEGIN"
         .BYTE TX_END
+
+; The display list, copied to SU_DL (RAM) by SETUP_ENTER: the logo's
+; rows 1-24 (rows 0 and 25 are empty), then the screen in MAPSCR
+SUDLIST
+        .BYTE DL_BLANK8,DL_BLANK8
+        .BYTE DL_DLI+DL_BLANK8          ; SU_DLI: the sky, the logo
+        .BYTE DL_LMS+DL_MODED           ; the logo, 24 mode D lines
+        .WORD LOGO+40
+        .BYTE DL_MODED,DL_MODED,DL_MODED,DL_MODED,DL_MODED,DL_MODED
+        .BYTE DL_MODED,DL_MODED,DL_MODED,DL_MODED,DL_MODED,DL_MODED
+        .BYTE DL_MODED,DL_MODED,DL_MODED,DL_MODED,DL_MODED,DL_MODED
+        .BYTE DL_MODED,DL_MODED,DL_MODED,DL_MODED,DL_MODED
+        .BYTE DL_BLANK4
+        .BYTE DL_LMS+DL_MODE5           ; the five value lines (SU_TXT)
+        .WORD SU_TXT
+        .BYTE DL_MODE5,DL_MODE5,DL_MODE5,DL_MODE5
+        .BYTE DL_BLANK2
+        .BYTE DL_MODEA,DL_MODEA,DL_MODEA,DL_MODEA ; the minimap (SU_MINI),
+        .BYTE DL_MODEA,DL_MODEA,DL_MODEA,DL_MODEA ; MM_ROWS lines
+        .BYTE DL_MODEA,DL_MODEA,DL_MODEA
+        .BYTE DL_BLANK4
+        .BYTE DL_MODE4                  ; the prompt (SU_PRM), small
+        .BYTE DL_JVB
+        .WORD SU_DL
+SU_DLE                          ; its end
+SU_DLN  =  SU_DLE-SUDLIST       ; its length (54 bytes)
