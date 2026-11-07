@@ -105,7 +105,7 @@ NAMES = {1: "FORT", 2: "FACTORY", 3: "CROPS", 4: "SCHOOL", 5: "HOSPITAL",
          6: "HOUSING", 7: "REBELS", 8: "PT BOAT", 9: "FISHING"}
 KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "0", "#"]
 LABELS_5200 = {"0": ("HELM", "boat"), "*": ("PRICES", None), "#": ("INFO", "hold")}
-LABELS_TP = {"0": ("HELM", "boat"), "*": ("PAUSE", None), "#": ("PRICES", None)}
+LABELS_TP = {"0": ("HELM", "boat"), "*": ("PRICES", None), "#": ("PAUSE", None)}
 
 
 def hexc(rgb):

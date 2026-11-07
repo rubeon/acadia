@@ -163,8 +163,8 @@ goes to player 1.
 
 **Video Touch Pad:** in a 1-player game, an Atari CX21 Video Touch Pad
 or CX50 keypad in port 2 is found by itself when the game starts. Its
-`0`-`9` work like the number keys, `*` pauses and `#` shows the price
-list; the joystick in port 1 still moves the cursor.
+`0`-`9` work like the number keys, `*` shows the price list (as on
+the 5200) and `#` pauses; the joystick in port 1 still moves the cursor.
 
 ### Atari 5200
 

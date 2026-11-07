@@ -101,10 +101,10 @@ NONE = (0xFF, 0xFF, 0, 0)
 for line in LAYOUT:
     for k in line:
         got = scan(k)
-        if k == "*":
-            want = (0xFF, 0xFF, 1, 0)
-        elif k == "#":
+        if k == "*":                # help, as on the 5200 (D74)
             want = (0xFF, 0xFF, 0, 1)
+        elif k == "#":              # pause
+            want = (0xFF, 0xFF, 1, 0)
         else:
             want = (int(k), 0, 0, 0)
         if got != [NONE, NONE, NONE, want]:

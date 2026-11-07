@@ -451,14 +451,14 @@
 <text x="86.042" y="110.54" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="2.189" font-weight="bold" fill="#f2ead2" text-anchor="start" textLength="10.421" lengthAdjust="spacingAndGlyphs">FISHING</text>
 <rect x="82.189" y="113.863" width="13.199" height="8.343" rx="1.2" fill="#2e1446" stroke="#fcd069" stroke-width="0.8"/>
 <text x="88.789" y="119.844" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="5.029" font-weight="bold" fill="#f2ead2" text-anchor="middle">9</text>
-<text x="49.505" y="130.14" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="2.576" font-weight="bold" fill="#f2ead2" text-anchor="middle">PAUSE</text>
+<text x="49.505" y="130.14" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="2.576" font-weight="bold" fill="#f2ead2" text-anchor="middle">PRICES</text>
 <rect x="42.906" y="133.373" width="13.199" height="8.343" rx="1.2" fill="#2e1446" stroke="#fcd069" stroke-width="0.8"/>
 <text x="49.505" y="139.355" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="5.029" font-weight="bold" fill="#f2ead2" text-anchor="middle">*</text>
 <text x="69.103" y="128.337" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="2.576" font-weight="bold" fill="#f2ead2" text-anchor="middle">HELM</text>
 <text x="69.103" y="131.299" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="1.803" font-weight="normal" fill="#fcd069" text-anchor="middle">boat</text>
 <rect x="62.504" y="133.373" width="13.199" height="8.343" rx="1.2" fill="#2e1446" stroke="#fcd069" stroke-width="0.8"/>
 <text x="69.103" y="139.355" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="5.029" font-weight="bold" fill="#f2ead2" text-anchor="middle">0</text>
-<text x="88.789" y="130.14" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="2.576" font-weight="bold" fill="#f2ead2" text-anchor="middle">PRICES</text>
+<text x="88.789" y="130.14" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="2.576" font-weight="bold" fill="#f2ead2" text-anchor="middle">PAUSE</text>
 <rect x="82.189" y="133.373" width="13.199" height="8.343" rx="1.2" fill="#2e1446" stroke="#fcd069" stroke-width="0.8"/>
 <text x="88.789" y="139.355" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="5.029" font-weight="bold" fill="#f2ead2" text-anchor="middle">#</text>
 <path d="M37.475 53.781H44.768V52.8A2.3 2.3 0 0 1 47.068 50.5H54.829A2.3 2.3 0 0 1 57.129 52.8V53.781H80.771V52.8A2.3 2.3 0 0 1 83.071 50.5H90.832A2.3 2.3 0 0 1 93.132 52.8V53.781H100.425A2.025 2.025 0 0 1 102.45 55.806V149.903A2.025 2.025 0 0 1 100.425 151.928H96.719V152.909A2.3 2.3 0 0 1 94.419 155.209H86.483A2.3 2.3 0 0 1 84.183 152.909V151.928H53.717V152.909A2.3 2.3 0 0 1 51.417 155.209H43.481A2.3 2.3 0 0 1 41.181 152.909V151.928H37.475A2.025 2.025 0 0 1 35.45 149.903V55.806A2.025 2.025 0 0 1 37.475 53.781Z" fill="none" stroke="#9a9a9a" stroke-width="0.2" stroke-dasharray="0.4 0.6"/>
@@ -909,14 +909,14 @@
 <text x="164.042" y="110.54" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="2.189" font-weight="bold" fill="#f2ead2" text-anchor="start" textLength="10.421" lengthAdjust="spacingAndGlyphs">FISHING</text>
 <rect x="160.189" y="113.863" width="13.199" height="8.343" rx="1.2" fill="#2e1446" stroke="#fcd069" stroke-width="0.8"/>
 <text x="166.789" y="119.844" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="5.029" font-weight="bold" fill="#f2ead2" text-anchor="middle">9</text>
-<text x="127.505" y="130.14" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="2.576" font-weight="bold" fill="#f2ead2" text-anchor="middle">PAUSE</text>
+<text x="127.505" y="130.14" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="2.576" font-weight="bold" fill="#f2ead2" text-anchor="middle">PRICES</text>
 <rect x="120.906" y="133.373" width="13.199" height="8.343" rx="1.2" fill="#2e1446" stroke="#fcd069" stroke-width="0.8"/>
 <text x="127.505" y="139.355" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="5.029" font-weight="bold" fill="#f2ead2" text-anchor="middle">*</text>
 <text x="147.103" y="128.337" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="2.576" font-weight="bold" fill="#f2ead2" text-anchor="middle">HELM</text>
 <text x="147.103" y="131.299" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="1.803" font-weight="normal" fill="#fcd069" text-anchor="middle">boat</text>
 <rect x="140.504" y="133.373" width="13.199" height="8.343" rx="1.2" fill="#2e1446" stroke="#fcd069" stroke-width="0.8"/>
 <text x="147.103" y="139.355" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="5.029" font-weight="bold" fill="#f2ead2" text-anchor="middle">0</text>
-<text x="166.789" y="130.14" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="2.576" font-weight="bold" fill="#f2ead2" text-anchor="middle">PRICES</text>
+<text x="166.789" y="130.14" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="2.576" font-weight="bold" fill="#f2ead2" text-anchor="middle">PAUSE</text>
 <rect x="160.189" y="133.373" width="13.199" height="8.343" rx="1.2" fill="#2e1446" stroke="#fcd069" stroke-width="0.8"/>
 <text x="166.789" y="139.355" font-family="Helvetica, Arial, 'Liberation Sans', sans-serif" font-size="5.029" font-weight="bold" fill="#f2ead2" text-anchor="middle">#</text>
 <path d="M115.475 53.781H122.768V52.8A2.3 2.3 0 0 1 125.068 50.5H132.829A2.3 2.3 0 0 1 135.129 52.8V53.781H158.771V52.8A2.3 2.3 0 0 1 161.071 50.5H168.832A2.3 2.3 0 0 1 171.132 52.8V53.781H178.425A2.025 2.025 0 0 1 180.45 55.806V149.903A2.025 2.025 0 0 1 178.425 151.928H174.719V152.909A2.3 2.3 0 0 1 172.419 155.209H164.483A2.3 2.3 0 0 1 162.183 152.909V151.928H131.717V152.909A2.3 2.3 0 0 1 129.417 155.209H121.481A2.3 2.3 0 0 1 119.181 152.909V151.928H115.475A2.025 2.025 0 0 1 113.45 149.903V55.806A2.025 2.025 0 0 1 115.475 53.781Z" fill="none" stroke="#9a9a9a" stroke-width="0.2" stroke-dasharray="0.4 0.6"/>

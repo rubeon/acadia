@@ -29,8 +29,8 @@ print scale.
 |---|---|---|
 | 1-9 | Buy: fort, factory, crops, school, hospital, housing, rebels, PT boat, fishing boat | same |
 | 0 | Take the helm of a boat / anchor it | same |
-| `*` | Price list | Pause |
-| `#` | Hold for the score pages; press again while holding to step | Price list |
+| `*` | Price list | Price list |
+| `#` | Hold for the score pages; press again while holding to step | Pause |
 
 On the 5200 the top side button also takes the helm, the bottom one is
 fire, and START / PAUSE are the keys above the keypad.
