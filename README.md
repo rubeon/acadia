@@ -12,7 +12,7 @@ Play against a friend or against the computer.
 | | |
 |---|---|
 | ![Game setup](docs/images/setup.png) | ![A game in progress](docs/images/gameplay.png) |
-| ![A pirate galleon off the islands](docs/images/pirates.png) | ![The end-of-game charts](docs/images/stats.png) |
+| ![Pirate galleons around the islands](docs/images/pirates.png) | ![The end-of-game charts](docs/images/stats.png) |
 
 Acadia is an independent project, not affiliated with or endorsed by
 Mattel. All code, graphics, sound and music are new.
@@ -31,6 +31,8 @@ Mattel. All code, graphics, sound and music are new.
   BASIC off by itself), so it also starts on the MiSTer core, which
   boots with BASIC on.
 - An ATR boot disk is planned (T-REL-3).
+
+![The same title on the Atari 5200](docs/images/5200.png)
 
 ## Getting started
 
