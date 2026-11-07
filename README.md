@@ -186,6 +186,11 @@ In atari800 `-5200`: the numpad is the stick, Right Ctrl the top
 button, Shift the bottom button, `0`-`9` the keypad, `=` for `#`,
 numpad `*`, `P` pause and F4 START.
 
+### Keypad overlays
+
+Printable overlays for the 5200 controller and the Video Touch Pad,
+with the game's icons, are in [docs/overlays](docs/overlays/README.md).
+
 ## Building
 
 Requires [ATasm](https://github.com/CycoPH/atasm) (MAC/65 compatible) and,
@@ -252,6 +257,7 @@ The original game's rules and numbers are in
 | `tests/` | Unit tests, run by `make test` |
 | `tools/mkfont.py` | Tile art and island outlines; generates the tile, font and island files (`--preview DIR` renders PNG previews of the islands) |
 | `tools/mktitle.py` | Draws the sunset title screen (`--preview FILE` renders it) |
+| `tools/mkoverlay.py`, `tools/overlay_render.js` | Printable keypad overlays in `docs/overlays/` (SVG; the render script makes PDF and PNG) |
 | `tools/mkstat.py` | Status bar letters and icons; generates the status font (`--preview FILE` renders a PNG) |
 | `docs/utopia-rules.md` | Rules and constants taken from the original game |
 
