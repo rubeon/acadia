@@ -81,7 +81,12 @@ check("RTCLOK", (m.byte("RTCLOK"), m.byte("RTCLOK", 1)), (0x13, 0x00))
 check("ATRACT", m.byte("ATRACT"), 0x80)
 check("DLIST", (m.byte("DLISTL"), m.byte("DLISTH")), (0x34, 0x56))
 check("DMACTL", m.byte("DMACTL"), 0x22)
-check("attract colours", [m.byte("COLPM0", i) for i in range(9)],
+def colours():
+    """COLPM0-COLBK as written: COLPM2 is PAL's address, read hooked"""
+    return [m.mem._subject[m.addr("COLPM0") + i] for i in range(9)]
+
+
+check("attract colours", colours(),
       [((0x90 + i) ^ 0x13) & 0xF6 for i in range(9)])
 check("pots", [m.byte("PADDL0", i) for i in range(8)], [100 + i for i in range(8)])
 
@@ -89,7 +94,7 @@ check("pots", [m.byte("PADDL0", i) for i in range(8)], [100 + i for i in range(8
 m.poke("ATRACT", 0)
 m.mpu.a, m.mpu.x, m.mpu.y = 0x44, 0x55, 0x66
 m.interrupt("BT_VBI")
-check("plain colours", [m.byte("COLPM0", i) for i in range(9)], [0x90 + i for i in range(9)])
+check("plain colours", colours(), [0x90 + i for i in range(9)])
 check("A, X, Y kept again", (m.mpu.a, m.mpu.x, m.mpu.y), (0x44, 0x55, 0x66))
 m.poke("CRITIC", 1)
 m.poke("SDMCTL", 0x00)
