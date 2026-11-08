@@ -78,6 +78,7 @@ START
         .INCLUDE "status.asm"
         .INCLUDE "trail.asm"
         .INCLUDE "stats2.asm"
+        .INCLUDE "reset5200.asm"        ; the RESET key (D76): block 1 is full
 ROMEND                          ; must stay below TITLEGFX (MKCART.PY)
 
 ; ---------------------------------------------------------------------

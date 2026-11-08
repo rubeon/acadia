@@ -27,7 +27,7 @@ Current files are marked ✓; the rest are planned (see PLAN.md).
 | `src/acadia5200.asm` ✓ | — | The 5200 build (32K cartridge, D62): `START`, the ROM layout, RAM reservations, cartridge header |
 | `src/main.asm` ✓ | — | Shared by both builds (D62): ZP allocation, `MAIN_INIT` (start-up; calls `PLAT_INIT` after `VARS_INIT`), `RESTART` (RESET: a fresh stack, then `MAIN_INIT` again, D76), `MAIN`, `GAME_FRAME`, `VARS_INIT` |
 | `src/plat_a800.asm` ✓ | platform | The 800's hooks: `PLAT_INIT` (RESET to `RESTART` through `DOSINI`, map 1 loaded, D76), `PLAT_MAP` (an `RTS`) |
-| `src/plat_5200.asm` ✓ | platform | The 5200's hooks (D62): `PLAT_INIT` (shadow bytes, `PLAT_VBI` after `VBI_D`, map 1 loaded), `PLAT_MAP` (the live map's fonts from ROM into RAM, `FONTPG` / `ROWFONT` pointed there), `PLAT_VBI` (`CHBAS`, `GPRIOR` to the hardware), `PLAT_RST` (the keypad's RESET: the BIOS's VBI back in `VVBLKD`, wait for the key to be let go, `RESTART`, D76) |
+| `src/plat_5200.asm` ✓ | platform | The 5200's hooks (D62): `PLAT_INIT` (shadow bytes, `PLAT_VBI` after `VBI_D`, map 1 loaded), `PLAT_MAP` (the live map's fonts from ROM into RAM, `FONTPG` / `ROWFONT` pointed there), `PLAT_VBI` (`CHBAS`, `GPRIOR` to the hardware), `PLAT_RST` (in `reset5200.asm`, code block 2, as block 1 is full; the keypad's RESET: the BIOS's VBI back in `VVBLKD`, wait for the key to be let go, `RESTART`, D76) |
 | `src/input5200.asm` ✓ | platform | 5200 input layer: a stub (nothing pressed) until T-5200-2 |
 | `src/hw_a800.asm` ✓ | platform | Hardware and OS shadow equates |
 | `src/input.asm` ✓ | platform | `INPUT_POLL` → `JOY0/1`, `FIRE0/1`, `KEY`, console keys |
@@ -140,7 +140,7 @@ Set in `src/mem_5200.asm`. RAM is `$0000-$3FFF`; only reserved blocks
 | `$5000-$73FF` | Fonts, 1K each: the corner font (`MFAC`), STANDARD 0-2 (`MFA00-02`), RANDOM (`MFA10`), pause band font (`PSFONTA` `$6400`, D69), title screen font (`TTFONTA` `$6800`, D70), help font + wave frames (`HLPFNTA`), status bar (`STFONTA`) |
 | `$7400-$753F` | Display lists (`DLBASE`, ROM: nothing writes them), then the island constants (`islands.asm`) |
 | `$7540-...` | `MAPSRC`: each map's block, `MAPNAME`, the minimaps, `RNDTILE`, `GRSTL` |
-| `$8081-$B378` | Code block 2: game logic, `trail.asm`, `stats2.asm`; `ROMEND` must stay below the logo (`$B379-$B7FF` free) |
+| `$8081-$B378` | Code block 2: game logic, `trail.asm`, `stats2.asm`, `reset5200.asm` (`PLAT_RST`, D76); `ROMEND` must stay below the logo (`$B379-$B7FF` free) |
 | `$B800-$BF23` | Title screen graphics (`TITLEGFX`, D70) |
 | `$BFE8-$BFFF` | Cartridge header: title (20 screen codes), year "26" (`$BFFC-$BFFD`; `$FF` there would skip the BIOS title screen but also its vector set-up, D62), start vector |
 
