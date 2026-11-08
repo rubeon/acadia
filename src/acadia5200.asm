@@ -25,14 +25,15 @@
 
 ; ---------------------------------------------------------------------
 ;  Entry point, from the BIOS through the header's start vector: a
-;  fresh stack, then the start-up shared with the 800 (MAIN.ASM)
+;  fresh stack, then what the BIOS no longer sets up (BOOT5200.ASM,
+;  D77), then the start-up shared with the 800 (MAIN.ASM)
 ; ---------------------------------------------------------------------
         *= CODE1
 START
         CLD
         LDX #$FF
         TXS
-        JMP MAIN_INIT
+        JMP BT_INIT     ; BOOT5200.ASM, then MAIN_INIT
 
         .INCLUDE "main.asm"
         .INCLUDE "plat_5200.asm"
@@ -79,6 +80,7 @@ START
         .INCLUDE "trail.asm"
         .INCLUDE "stats2.asm"
         .INCLUDE "reset5200.asm"        ; the RESET key (D76): block 1 is full
+        .INCLUDE "boot5200.asm"         ; start-up without the BIOS screen (D77)
 ROMEND                          ; must stay below TITLEGFX (MKCART.PY)
 
 ; ---------------------------------------------------------------------
@@ -99,15 +101,17 @@ ROMEND                          ; must stay below TITLEGFX (MKCART.PY)
         .INCLUDE "isl_live5200.asm"
 
 ; ---------------------------------------------------------------------
-;  Cartridge header (5200 BIOS): 20 characters of title (screen codes,
-;  bits 6-7 the colour) at $BFE8, the copyright year's last two digits
-;  at $BFFC-$BFFD, the start vector at $BFFE.  The BIOS shows its title
-;  screen (logo, the title, "COPYRIGHT 19" + the two digits) for a few
-;  seconds, then jumps to START.  $BFFD = $FF would skip that screen,
-;  but then the BIOS jumps before it sets its vectors (VIMIRQ,
-;  VVBLKI, ...) and the first IRQ crashes (D62).
+;  Cartridge header (5200 BIOS): 20 characters of title (screen codes)
+;  at $BFE8, the copyright year's last two digits at $BFFC-$BFFD, the
+;  start vector at $BFFE.  $BFFD = $FF makes the BIOS skip its title
+;  screen ("COPYRIGHT 19" + the year, the Atari logo, a few seconds)
+;  and jump to START at once; the title and $BFFC are then never
+;  shown.  BT_INIT does the set-up the BIOS skips (D77).
 ; ---------------------------------------------------------------------
+BT_NOSCR = $FF          ; header $BFFD: skip the BIOS title screen
+
         *= CARTHDR
         .SBYTE "       ACADIA       "
-        .SBYTE "26"     ; the year (screen codes, PF0)
+        .BYTE 0         ; the year's first digit: not shown
+        .BYTE BT_NOSCR  ; $BFFD: no BIOS title screen
         .WORD START

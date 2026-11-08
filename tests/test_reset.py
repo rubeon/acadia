@@ -7,9 +7,9 @@ tables.  RESTART, entered as the OS would after a game on the RANDOM
 map, runs the start-up again to the main loop: title screen, our VBI
 chained to the OS's, map 1 in the tables.
 
-5200: the keypad's RESET key, in a game, jumps to PLAT_RST, which waits
-while it is held and then restarts: title screen, the BIOS's deferred
-VBI kept at the end of the chain (not our own VBIs chained to
+5200: started at START as the BIOS jumps there (D77); the keypad's RESET
+key, in a game, jumps to PLAT_RST, which waits while it is held and then
+restarts: title screen, BT_XIT (the VBI's end) kept at the end of the chain (not our own VBIs chained to
 themselves).
 """
 
@@ -21,7 +21,6 @@ from run6502 import Machine  # noqa: E402
 
 fails = 0
 OS_XITVBV = 0xE462              # the 800 OS's deferred VBI exit
-BIOS_VBD = 0xFCB2               # the 5200 BIOS's
 
 
 def fail(msg):
@@ -103,14 +102,12 @@ map_ok(m, "800 RESET")
 CODE = {"R": 4, "S": 12}
 C = 114
 m = Machine(cart=True)
-m.poke("PAL", 0x0F)
-m.poke("POKMSK", 0xC0)                            # as the BIOS leaves it
-m.poke("VVBLKD", BIOS_VBD & 0xFF, BIOS_VBD >> 8)
-m.poke("SKSTAT", 0xFF)
-m.mpu.pc = m.addr("START")
+m.on_read("PAL", lambda: 0x0F)                   # NTSC (BT_INIT clears GTIA)
+m.mpu.pc = m.addr("START")                       # as the BIOS jumps (D77)
 run_to(m, "MAIN")
+VBI_END = m.addr("BT_XIT")                       # our VBI's end (D77)
 check("5200 start: PLAT_VBI", m.word("VVBLKD"), m.addr("VBI_D"))
-check("5200 start: BIOS last", m.word("PV_OLD"), BIOS_VBD)
+check("5200 start: our VBI's end last", m.word("PV_OLD"), VBI_END)
 
 
 def frame(n=1, pad=None, bot=False):
@@ -156,14 +153,14 @@ for _ in range(50000):
         break
 check("5200 RESET held: NMIs off", m.byte("NMIEN"), 0)
 check("5200 RESET held: screen off", (m.byte("DMACTL"), m.byte("SDMCTL")), (0, 0))
-check("5200 RESET held: the BIOS's VBI back", m.word("VVBLKD"), BIOS_VBD)
+check("5200 RESET held: the VBI's end back", m.word("VVBLKD"), VBI_END)
 m.poke("SKSTAT", 0xFF)                            # let go
 run_to(m, "MAIN")
 check("5200 RESET: title", m.byte("GSTATE"), m.sym["GS_TITLE"])
 check("5200 RESET: a fresh stack", m.mpu.sp, 0xFF)
 check("5200 RESET: VBI_D first", m.word("VVBLKD"), m.addr("VBI_D"))
 check("5200 RESET: then PLAT_VBI", m.word("OLDVBD"), m.addr("PLAT_VBI"))
-check("5200 RESET: then the BIOS's", m.word("PV_OLD"), BIOS_VBD)
+check("5200 RESET: then our VBI's end", m.word("PV_OLD"), VBI_END)
 check("5200 RESET: NMIs on", m.byte("NMIEN") & 0x40, 0x40)
 check("5200 RESET: MAPLD", m.byte("MAPLD"), 0)
 map_ok(m, "5200 RESET", cart=True)

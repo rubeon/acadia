@@ -15,7 +15,7 @@
 ;  the keypad's RESET key: back to the title (D76).
 ; =====================================================================
 
-PV_OLD  =  PLATRAM+4    ; 2 bytes: the BIOS's deferred VBI vector
+PV_OLD  =  PLATRAM+4    ; 2 bytes: the previous deferred VBI (BT_XIT, D77)
 PM_ORG  =  PLATRAM+6    ; PLAT_MAP: FONTPG's ROM pages (N_FONTS bytes)
 PM_I    =  PLATRAM+9    ; PLAT_MAP: font index
 PM_N    =  PLATRAM+10   ; PLAT_MAP: pages left to copy
@@ -38,7 +38,7 @@ PLAT_INIT
 
         LDA #0
         STA NMIEN       ; no VBI while the vector is patched
-        LDA VVBLKD      ; PLAT_VBI, then the BIOS's deferred VBI
+        LDA VVBLKD      ; PLAT_VBI, then the VBI's end (BT_XIT)
         STA PV_OLD
         LDA VVBLKD+1
         STA PV_OLD+1
@@ -56,7 +56,7 @@ PLAT_INIT
 ; ---------------------------------------------------------------------
 ;  PLAT_VBI -- end of the deferred VBI (VBI_D chains here through
 ;  OLDVBD): the font and priority shadows to the hardware, then the
-;  BIOS's own deferred VBI
+;  VBI's end (BT_XIT, BOOT5200.ASM)
 ; ---------------------------------------------------------------------
 PLAT_VBI
         LDA CHBAS

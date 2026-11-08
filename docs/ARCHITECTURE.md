@@ -28,6 +28,7 @@ Current files are marked ✓; the rest are planned (see PLAN.md).
 | `src/main.asm` ✓ | — | Shared by both builds (D62): ZP allocation, `MAIN_INIT` (start-up; calls `PLAT_INIT` after `VARS_INIT`), `RESTART` (RESET: a fresh stack, then `MAIN_INIT` again, D76), `MAIN`, `GAME_FRAME`, `VARS_INIT` |
 | `src/plat_a800.asm` ✓ | platform | The 800's hooks: `PLAT_INIT` (RESET to `RESTART` through `DOSINI`, map 1 loaded, D76), `PLAT_MAP` (an `RTS`) |
 | `src/plat_5200.asm` ✓ | platform | The 5200's hooks (D62): `PLAT_INIT` (shadow bytes, `PLAT_VBI` after `VBI_D`, map 1 loaded), `PLAT_MAP` (the live map's fonts from ROM into RAM, `FONTPG` / `ROWFONT` pointed there), `PLAT_VBI` (`CHBAS`, `GPRIOR` to the hardware), `PLAT_RST` (in `reset5200.asm`, code block 2, as block 1 is full; the keypad's RESET: the BIOS's VBI back in `VVBLKD`, wait for the key to be let go, `RESTART`, D76) |
+| `src/boot5200.asm` ✓ | platform | The 5200's start-up without the BIOS screen (D77): `BT_INIT` (RAM, chips and zero page cleared, our vectors, keypad scan), `BT_VBI` (the BIOS's VBI work), `BT_XIT`, `BT_IRQ` |
 | `src/input5200.asm` ✓ | platform | 5200 input layer: a stub (nothing pressed) until T-5200-2 |
 | `src/hw_a800.asm` ✓ | platform | Hardware and OS shadow equates |
 | `src/input.asm` ✓ | platform | `INPUT_POLL` → `JOY0/1`, `FIRE0/1`, `KEY`, console keys |
@@ -125,7 +126,7 @@ Set in `src/mem_5200.asm`. RAM is `$0000-$3FFF`; only reserved blocks
 | `$0000-$0018` | BIOS shadows (`POKMSK`, `RTCLOK`, `CRITIC`, `ATRACT`, `SDLSTL/H`, `SDMCTL`, `PCOLR0-3`, `COLOR0-4`, `PADDL0-7`) |
 | `$0080-$0090`, `$00CB-$00CE` | Game ZP, as on the 800 (`main.asm`) |
 | `$0100-$01FF` | Stack |
-| `$0200-$021B` | BIOS vectors (`VIMIRQ`, `VVBLKI`, `VVBLKD`, `VDSLST`, `VKYBDI`, `VKYBDF`, ...) |
+| `$0200-$021B` | BIOS vectors (`VIMIRQ`, `VVBLKI`, `VVBLKD`, `VDSLST`, `VKYBDI`, `VKYBDF`, ...), set by `BT_INIT` to our own handlers (D77) |
 | `$0220-$023F` | `PLATRAM` (`PLATSZ` bytes): `CHBAS`, `GPRIOR`, `COLRSH`, `DRKMSK`; `PLAT_5200`'s `PV_OLD`, `PM_ORG`, `PM_I`, `PM_N`; `INPUT5200`'s `IN_CTL` ... `IN_J` |
 | `$0400-$07FF` | P/M graphics (`PMAREA`, 1K aligned, double-line) |
 | `$0800-$13FF` | `RMFONT0-2`: RAM copies of the live map's fonts (`PLAT_MAP`), 1K each |
@@ -142,7 +143,7 @@ Set in `src/mem_5200.asm`. RAM is `$0000-$3FFF`; only reserved blocks
 | `$7540-...` | `MAPSRC`: each map's block, `MAPNAME`, the minimaps, `RNDTILE`, `GRSTL` |
 | `$8081-$B378` | Code block 2: game logic, `trail.asm`, `stats2.asm`, `reset5200.asm` (`PLAT_RST`, D76); `ROMEND` must stay below the logo (`$B379-$B7FF` free) |
 | `$B800-$BF23` | Title screen graphics (`TITLEGFX`, D70) |
-| `$BFE8-$BFFF` | Cartridge header: title (20 screen codes), year "26" (`$BFFC-$BFFD`; `$FF` there would skip the BIOS title screen but also its vector set-up, D62), start vector |
+| `$BFE8-$BFFF` | Cartridge header: title (20 screen codes, never shown), `$BFFC` 0, `$BFFD` = `$FF` (no BIOS title screen, D77), start vector |
 
 Variables: all RAM variables live in one block, `src/vars.asm` at
 `$3900`, never inline after code, so the same source can run from a
@@ -215,7 +216,8 @@ re-enabling NMIs. The deferred VBI chains to the previous handler via
 the saved pointer `OLDVBD`. No OS routine is ever called. On the 5200
 that previous handler is `PLAT_VBI`, which copies `CHBAS` and `GPRIOR`
 (RAM bytes there: the BIOS has no such shadows) to the hardware and
-then jumps to the BIOS's own deferred vector (D62).
+then jumps to the previous deferred vector (D62): `BT_XIT`, the end of
+`BT_VBI`, the cartridge's own immediate VBI (D77).
 
 **Start-up and hooks (D62):** each build's `START` does its machine's
 set-up and jumps to `MAIN_INIT` (`main.asm`). `PLAT_INIT` runs right
@@ -224,6 +226,18 @@ block is copied over the live tables. On the 800 `PLAT_INIT` hooks
 RESET and loads map 1, and `PLAT_MAP` is an `RTS`; on the 5200 they set
 up the BIOS-less shadows and load map 1, and copy the live map's fonts
 into RAM.
+
+**5200 start-up without the BIOS screen (D77):** the header's `$BFFD`
+= `$FF` makes the BIOS jump to `START` right after `SEI`, `CLD` and a
+fresh stack, skipping its title screen and all its set-up. `START`
+jumps to `BT_INIT` (`boot5200.asm`, code block 2), which clears RAM
+(`$0100-$3FFF`), the chips' registers and the zero page, points the
+vectors at its own handlers (`BT_IRQ`, `BT_VBI`, `BT_XIT`, `BT_RTI`;
+the BIOS's are at different ROM addresses in different BIOS
+revisions), sets `CHBASE` and `SKCTL` (keypad scan) and jumps to
+`MAIN_INIT`. `BT_VBI` does the BIOS's VBI work: `RTCLOK`, `ATRACT`,
+shadows to the hardware (attract colours as the BIOS does them), pots
+into `PADDL0-7`, `POTGO`, then `VVBLKD`. No IRQ is enabled.
 
 **RESET (D76):** `RESTART` (`main.asm`) is the start-up again from a
 fresh stack, so RESET lands on the title screen as at power-on. On the
