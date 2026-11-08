@@ -11,6 +11,8 @@
 ;  copies the live map's fonts into RAM (RMFONT0-2) and points ROWFONT
 ;  and FONTPG there.  PLAT_VBI, chained after the deferred VBI, copies
 ;  CHBAS and GPRIOR to the hardware each frame, as the 800's OS does.
+;  PLAT_RST (RESET5200.ASM, in code block 2, as block 1 is full) is
+;  the keypad's RESET key: back to the title (D76).
 ; =====================================================================
 
 PV_OLD  =  PLATRAM+4    ; 2 bytes: the BIOS's deferred VBI vector

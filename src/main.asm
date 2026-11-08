@@ -51,6 +51,18 @@ MN_WAIT CMP FRAME
         JMP MAIN
 
 ; ---------------------------------------------------------------------
+;  RESTART -- RESET: back to the title screen, as at power-on (D76).
+;  Entered by JMP, from the 800 OS's warm start through DOSINI, or
+;  from the 5200's RESET key through PLAT_RST, at any point in the
+;  game: a fresh stack, then the whole start-up again.  Never returns.
+; ---------------------------------------------------------------------
+RESTART CLD
+        CLI             ; IRQs on (the keyboard), whoever came here
+        LDX #$FF
+        TXS
+        JMP MAIN_INIT
+
+; ---------------------------------------------------------------------
 ;  GAME_FRAME -- one frame of the game, called by the main loop
 ; ---------------------------------------------------------------------
 GAME_FRAME

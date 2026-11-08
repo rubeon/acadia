@@ -131,6 +131,8 @@ NMI_DLI   = $80
 ;  OS shadow registers and vectors (RAM; written, never called)
 ;  The OS VBI copies these to hardware each frame.
 ; ---------------------------------------------------------------------
+BOOTQ   =  $09          ; BOOT?: bit 0 set = RESET calls DOSINI
+DOSINI  =  $0C          ; 2-byte vector the OS calls on RESET (D76)
 RTCLOK  =  $12          ; 3-byte frame clock (LSB at $14)
 ATRACT  =  $4D          ; attract-mode timer
 DRKMSK  =  $4E          ; attract-mode luminance mask (OS)
@@ -139,6 +141,7 @@ VDSLST  =  $0200        ; DLI vector
 VVBLKI  =  $0222        ; immediate VBI vector
 VVBLKD  =  $0224        ; deferred VBI vector
 SDMCTL  =  $022F        ; shadow DMACTL
+COLDST  =  $0244        ; 0 = RESET is a warm start (D76)
 SDLSTL  =  $0230        ; shadow DLISTL
 SDLSTH  =  $0231
 GPRIOR  =  $026F        ; shadow PRIOR
