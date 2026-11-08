@@ -49,13 +49,20 @@ def table(m, name, i):
     return m.byte(name, i)
 
 
-def map_ok(m, what):
-    """The live tables hold map 1's block (MAPS0)."""
-    n = m.addr("MAPEND") - m.addr("TILECH")
-    src = table(m, "MAPSL", 0) | table(m, "MAPSH", 0) << 8
+def map_ok(m, what, cart=False):
+    """The live tables hold map 1's block (MAPS0).  On the 5200,
+    PLAT_MAP points FONTPG and ROWFONT at the fonts' RAM copies, so
+    those bytes differ on purpose: skipped."""
     live = m.addr("TILECH")
-    if [m.mem[live + i] for i in range(n)] != [m.mem[src + i] for i in range(n)]:
-        fail(what + ": the live tables are not map 1's")
+    n = m.addr("MAPEND") - live
+    src = table(m, "MAPSL", 0) | table(m, "MAPSH", 0) << 8
+    skip = set()
+    if cart:
+        for name, k in (("FONTPG", 3), ("ROWFONT", 22)):
+            skip.update(range(m.addr(name) - live, m.addr(name) - live + k))
+    bad = [i for i in range(n) if i not in skip and m.mem[live + i] != m.mem[src + i]]
+    if bad:
+        fail(what + ": the live tables are not map 1's (%d bytes)" % len(bad))
 
 
 # ---------------------------------------------------------------- 800
@@ -148,6 +155,7 @@ for _ in range(50000):
         fail("5200 RESET held: restarted while held")
         break
 check("5200 RESET held: NMIs off", m.byte("NMIEN"), 0)
+check("5200 RESET held: screen off", (m.byte("DMACTL"), m.byte("SDMCTL")), (0, 0))
 check("5200 RESET held: the BIOS's VBI back", m.word("VVBLKD"), BIOS_VBD)
 m.poke("SKSTAT", 0xFF)                            # let go
 run_to(m, "MAIN")
@@ -158,7 +166,7 @@ check("5200 RESET: then PLAT_VBI", m.word("OLDVBD"), m.addr("PLAT_VBI"))
 check("5200 RESET: then the BIOS's", m.word("PV_OLD"), BIOS_VBD)
 check("5200 RESET: NMIs on", m.byte("NMIEN") & 0x40, 0x40)
 check("5200 RESET: MAPLD", m.byte("MAPLD"), 0)
-map_ok(m, "5200 RESET")
+map_ok(m, "5200 RESET", cart=True)
 
 # and the title still works: fire goes on to setup
 frame(10)

@@ -56,7 +56,8 @@ PLAT_INIT
 ;  PLAT_RST -- the RESET key (INPUT5200.ASM): back to the title screen,
 ;  as at power-on (D76).  The 5200's RESET is only a keypad key: the
 ;  BIOS does nothing with it, and the machine and RAM stay as they
-;  are.  So: sound off, the BIOS's deferred VBI back in VVBLKD (else
+;  are.  So: sound off, a black screen (the DLIs and VBI that colour
+;  it stop), the BIOS's deferred VBI back in VVBLKD (else
 ;  PLAT_INIT and DISP_INIT would chain our VBIs to themselves), wait
 ;  until RESET is let go and its contacts have settled (else the new
 ;  title would see it held as a new press), then RESTART (MAIN.ASM).
@@ -66,6 +67,14 @@ PLAT_RST
         JSR SND_INIT    ; no note left sounding
         LDA #0
         STA NMIEN       ; no VBI or DLI while the vector is patched
+        STA DMACTL      ; and a black screen while RESET is held:
+        STA SDMCTL      ; no playfield (DISP_INIT turns it on again),
+        STA GRACTL      ; no players or missiles,
+        STA COLBK       ; black border
+        LDX #GRAFM-GRAFP0
+RS_PM   STA GRAFP0,X    ; and nothing left in their latches
+        DEX
+        BPL RS_PM
         LDA PV_OLD
         STA VVBLKD
         LDA PV_OLD+1
