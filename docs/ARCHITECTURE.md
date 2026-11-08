@@ -25,9 +25,9 @@ Current files are marked ✓; the rest are planned (see PLAN.md).
 |---|---|---|
 | `src/acadia.asm` ✓ | — | The 800 build (XEX): `START`, the code blocks' layout, `.INCLUDE`s |
 | `src/acadia5200.asm` ✓ | — | The 5200 build (32K cartridge, D62): `START`, the ROM layout, RAM reservations, cartridge header |
-| `src/main.asm` ✓ | — | Shared by both builds (D62): ZP allocation, `MAIN_INIT` (start-up; calls `PLAT_INIT` after `VARS_INIT`), `MAIN`, `GAME_FRAME`, `VARS_INIT` |
-| `src/plat_a800.asm` ✓ | platform | The 800's hooks: `PLAT_INIT`, `PLAT_MAP`, both an `RTS` |
-| `src/plat_5200.asm` ✓ | platform | The 5200's hooks (D62): `PLAT_INIT` (shadow bytes, `PLAT_VBI` after `VBI_D`, map 1 loaded), `PLAT_MAP` (the live map's fonts from ROM into RAM, `FONTPG` / `ROWFONT` pointed there), `PLAT_VBI` (`CHBAS`, `GPRIOR` to the hardware) |
+| `src/main.asm` ✓ | — | Shared by both builds (D62): ZP allocation, `MAIN_INIT` (start-up; calls `PLAT_INIT` after `VARS_INIT`), `RESTART` (RESET: a fresh stack, then `MAIN_INIT` again, D76), `MAIN`, `GAME_FRAME`, `VARS_INIT` |
+| `src/plat_a800.asm` ✓ | platform | The 800's hooks: `PLAT_INIT` (RESET to `RESTART` through `DOSINI`, map 1 loaded, D76), `PLAT_MAP` (an `RTS`) |
+| `src/plat_5200.asm` ✓ | platform | The 5200's hooks (D62): `PLAT_INIT` (shadow bytes, `PLAT_VBI` after `VBI_D`, map 1 loaded), `PLAT_MAP` (the live map's fonts from ROM into RAM, `FONTPG` / `ROWFONT` pointed there), `PLAT_VBI` (`CHBAS`, `GPRIOR` to the hardware), `PLAT_RST` (the keypad's RESET: the BIOS's VBI back in `VVBLKD`, wait for the key to be let go, `RESTART`, D76) |
 | `src/input5200.asm` ✓ | platform | 5200 input layer: a stub (nothing pressed) until T-5200-2 |
 | `src/hw_a800.asm` ✓ | platform | Hardware and OS shadow equates |
 | `src/input.asm` ✓ | platform | `INPUT_POLL` → `JOY0/1`, `FIRE0/1`, `KEY`, console keys |
@@ -220,9 +220,19 @@ then jumps to the BIOS's own deferred vector (D62).
 **Start-up and hooks (D62):** each build's `START` does its machine's
 set-up and jumps to `MAIN_INIT` (`main.asm`). `PLAT_INIT` runs right
 after `VARS_INIT`; `PLAT_MAP` runs in `MAP_LOAD` right after a map's
-block is copied over the live tables. Both are an `RTS` on the 800; on
-the 5200 they set up the BIOS-less shadows and load map 1, and copy the
-live map's fonts into RAM.
+block is copied over the live tables. On the 800 `PLAT_INIT` hooks
+RESET and loads map 1, and `PLAT_MAP` is an `RTS`; on the 5200 they set
+up the BIOS-less shadows and load map 1, and copy the live map's fonts
+into RAM.
+
+**RESET (D76):** `RESTART` (`main.asm`) is the start-up again from a
+fresh stack, so RESET lands on the title screen as at power-on. On the
+800 RESET is the OS's warm start, which keeps RAM, clears its own
+($0010-$007F, $0200-$03FF), sets the hardware up and calls `DOSINI`:
+`PLAT_INIT` points that at `RESTART`, sets `BOOT?` bit 0 and `COLDST`
+= 0. On the 5200 RESET is a keypad key: `INPUT5200.ASM` jumps to
+`PLAT_RST`, which first restores the BIOS's deferred VBI vector, since
+nothing else has reset the machine.
 
 ## 5. Frame loop
 

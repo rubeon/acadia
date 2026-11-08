@@ -11,6 +11,7 @@
 ;  copies the live map's fonts into RAM (RMFONT0-2) and points ROWFONT
 ;  and FONTPG there.  PLAT_VBI, chained after the deferred VBI, copies
 ;  CHBAS and GPRIOR to the hardware each frame, as the 800's OS does.
+;  PLAT_RST is the keypad's RESET key: back to the title (D76).
 ; =====================================================================
 
 PV_OLD  =  PLATRAM+4    ; 2 bytes: the BIOS's deferred VBI vector
@@ -50,6 +51,38 @@ PLAT_INIT
 
         LDA #0          ; map 1, as the 800's XEX loads it
         JMP MAP_LOAD
+
+; ---------------------------------------------------------------------
+;  PLAT_RST -- the RESET key (INPUT5200.ASM): back to the title screen,
+;  as at power-on (D76).  The 5200's RESET is only a keypad key: the
+;  BIOS does nothing with it, and the machine and RAM stay as they
+;  are.  So: sound off, the BIOS's deferred VBI back in VVBLKD (else
+;  PLAT_INIT and DISP_INIT would chain our VBIs to themselves), wait
+;  until RESET is let go and its contacts have settled (else the new
+;  title would see it held as a new press), then RESTART (MAIN.ASM).
+;  Entered by JMP from anywhere in the game; never returns.
+; ---------------------------------------------------------------------
+PLAT_RST
+        JSR SND_INIT    ; no note left sounding
+        LDA #0
+        STA NMIEN       ; no VBI or DLI while the vector is patched
+        LDA PV_OLD
+        STA VVBLKD
+        LDA PV_OLD+1
+        STA VVBLKD+1
+RS_KEY  LDA SKSTAT      ; until no key is held on the keypad
+        AND #SK_KEY
+        BEQ RS_KEY
+        LDX #RS_FRMS    ; then RS_FRMS frames of nothing (NMIs are
+RS_TOP  LDA VCOUNT      ; off, so VCOUNT counts them): the top of a
+        BNE RS_TOP      ; frame,
+RS_LINE LDA VCOUNT      ; then past it
+        BEQ RS_LINE
+        DEX
+        BNE RS_TOP
+        JMP RESTART
+
+RS_FRMS =  6            ; PLAT_RST: frames to let RESET's contacts settle
 
 ; ---------------------------------------------------------------------
 ;  PLAT_VBI -- end of the deferred VBI (VBI_D chains here through

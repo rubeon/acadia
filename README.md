@@ -156,6 +156,7 @@ to the setup screen.
 | `H` or `HELP` | Price list (the game stands still); again to go back |
 | `P` | Pause and unpause |
 | `START` / `SELECT` / `OPTION` held | Total scores / populations / last round's scores |
+| `RESET` | Back to the title screen (the game in play is lost) |
 
 **Two players** share the keyboard: hold your fire button while you
 press a number and it buys for you. With no fire button held, the key
@@ -181,6 +182,7 @@ to buy.
 | `PAUSE` | Pause and unpause |
 | `START` | Begin a game; held during a round, the total scores |
 | `#` held | Total scores; press again while holding to step to populations, then the last round |
+| `RESET` | Back to the title screen (the game in play is lost) |
 
 In atari800 `-5200`: the numpad is the stick, Right Ctrl the top
 button, Shift the bottom button, `0`-`9` the keypad, `=` for `#`,

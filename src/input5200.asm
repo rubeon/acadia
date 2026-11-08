@@ -23,7 +23,7 @@
 ;    START         CONKEY's START bit while held (totals; begins a game
 ;                  on the setup and title screens, as on the 800)
 ;    PAUSE         PAUSEK (D19)
-;    RESET         nothing (the BIOS's keypad IRQ ignores it too)
+;    RESET         back to the title screen (PLAT_RST, D76)
 ;
 ;  POKEY scans one controller's keypad and bottom button at a time,
 ;  the one CONSOL bits 0-1 select.  INPUT_POLL reads the controller
@@ -252,12 +252,15 @@ IA_SHR  TXA             ; a shared key: not if the other controller
         STA HELPK
         BNE IA_BOT
 IA_PAUS CMP #KC_PAUS
-        BNE IA_HASH
+        BNE IA_RST
         LDA #1          ; PAUSE (D19)
         STA PAUSEK
         BNE IA_BOT
+IA_RST  CMP #KC_RST
+        BNE IA_HASH
+        JMP PLAT_RST    ; RESET: the title screen (D76), never returns
 IA_HASH CMP #KC_HASH
-        BNE IA_BOT      ; START (held only), RESET: nothing here
+        BNE IA_BOT      ; START (held only): nothing here
         LDA IN_PGT      ; #: soon after the last one, the next page;
         BEQ IA_PG1      ; else totals
         LDY IN_PG

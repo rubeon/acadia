@@ -262,10 +262,7 @@ frame(pad=("#", None))
 check("# on the setup screen", m.byte("CONKEY"), 0)
 check("# on the setup screen: a key held", m.byte("KEYDOWN"), 1)
 
-# --- RESET: nothing but a key held ---
-setup(players=1)
-frame(pad=("R", None))
-check("RESET", (key(), m.byte("CONKEY"), m.byte("PAUSEK"), m.byte("HELPK")), (None, 0, 0, 0))
+# (RESET goes back to the title screen: tests/test_reset.py, D76)
 
 # --- attract mode: any input zeroes ATRACT, nothing leaves it ---
 setup(players=1)

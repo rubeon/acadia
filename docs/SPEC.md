@@ -57,6 +57,7 @@ on the Atari. Requirement IDs (`R-...`) are referenced from PLAN.md.
 | R-CTL-7 | H (or HELP on an XL/XE) during a round shows a price list over the map: each item's key, its map tile, name and price. H or HELP again returns; the game stands still while it is up (D34). |
 | R-CTL-8 | 1-player games can use an Atari keypad controller (CX21 Video Touch Pad or CX50) in port 2, found by itself when the game starts (Atari computers only): 0-9 as the number keys, * help, # pause (D49, D58, D74). |
 | R-CTL-5 | All input goes through the input layer (ARCHITECTURE §4). |
+| R-CTL-9 | RESET goes back to the title screen at any point, as at power-on; the game in play is lost (800: the console RESET key; 5200: the keypad's RESET) (D76). |
 
 ## 6. Timing
 
