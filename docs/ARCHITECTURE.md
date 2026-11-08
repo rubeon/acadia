@@ -141,7 +141,7 @@ Set in `src/mem_5200.asm`. RAM is `$0000-$3FFF`; only reserved blocks
 | `$5000-$73FF` | Fonts, 1K each: the corner font (`MFAC`), STANDARD 0-2 (`MFA00-02`), RANDOM (`MFA10`), pause band font (`PSFONTA` `$6400`, D69), title screen font (`TTFONTA` `$6800`, D70), help font + wave frames (`HLPFNTA`), status bar (`STFONTA`) |
 | `$7400-$753F` | Display lists (`DLBASE`, ROM: nothing writes them), then the island constants (`islands.asm`) |
 | `$7540-...` | `MAPSRC`: each map's block, `MAPNAME`, the minimaps, `RNDTILE`, `GRSTL` |
-| `$8081-$B378` | Code block 2: game logic, `trail.asm`, `stats2.asm`, `reset5200.asm` (`PLAT_RST`, D76); `ROMEND` must stay below the logo (`$B379-$B7FF` free) |
+| `$8081-$B566` | Code block 2: game logic, `trail.asm`, `stats2.asm`, `reset5200.asm` (`PLAT_RST`, D76), `boot5200.asm` (`BT_INIT`, `BT_VBI`, D77); `ROMEND` must stay below the logo (`$B567-$B7FF` free) |
 | `$B800-$BF23` | Title screen graphics (`TITLEGFX`, D70) |
 | `$BFE8-$BFFF` | Cartridge header: title (20 screen codes, never shown), `$BFFC` 0, `$BFFD` = `$FF` (no BIOS title screen, D77), start vector |
 
