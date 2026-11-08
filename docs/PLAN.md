@@ -117,3 +117,4 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 | T-5200-1 | `hw_5200.asm`, cartridge build target (`make 5200`): boots to the title and runs the demo; input stubbed (D62) | done |
 | T-5200-2 | 5200 input layer: analog sticks, keypad, second fire button (Q4, D63) | done |
 | T-5200-3 | Replace any remaining 800-only assumptions (memory map, interrupts via 5200 BIOS vectors) | todo |
+| T-5200-4 | No BIOS title screen ("COPYRIGHT 19..", Atari logo): header `$BFFD` = `$FF`, the cartridge's own start-up and VBI (D77) | done |

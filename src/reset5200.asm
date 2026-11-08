@@ -11,7 +11,7 @@
 ;  as at power-on (D76).  The 5200's RESET is only a keypad key: the
 ;  BIOS does nothing with it, and the machine and RAM stay as they
 ;  are.  So: sound off, a black screen (the DLIs and VBI that colour
-;  it stop), the BIOS's deferred VBI back in VVBLKD (else
+;  it stop), the VBI's end (BT_XIT) back in VVBLKD (else
 ;  PLAT_INIT and DISP_INIT would chain our VBIs to themselves), wait
 ;  until RESET is let go and its contacts have settled (else the new
 ;  title would see it held as a new press), then RESTART (MAIN.ASM).

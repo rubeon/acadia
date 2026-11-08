@@ -58,6 +58,7 @@ CONSOL  =  $C01F        ; W  bit 2: controller pots on (the BIOS sets it)
 ;  POKEY  ($E800)
 ; ---------------------------------------------------------------------
 AUDF1   =  $E800        ; W  audio frequency / volume+distortion
+POT0    =  $E800        ; R  pots 0-7 ($E800-$E807): the last scan
 AUDC1   =  $E801
 AUDF2   =  $E802
 AUDC2   =  $E803
@@ -128,7 +129,7 @@ NMI_DLI   = $80
 
 ; ---------------------------------------------------------------------
 ;  BIOS shadow registers (zero page) and vectors (RAM; written, never
-;  called).  The BIOS's VBI copies the shadows to hardware each frame
+;  called).  BT_VBI (BOOT5200.ASM, D77) copies the shadows each frame
 ;  and reads the pots into PADDL0-7.
 ; ---------------------------------------------------------------------
 POKMSK  =  $00          ; POKEY IRQs enabled (shadow of IRQEN)
@@ -150,7 +151,7 @@ COLOR4  =  $10          ; shadow COLBK
 PADDL0  =  $11          ; pots 0-7: controller 1 x, y, 2 x, y, ...
 VIMIRQ  =  $0200        ; IRQ vector
 VVBLKI  =  $0202        ; immediate VBI vector
-VVBLKD  =  $0204        ; deferred VBI vector (BIOS: its VBI exit)
+VVBLKD  =  $0204        ; deferred VBI vector (at first BT_XIT)
 VDSLST  =  $0206        ; DLI vector
 VKYBDI  =  $0208        ; keypad IRQ vector
 VKYBDF  =  $020A        ; keypad deferred vector
