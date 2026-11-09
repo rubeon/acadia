@@ -47,12 +47,16 @@ CT_XL   =  CTTXT+40     ; the round numbers
 CT_LEG  =  CTTXT+80     ; the legend: pawns, totals, best rounds
 CT_TAB0 =  4            ; column of the first page name
 
-; colours (status bar colours: STATUS.ASM)
-C_CTBK  =  $82          ; the chart's background
-C_CTGRD =  $86          ; grid lines and their labels
-C_CTDIM =  $86          ; the other pages' names
-C_CTSEL =  $0E          ; this page's name (inverse: PF3)
-C_CTXL  =  $88          ; the round numbers
+; colours: the setup screen's (D78): black, yellow text, the current
+; item white, the chart on the minimap's sea blue; the players' red and
+; turquoise and the gold from the status bar (STATUS.ASM)
+C_CTSBK =  $00          ; the text lines' background: black (C_SUBK)
+C_CTTXT =  $1C          ; text: the setup screen's yellow (C_TITLE)
+C_CTBK  =  C_SEA        ; the chart's background: the minimap's sea
+C_CTGRD =  $98          ; grid lines and their labels
+C_CTDIM =  $16          ; the other pages' names: dark yellow
+C_CTSEL =  $0E          ; this page's name (inverse: PF3): white
+C_CTXL  =  $18          ; the round numbers
 
 ; ---------------------------------------------------------------------
 ;  CT_REC -- at the end of a round (ROUND_END, before CURTRN counts
@@ -563,10 +567,10 @@ CI_OUT  PLA
 ;  Tables
 ; ---------------------------------------------------------------------
 ; per DLI: status line 1, line 2, page names, chart, round numbers, legend
-CTBK    .BYTE C_SBK1,C_SBK2,C_SBK2,C_CTBK,C_SBK2,C_SBK2
+CTBK    .BYTE C_CTSBK,C_CTSBK,C_CTSBK,C_CTBK,C_CTSBK,C_CTSBK
 CTPF0   .BYTE C_SGOLD,C_SGOLD,C_SGOLD,C_CTGRD,C_SGOLD,C_SGOLD
 CTPF1   .BYTE C_SRED,C_SRED,C_SRED,C_SRED,C_SRED,C_SRED
-CTPF2   .BYTE C_SWHT,C_SWHT,C_CTDIM,C_STURQ,C_CTXL,C_SWHT
+CTPF2   .BYTE C_CTTXT,C_CTTXT,C_CTDIM,C_STURQ,C_CTXL,C_CTTXT
 CTPF3   .BYTE C_STURQ,C_STURQ,C_CTSEL,C_STURQ,C_STURQ,C_STURQ
 
 CTMASK  .BYTE $C0,$30,$0C,$03   ; a pixel's bits in its byte
