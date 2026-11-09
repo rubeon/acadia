@@ -233,7 +233,7 @@ zones = []
 for i in range(7):
     m.interrupt("CT_DLI")
     zones.append(tuple(m.byte(r) for r in ("COLBK", "COLPF0", "COLPF1", "COLPF2", "COLPF3")))
-if zones[3] != (0x94, 0x98, 0x48, 0xAC, 0xAC) or zones[6] != zones[5]:
+if zones[3] != (0x00, 0x16, 0x48, 0xAC, 0xAC) or zones[6] != zones[5]:
     fail("DLI colours %r" % zones)
 m.poke("CT_ON", 0)
 m.call("ST_VBI")

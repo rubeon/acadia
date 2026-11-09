@@ -15,7 +15,9 @@ C_SGOLD =  $2C          ; COLPF0: the gold bar, the people's heads
 C_SRED  =  $48          ; COLPF1: player 1 (C_CUR0, a step brighter)
 C_SWHT  =  $0C          ; COLPF2: text
 C_STURQ =  $AC          ; COLPF3: player 2 (C_CUR1), inverse characters
+C_SBK1  =  $84          ; the stats screen's title line background
 C_STOP  =  $00          ; line 1 background in play: black (D69)
+C_SBK2  =  $80          ; a shade darker (the stats screen's line 2)
 C_SPOP  =  C_SEA        ; line 2 (people) background: the map's dark
                         ; corner blue, so it runs into them (D67)
 C_SDKG  =  $26          ; COLPF1 on line 1 while it shows the gold bars:
