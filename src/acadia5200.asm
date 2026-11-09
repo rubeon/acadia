@@ -79,6 +79,7 @@ START
         .INCLUDE "status.asm"
         .INCLUDE "trail.asm"
         .INCLUDE "stats2.asm"
+        .INCLUDE "stats3.asm"           ; the legend (D80): block 1 is full
         .INCLUDE "reset5200.asm"        ; the RESET key (D76): block 1 is full
         .INCLUDE "boot5200.asm"         ; start-up without the BIOS screen (D77)
 ROMEND                          ; must stay below TITLEGFX (MKCART.PY)
