@@ -118,8 +118,9 @@ CT_ENTER
         LDA #0
         STA CT_PG       ; the score page first
         STA CT_ARM
-        LDX #159        ; blank text lines (4: the hint too)
-CE_TXT  STA CTTXT,X
+        LDX #79         ; blank the 4 text lines (160 bytes: two
+CE_TXT  STA CTTXT,X     ; stores, as BPL stops at 128)
+        STA CTTXT+80,X
         DEX
         BPL CE_TXT
         LDA CURTRN      ; rounds recorded
