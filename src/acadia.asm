@@ -43,6 +43,7 @@ START
         .INCLUDE "cursor.asm"
         .INCLUDE "map.asm"
         .INCLUDE "stats.asm"
+        .INCLUDE "stats3.asm"   ; the legend (D80): no room below $BC00
         .INCLUDE "display.asm"
 
 ; ---------------------------------------------------------------------

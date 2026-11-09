@@ -40,19 +40,29 @@ CT_COL2 =  $FF          ; a byte of 11 pixels: player 2's line
 CT_NPGS =  3            ; pages: score, people, income
 CT_NDLI =  6            ; DLIs in CTDLIST
 CT_WLEN =  17           ; the winner's part of status line 2 (TX_W1)
+CT_WCOL =  12           ; ... moved here: "PLAYER 1 WINS!" centred
+CT_HCOL =  10           ; column of the hint (TX_NEWG), centred
+CT_NGLN =  21           ; the hint's length
+CT_POP0 =  1000         ; each player's people at the start (ECO_INIT)
+SC_PLUS =  $0B          ; screen code of "+"
 
                         ; CTBM0-CTBM2 (bitmap), CTTXT: MEM_A800.ASM
 CT_TAB  =  CTTXT        ; the page names
 CT_XL   =  CTTXT+40     ; the round numbers
 CT_LEG  =  CTTXT+80     ; the legend: pawns, totals, best rounds
+CT_HINT =  CTTXT+120    ; the hint at the bottom (TX_NEWG)
 CT_TAB0 =  4            ; column of the first page name
 
-; colours (status bar colours: STATUS.ASM)
-C_CTBK  =  $82          ; the chart's background
-C_CTGRD =  $86          ; grid lines and their labels
-C_CTDIM =  $86          ; the other pages' names
-C_CTSEL =  $0E          ; this page's name (inverse: PF3)
-C_CTXL  =  $88          ; the round numbers
+; colours: the status lines keep the status bar's (STATUS.ASM); below
+; them the setup screen's (D78): black, yellow text, the current page
+; white, the grid dark yellow; the players' red and turquoise as before
+C_CTSBK =  $00          ; background under the status lines: black
+C_CTTXT =  $1C          ; text: the setup screen's yellow (C_TITLE)
+C_CTBK  =  $00          ; the chart's background: black
+C_CTGRD =  $16          ; grid lines and their labels: dark yellow
+C_CTDIM =  $16          ; the other pages' names: dark yellow
+C_CTSEL =  $0E          ; this page's name (inverse: PF3): white
+C_CTXL  =  $18          ; the round numbers
 
 ; ---------------------------------------------------------------------
 ;  CT_REC -- at the end of a round (ROUND_END, before CURTRN counts
@@ -111,8 +121,9 @@ CT_ENTER
         LDA #0
         STA CT_PG       ; the score page first
         STA CT_ARM
-        LDX #119        ; blank text lines
-CE_TXT  STA CTTXT,X
+        LDX #79         ; blank the 4 text lines (160 bytes: two
+CE_TXT  STA CTTXT,X     ; stores, as BPL stops at 128)
+        STA CTTXT+80,X
         DEX
         BPL CE_TXT
         LDA CURTRN      ; rounds recorded
@@ -120,12 +131,8 @@ CE_TXT  STA CTTXT,X
         BCC CE_N
         LDA #CT_MAXR
 CE_N    STA CT_N
-        LDX #40+CT_WLEN ; line 2: the winner, then the new prompt
-        LDA #<TX_NEWG
-        LDY #>TX_NEWG
-        JSR TXT_STR
+        JSR CT_LN2      ; the winner centred, the hint at the bottom
         JSR CT_XLAB
-        JSR CT_LEGD
         JSR CT_CLR      ; no old map in the chart's first frame
         LDA JOY0        ; a stick still held flips nothing
         ORA JOY1
@@ -143,6 +150,7 @@ CE_N    STA CT_N
 ;  Takes a few frames.  Trashes A, X, Y.
 ; ---------------------------------------------------------------------
 CT_DRAW
+        JSR CT_LEGD     ; the legend for this page (D80)
         JSR CT_TABS
         JSR CT_CLR
         JSR CT_SCALE
@@ -563,10 +571,10 @@ CI_OUT  PLA
 ;  Tables
 ; ---------------------------------------------------------------------
 ; per DLI: status line 1, line 2, page names, chart, round numbers, legend
-CTBK    .BYTE C_SBK1,C_SBK2,C_SBK2,C_CTBK,C_SBK2,C_SBK2
+CTBK    .BYTE C_SBK1,C_SBK2,C_CTSBK,C_CTBK,C_CTSBK,C_CTSBK
 CTPF0   .BYTE C_SGOLD,C_SGOLD,C_SGOLD,C_CTGRD,C_SGOLD,C_SGOLD
 CTPF1   .BYTE C_SRED,C_SRED,C_SRED,C_SRED,C_SRED,C_SRED
-CTPF2   .BYTE C_SWHT,C_SWHT,C_CTDIM,C_STURQ,C_CTXL,C_SWHT
+CTPF2   .BYTE C_SWHT,C_SWHT,C_CTDIM,C_STURQ,C_CTXL,C_CTTXT
 CTPF3   .BYTE C_STURQ,C_STURQ,C_CTSEL,C_STURQ,C_STURQ,C_STURQ
 
 CTMASK  .BYTE $C0,$30,$0C,$03   ; a pixel's bits in its byte
@@ -606,6 +614,3 @@ CTLGC   .BYTE 1,21
 CTPCOL  .BYTE TX_RED,TX_TURQ
 TX_BEST .SBYTE "BEST "
 
-; status line 2 on this screen, after the winner (TX_W1 ...)
-TX_NEWG .SBYTE "FIRE OR KEY: NEW GAME  "
-        .BYTE TX_END

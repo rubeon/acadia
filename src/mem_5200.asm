@@ -34,7 +34,7 @@ VARPAGES = 7            ; $2100-$27FF
 CTBM0   =  $2800        ; stats chart lines 0-24 (D61), 1K
 CTBM1   =  $2C00        ; lines 25-49, 1K
 CTBM2   =  MAPSCR       ; lines 50-63: the map, drawn again later
-CTTXT   =  HELPSCR      ; three mode 4 lines: the help screen's memory
+CTTXT   =  HELPSCR      ; four mode 4 lines: the help screen's memory
 RAMEND  =  $4000        ; $3000-$3FFF free
 
 ; ---------------------------------------------------------------------

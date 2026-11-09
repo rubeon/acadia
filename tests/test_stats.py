@@ -154,6 +154,12 @@ for n, seed in ((10, 1), (50, 2), (2, 3), (1, 4), (23, 5)):
     m.call("CT_ENTER", limit=BIG)
     if m.byte("CT_ON") != 1 or m.byte("CT_N") != n:
         fail("CT_ENTER: CT_ON %d CT_N %d" % (m.byte("CT_ON"), m.byte("CT_N")))
+    line2 = "".join(chr((m.byte("STATUS1", 40 + i) & 0x3F) + 0x20) if m.byte("STATUS1", 40 + i) & 0x3F else " "
+                    for i in range(40))
+    if line2.strip() != "PLAYER 1 WINS!" or line2.index("P") != 13:
+        fail("CT_ENTER: status line 2 %r, want the winner centred" % line2)
+    if text(120).strip() != "FIRE OR KEY: NEW GAME" or text(120).index("F") != 10:
+        fail("CT_ENTER: hint line %r" % text(120))
     for pg in range(3):
         m.poke("CT_PG", pg)
         m.call("CT_DRAW", limit=BIG)
@@ -179,6 +185,19 @@ for n, seed in ((10, 1), (50, 2), (2, 3), (1, 4), (23, 5)):
             y = YB - GAP * k
             if sum(pixel(x, y) == 1 for x in range(X0, X0 + W, 2)) < 10:
                 fail("n %d page %d: no grid line at %d" % (n, pg, y))
+        # the legend follows the page (D80): total, BEST, best round
+        leg = text(80)
+        for p in range(2):
+            v = data[pg][p][:n]
+            if pg == 0:
+                want = "%d BEST %d" % ((0x234, 0x121)[p], max(v))
+            elif pg == 1:
+                gains = [b - a for a, b in zip([1000] + v[:-1], v)]
+                want = "%d BEST +%d" % (v[-1], max([0] + gains))
+            else:
+                want = "%d BEST +%d" % (min(sum(v), 65535), max(v))
+            if want not in leg:
+                fail("n %d page %d legend %r, want %r" % (n, pg, leg, want))
         # page names: this one inverse
         tabs = [m.byte("CT_TAB", c) for c in (4, 17, 31)]
         if [t >= 0x80 for t in tabs] != [i == pg for i in range(3)]:
@@ -187,10 +206,6 @@ for n, seed in ((10, 1), (50, 2), (2, 3), (1, 4), (23, 5)):
     if not xl.strip().startswith("1") or str(n) not in xl:
         fail("n %d round numbers %r" % (n, xl))
     leg = text(80)
-    for p in range(2):
-        best = str(max(data[0][p]))
-        if "BEST " + best not in leg:
-            fail("n %d legend %r, want BEST %s" % (n, leg, best))
     print("n %2d: %r" % (n, xl))
     print("      %r" % leg)
 
@@ -233,7 +248,7 @@ zones = []
 for i in range(7):
     m.interrupt("CT_DLI")
     zones.append(tuple(m.byte(r) for r in ("COLBK", "COLPF0", "COLPF1", "COLPF2", "COLPF3")))
-if zones[3] != (0x82, 0x86, 0x48, 0xAC, 0xAC) or zones[6] != zones[5]:
+if zones[3] != (0x00, 0x16, 0x48, 0xAC, 0xAC) or zones[6] != zones[5]:
     fail("DLI colours %r" % zones)
 m.poke("CT_ON", 0)
 m.call("ST_VBI")
