@@ -52,7 +52,8 @@ CT_TAB0 =  4            ; column of the first page name
 ; turquoise and the gold from the status bar (STATUS.ASM)
 C_CTSBK =  $00          ; the text lines' background: black (C_SUBK)
 C_CTTXT =  $1C          ; text: the setup screen's yellow (C_TITLE)
-C_CTBK  =  C_SEA        ; the chart's background: the minimap's sea
+C_CTBK  =  $94          ; the chart's background: the minimap's sea (C_SEA,
+                        ; DISPLAY.ASM; not named: a forward reference)
 C_CTGRD =  $98          ; grid lines and their labels
 C_CTDIM =  $16          ; the other pages' names: dark yellow
 C_CTSEL =  $0E          ; this page's name (inverse: PF3): white
