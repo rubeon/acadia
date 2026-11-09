@@ -329,3 +329,33 @@ CY_LOW  INY
         JMP CY_PL
 CY_END  RTS
 
+; ---------------------------------------------------------------------
+;  CT_LN2 -- (CT_ENTER) status line 2: the winner (TX_W1, TX_W2 or
+;  TX_TIE, put at column 0 by the game-over screen) moved to the middle,
+;  the rest blank; the hint "FIRE OR KEY: NEW GAME" on the bottom line.
+;  Trashes A, Y.
+; ---------------------------------------------------------------------
+CT_LN2
+        LDY #CT_WLEN-1  ; the winner, from the right end (they overlap)
+CL_WIN  LDA STATUS1+40,Y
+        STA STATUS1+40+CT_WCOL,Y
+        DEY
+        BPL CL_WIN
+        LDA #0          ; blank left of it ...
+        LDY #CT_WCOL-1
+CL_LFT  STA STATUS1+40,Y
+        DEY
+        BPL CL_LFT
+        LDY #40-CT_WCOL-CT_WLEN-1 ; ... and right of it
+CL_RGT  STA STATUS1+40+CT_WCOL+CT_WLEN,Y
+        DEY
+        BPL CL_RGT
+        LDY #CT_HLEN-1  ; the hint
+CL_HNT  LDA TX_NEWG,Y
+        STA CT_HINT+CT_HCOL,Y
+        DEY
+        BPL CL_HNT
+        RTS
+
+TX_NEWG .SBYTE "FIRE OR KEY: NEW GAME"  ; the hint (CT_HLEN characters)
+CT_HLEN =  21

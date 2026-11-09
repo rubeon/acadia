@@ -665,5 +665,7 @@ CTDLIST
         .WORD CT_XL
         .BYTE DL_BLANK2
         .BYTE DL_MODE4                  ; legend (CT_LEG follows CT_XL)
+        .BYTE DL_BLANK8
+        .BYTE DL_MODE4                  ; the hint (CT_HINT), at the bottom
         .BYTE DL_JVB
         .WORD CTDLIST

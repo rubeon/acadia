@@ -154,6 +154,12 @@ for n, seed in ((10, 1), (50, 2), (2, 3), (1, 4), (23, 5)):
     m.call("CT_ENTER", limit=BIG)
     if m.byte("CT_ON") != 1 or m.byte("CT_N") != n:
         fail("CT_ENTER: CT_ON %d CT_N %d" % (m.byte("CT_ON"), m.byte("CT_N")))
+    line2 = "".join(chr((m.byte("STATUS1", 40 + i) & 0x3F) + 0x20) if m.byte("STATUS1", 40 + i) & 0x3F else " "
+                    for i in range(40))
+    if line2.strip() != "PLAYER 1 WINS!" or line2.index("P") != 13:
+        fail("CT_ENTER: status line 2 %r, want the winner centred" % line2)
+    if text(120).strip() != "FIRE OR KEY: NEW GAME" or text(120).index("F") != 10:
+        fail("CT_ENTER: hint line %r" % text(120))
     for pg in range(3):
         m.poke("CT_PG", pg)
         m.call("CT_DRAW", limit=BIG)

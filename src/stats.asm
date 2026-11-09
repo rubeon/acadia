@@ -40,11 +40,14 @@ CT_COL2 =  $FF          ; a byte of 11 pixels: player 2's line
 CT_NPGS =  3            ; pages: score, people, income
 CT_NDLI =  6            ; DLIs in CTDLIST
 CT_WLEN =  17           ; the winner's part of status line 2 (TX_W1)
+CT_WCOL =  12           ; ... moved here: "PLAYER 1 WINS!" centred
+CT_HCOL =  10           ; column of the hint (TX_NEWG), centred
 
                         ; CTBM0-CTBM2 (bitmap), CTTXT: MEM_A800.ASM
 CT_TAB  =  CTTXT        ; the page names
 CT_XL   =  CTTXT+40     ; the round numbers
 CT_LEG  =  CTTXT+80     ; the legend: pawns, totals, best rounds
+CT_HINT =  CTTXT+120    ; the hint at the bottom (TX_NEWG)
 CT_TAB0 =  4            ; column of the first page name
 
 ; colours: the status lines keep the status bar's (STATUS.ASM); below
@@ -115,7 +118,7 @@ CT_ENTER
         LDA #0
         STA CT_PG       ; the score page first
         STA CT_ARM
-        LDX #119        ; blank text lines
+        LDX #159        ; blank text lines (4: the hint too)
 CE_TXT  STA CTTXT,X
         DEX
         BPL CE_TXT
@@ -124,10 +127,7 @@ CE_TXT  STA CTTXT,X
         BCC CE_N
         LDA #CT_MAXR
 CE_N    STA CT_N
-        LDX #40+CT_WLEN ; line 2: the winner, then the new prompt
-        LDA #<TX_NEWG
-        LDY #>TX_NEWG
-        JSR TXT_STR
+        JSR CT_LN2      ; the winner centred, the hint at the bottom
         JSR CT_XLAB
         JSR CT_LEGD
         JSR CT_CLR      ; no old map in the chart's first frame
@@ -610,6 +610,3 @@ CTLGC   .BYTE 1,21
 CTPCOL  .BYTE TX_RED,TX_TURQ
 TX_BEST .SBYTE "BEST "
 
-; status line 2 on this screen, after the winner (TX_W1 ...)
-TX_NEWG .SBYTE "FIRE OR KEY: NEW GAME  "
-        .BYTE TX_END

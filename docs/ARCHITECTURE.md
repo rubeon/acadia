@@ -95,7 +95,7 @@ and `tools/mkstat.py`, which still test that fonts fit).
 | `$3800-$38FF` | Display lists: `DLIST` (map), `HDLIST` (help), `TDLIST` (title) and `CTDLIST` (stats, D61), same page so one store to `SDLSTL` switches |
 | `$3900-$3FFF` | RAM variables (`src/vars.asm`), cleared by `VARS_INIT` at start-up |
 | `$4000-$43FF` | P/M graphics, double-line resolution, 1K aligned (`PMAREA`) |
-| `$4400-$45B7` | Help screen `HELPSCR` (11 mode 5 lines × 40); during `GAME_START`, `ML_STEPS`'s queue; on the stats screen its 3 text lines (`CTTXT`, D61) |
+| `$4400-$45B7` | Help screen `HELPSCR` (11 mode 5 lines × 40); during `GAME_START`, `ML_STEPS`'s queue; on the stats screen its 4 text lines (`CTTXT`, D61, D79) |
 | `$4800-$4BFF` | STANDARD map font 0 |
 | `$4C00-$4FFF` | Help font `HLPFONT` (generated): fixed tiles at their map codes, 3 × 5 letters and digits at screen code + `HELP_OFS`; then `WVDATA`, the wave frames (D51) |
 | `$5000-$7FFF` | Code block 2 (`CODE2`): game logic (`economy.asm`, `boats.asm`, `fish.asm`, `weather.asm`, `pirates.asm`, `rebels.asm`, `ai.asm`, `sound.asm`, `music.asm`, `pause.asm`, `help.asm`, `screens.asm`, `news.asm`, `setup.asm`, `demo.asm`, `shade.asm`, `maps.asm`, `status.asm`); about `$7CC0` used so far |
