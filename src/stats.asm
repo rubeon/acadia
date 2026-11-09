@@ -42,6 +42,7 @@ CT_NDLI =  6            ; DLIs in CTDLIST
 CT_WLEN =  17           ; the winner's part of status line 2 (TX_W1)
 CT_WCOL =  12           ; ... moved here: "PLAYER 1 WINS!" centred
 CT_HCOL =  10           ; column of the hint (TX_NEWG), centred
+CT_NGLN =  21           ; the hint's length
 
                         ; CTBM0-CTBM2 (bitmap), CTTXT: MEM_A800.ASM
 CT_TAB  =  CTTXT        ; the page names

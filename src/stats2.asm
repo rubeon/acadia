@@ -350,12 +350,11 @@ CL_LFT  STA STATUS1+40,Y
 CL_RGT  STA STATUS1+40+CT_WCOL+CT_WLEN,Y
         DEY
         BPL CL_RGT
-        LDY #CT_HLEN-1  ; the hint
+        LDY #CT_NGLN-1  ; the hint
 CL_HNT  LDA TX_NEWG,Y
         STA CT_HINT+CT_HCOL,Y
         DEY
         BPL CL_HNT
         RTS
 
-TX_NEWG .SBYTE "FIRE OR KEY: NEW GAME"  ; the hint (CT_HLEN characters)
-CT_HLEN =  21
+TX_NEWG .SBYTE "FIRE OR KEY: NEW GAME"  ; the hint (CT_NGLN characters)
