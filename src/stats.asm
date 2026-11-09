@@ -43,6 +43,8 @@ CT_WLEN =  17           ; the winner's part of status line 2 (TX_W1)
 CT_WCOL =  12           ; ... moved here: "PLAYER 1 WINS!" centred
 CT_HCOL =  10           ; column of the hint (TX_NEWG), centred
 CT_NGLN =  21           ; the hint's length
+CT_POP0 =  1000         ; each player's people at the start (ECO_INIT)
+SC_PLUS =  $0B          ; screen code of "+"
 
                         ; CTBM0-CTBM2 (bitmap), CTTXT: MEM_A800.ASM
 CT_TAB  =  CTTXT        ; the page names
@@ -131,7 +133,6 @@ CE_TXT  STA CTTXT,X     ; stores, as BPL stops at 128)
 CE_N    STA CT_N
         JSR CT_LN2      ; the winner centred, the hint at the bottom
         JSR CT_XLAB
-        JSR CT_LEGD
         JSR CT_CLR      ; no old map in the chart's first frame
         LDA JOY0        ; a stick still held flips nothing
         ORA JOY1
@@ -149,6 +150,7 @@ CE_N    STA CT_N
 ;  Takes a few frames.  Trashes A, X, Y.
 ; ---------------------------------------------------------------------
 CT_DRAW
+        JSR CT_LEGD     ; the legend for this page (D80)
         JSR CT_TABS
         JSR CT_CLR
         JSR CT_SCALE

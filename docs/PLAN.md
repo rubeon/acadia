@@ -60,7 +60,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 | T-SCR-5 | End-of-game stats screen: line charts over the rounds of each player's score, population and gold | R-SCR-7 | T-SCR-2 | Every round of a game up to 50 rounds is recorded and charted; the chart scales to the values; fire goes on to the setup screen | done (D61) |
 | T-SCR-7 | Stats screen: the GOLD page becomes INCOME, the gold each player earned in each round (D66) | R-SCR-7 | T-SCR-5 | Income recorded before the round's earned gold is cleared; the page is called INCOME | done (Claude) |
 | T-SCR-8 | Setup screen with the title's "Acadia" logo and sunset sky at the top left, the options under it (D71) | R-MODE-3 | T-SCR-6, T-REL-4 | Logo and sky as on the title; every line, the minimap and the prompt visible; 800 and 5200 builds | done |
-| T-SCR-9 | Stats screen's chart area in the setup screen's colours: black, yellow text, the current page white; status lines stay blue (D78); the winner centred, the fire hint at the bottom (D79) | R-SCR-7 | T-SCR-7, T-SCR-8 | Every zone of the stats screen in the new colours; both players' lines and the grid readable; 800 and 5200 builds | done (Claude) |
+| T-SCR-9 | Stats screen's chart area in the setup screen's colours: black, yellow text, the current page white; status lines stay blue (D78); the winner centred, the fire hint at the bottom (D79); the legend's totals and best round follow the page (D80) | R-SCR-7 | T-SCR-7, T-SCR-8 | Every zone of the stats screen in the new colours; both players' lines and the grid readable; 800 and 5200 builds | done (Claude) |
 
 ## M4 — Moving things
 

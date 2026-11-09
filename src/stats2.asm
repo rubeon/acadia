@@ -266,11 +266,21 @@ CX_M5   INC CT_I
         RTS
 
 ; ---------------------------------------------------------------------
-;  CT_LEGD -- the legend: per player a pawn, the total score in the
-;  player's colour, BEST and the best round score.  Trashes A, X, Y.
+;  CT_LEGD -- the legend for page CT_PG (D80): per player a pawn, a
+;  total in the player's colour, BEST and the best round.  SCORE: the
+;  total score, the best round score; PEOPLE: the last population, the
+;  biggest growth in a round (+N; +0 if it never grew); INCOME: all the
+;  gold earned (65535 at most), the best round's (+N).  From CT_DRAW,
+;  before CT_SCALE (it uses CT_MIN, CT_MAX, CT_V, CT_R, CT_S).
+;  Trashes A, X, Y.
 ; ---------------------------------------------------------------------
 CT_LEGD
-        LDX #0
+        LDA #0          ; the line blank: totals change length
+        LDX #39
+CY_CLR  STA CT_LEG,X
+        DEX
+        BPL CY_CLR
+        INX             ; X = 0: player 1
 CY_PL   STX CT_P
         LDY CTLGC,X     ; the pawn, 2 characters
         LDA CTPWN,X
@@ -284,18 +294,22 @@ CY_PL   STX CT_P
         STA CT_TX2
         LDA CTPCOL,X
         STA CT_TC
-        TXA             ; the total score
+        JSR CT_LSUM     ; CT_V = the total, CT_MAX = the best round
+        LDA CT_PG
+        BNE CY_TOT      ; the score page: the total score
+        LDA CT_P
         ASL A
         TAX
         LDA SCORE,X
-        PHA
+        STA CT_V
         LDA SCORE+1,X
-        TAX
-        PLA
+        STA CT_V+1
+CY_TOT  LDA CT_V
+        LDX CT_V+1
         JSR NUM16
         LDX CT_TX2
         JSR CT_TNUM
-        INX             ; a space, then BEST in white
+        INX             ; a space, then BEST
         LDY #0
 CY_BST  LDA TX_BEST,Y
         STA CTTXT,X
@@ -303,31 +317,93 @@ CY_BST  LDA TX_BEST,Y
         INY
         CPY #5
         BCC CY_BST
-        STX CT_TX2
-        LDA #0          ; the best round score
-        STA CT_T
-        LDY CT_P
-        BEQ CY_B0
-        LDY #CT_MAXR
-CY_B0   LDX CT_N
-CY_MAX  LDA HSC,Y
-        CMP CT_T
-        BCC CY_LOW
-        STA CT_T
-CY_LOW  INY
-        DEX
-        BNE CY_MAX
-        LDA CT_T
-        LDX #0
+        LDA CT_PG       ; people and income: a gain, "+"
+        BEQ CY_BNUM
+        LDA #SC_PLUS
+        ORA CT_TC
+        STA CTTXT,X
+        INX
+CY_BNUM STX CT_TX2
+        LDA CT_MAX
+        LDX CT_MAX+1
         JSR NUM16
         LDX CT_TX2
         JSR CT_TNUM
         LDX CT_P
         INX
         CPX #2
-        BCS CY_END
-        JMP CY_PL
-CY_END  RTS
+        BCC CY_PL
+        RTS
+
+; ---------------------------------------------------------------------
+;  CT_LSUM -- (CT_LEGD) player CT_P's series on page CT_PG: CT_V = the
+;  last value (income: the sum, 65535 at most), CT_MAX = the highest
+;  value (people: the highest gain over the round before, the first
+;  over the starting CT_POP0; losses count as 0).  Trashes A, X, Y.
+; ---------------------------------------------------------------------
+CT_LSUM
+        LDA CT_PG
+        ASL A
+        ORA CT_P
+        STA CT_S
+        LDA #0
+        STA CT_V
+        STA CT_V+1
+        STA CT_MAX
+        STA CT_MAX+1
+        LDA #<CT_POP0   ; people: the round before the first
+        STA CT_MIN
+        LDA #>CT_POP0
+        STA CT_MIN+1
+        LDY #0
+CU_LOOP STY CT_I
+        LDX CT_S
+        JSR CT_GET      ; A = low, X = high
+        STA CT_R
+        STX CT_R+1
+        LDY CT_PG
+        CPY #2
+        BCC CU_LAST
+        CLC             ; income: add it up
+        ADC CT_V
+        STA CT_V
+        TXA
+        ADC CT_V+1
+        STA CT_V+1
+        BCC CU_GAIN
+        LDA #$FF        ; too much: 65535
+        STA CT_V
+        STA CT_V+1
+        BNE CU_GAIN
+CU_LAST STA CT_V        ; score, people: the last one
+        STX CT_V+1
+CU_GAIN LDA CT_R
+        DEY             ; Y = page - 1: people?
+        BNE CU_MAX
+        SEC             ; people: the gain over the round before
+        SBC CT_MIN
+        PHA
+        TXA
+        SBC CT_MIN+1
+        TAX
+        LDA CT_R        ; this round is the next one's "before"
+        STA CT_MIN
+        LDA CT_R+1
+        STA CT_MIN+1
+        PLA
+        BCC CU_NEXT     ; a loss
+CU_MAX  CPX CT_MAX+1    ; A/X above the highest?
+        BCC CU_NEXT
+        BNE CU_SET
+        CMP CT_MAX
+        BCC CU_NEXT
+CU_SET  STA CT_MAX
+        STX CT_MAX+1
+CU_NEXT LDY CT_I
+        INY
+        CPY CT_N
+        BCC CU_LOOP
+        RTS
 
 ; ---------------------------------------------------------------------
 ;  CT_LN2 -- (CT_ENTER) status line 2: the winner (TX_W1, TX_W2 or

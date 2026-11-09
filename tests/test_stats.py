@@ -185,6 +185,19 @@ for n, seed in ((10, 1), (50, 2), (2, 3), (1, 4), (23, 5)):
             y = YB - GAP * k
             if sum(pixel(x, y) == 1 for x in range(X0, X0 + W, 2)) < 10:
                 fail("n %d page %d: no grid line at %d" % (n, pg, y))
+        # the legend follows the page (D80): total, BEST, best round
+        leg = text(80)
+        for p in range(2):
+            v = data[pg][p][:n]
+            if pg == 0:
+                want = "%d BEST %d" % ((0x234, 0x121)[p], max(v))
+            elif pg == 1:
+                gains = [b - a for a, b in zip([1000] + v[:-1], v)]
+                want = "%d BEST +%d" % (v[-1], max([0] + gains))
+            else:
+                want = "%d BEST +%d" % (min(sum(v), 65535), max(v))
+            if want not in leg:
+                fail("n %d page %d legend %r, want %r" % (n, pg, leg, want))
         # page names: this one inverse
         tabs = [m.byte("CT_TAB", c) for c in (4, 17, 31)]
         if [t >= 0x80 for t in tabs] != [i == pg for i in range(3)]:
@@ -193,10 +206,6 @@ for n, seed in ((10, 1), (50, 2), (2, 3), (1, 4), (23, 5)):
     if not xl.strip().startswith("1") or str(n) not in xl:
         fail("n %d round numbers %r" % (n, xl))
     leg = text(80)
-    for p in range(2):
-        best = str(max(data[0][p]))
-        if "BEST " + best not in leg:
-            fail("n %d legend %r, want BEST %s" % (n, leg, best))
     print("n %2d: %r" % (n, xl))
     print("      %r" % leg)
 
