@@ -141,8 +141,7 @@ def hz16(f):
     return round(1789773 / (2 * f)) - 7
 
 
-D2, A2, D3, AS1, F2 = (hz16(55 * 2 ** (n / 12)) for n in (5, 12, 17, 1, 8))
-A1 = hz16(55)
+D2, A1 = hz16(55 * 2 ** (5 / 12)), hz16(55)
 
 
 m.call("SND_INIT")
@@ -163,8 +162,8 @@ if mel[:6] != [A4, G4, NOTES[18], A4, C5, G4]:
     fail("title melody starts %r" % mel[:6])
 if not m.byte("MZ_ON") or len(mel) <= 13:
     fail("title tune did not loop: %d notes, on %d" % (len(mel), m.byte("MZ_ON")))
-if bass(frames)[:6] != [D2, A2, D3, AS1, F2, hz16(55 * 2 ** (13 / 12))]:
-    fail("title bass starts %r" % bass(frames)[:6])
+if bass(frames)[:5] != [D2, D2, D2, A1, D2]:
+    fail("title bass starts %r" % bass(frames)[:5])
 if any(v[0][1] for v in frames):
     fail("title: voice 1 (the bass's low byte) heard")
 m.call("SND_BUY")

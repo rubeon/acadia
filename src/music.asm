@@ -68,17 +68,7 @@ N_B5  =  36
 
 ; bass notes: indices into BASFL / BASFH (only the notes the tunes use)
 B_A1  =  1
-B_AS1 =  2
-B_C2  =  3
-B_CS2 =  4
-B_D2  =  5
-B_E2  =  6
-B_F2  =  7
-B_G2  =  8
-B_A2  =  9
-B_AS2 =  10
-B_C3  =  11
-B_D3  =  12
+B_D2  =  2
 
 ; ---------------------------------------------------------------------
 ;  MUS_TITLE -- start the title tune (loops).  MUS_FANF -- start the
