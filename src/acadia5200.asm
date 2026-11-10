@@ -66,6 +66,7 @@ START
         .INCLUDE "ai.asm"
         .INCLUDE "sound.asm"
         .INCLUDE "music.asm"
+        .INCLUDE "musdata.asm"          ; its tables and tunes (D85)
         .INCLUDE "pause.asm"
         .INCLUDE "help.asm"
         .INCLUDE "screens.asm"
@@ -93,8 +94,8 @@ ROMEND                          ; must stay below TITLEGFX (MKCART.PY)
 ;  The pause band's font (D69), 1K aligned, in the gap after RANDOM's
 ; ---------------------------------------------------------------------
         .INCLUDE "font_pause.asm"
-        .INCLUDE "stats4.asm"   ; the summary page (D84), in the font's
-SYEND                           ; free 872 bytes: below TTFONTA ($6800)
+        .INCLUDE "stats4.asm"   ; the summary page (D84), in the font's free space
+SYEND                           ; below TTFONTA ($6800)
 
 ; ---------------------------------------------------------------------
 ;  RAM: the variables and the live map's tables, reserved only

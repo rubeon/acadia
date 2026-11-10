@@ -153,7 +153,7 @@ SN_SX   *= *+1          ; SND_GO: X and Y kept
 SN_SY   *= *+1
 SN_T    *= *+1          ; SND_PLAY: channel chosen
 SN_I    *= *+1          ; SND_PLAY: work
-SN_LO   *= *+1          ; lowest voice effects may use (2 while music)
+SN_LO   *= *+1          ; lowest voice effects may use (3 while music)
 
 ; ---------------------------------------------------------------------
 ;  Music (MUSIC.ASM): per voice 0-1
@@ -165,7 +165,7 @@ MZ_ACT  *= *+2          ; 1 while the voice has notes left
 MZ_POS  *= *+2          ; next note, offset in MUSDAT
 MZ_ST   *= *+2          ; first note, for looping
 MZ_CNT  *= *+2          ; frames left of this note
-MZ_F    *= *+2          ; AUDF now
+MZ_F    *= *+2          ; the note now (MV_OUT looks up its AUDF)
 MZ_VOL  *= *+2          ; volume now
 MZ_DT   *= *+2          ; frames since the volume last fell
 

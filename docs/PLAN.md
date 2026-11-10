@@ -82,6 +82,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 | T-SND-1 | VBI sound driver: SFX priority, 4 channels | R-SND-3 | — | No audible glitches under load | done (D41) |
 | T-SND-2 | All SFX | R-SND-1,4 | T-SND-1 | Every event in R-SND-1 has a sound | done (D41) |
 | T-SND-3 | Music: title and end of round | R-SND-2,4 | T-SND-1 | Plays without stalling the game | done (D42; tunes replaced D45) |
+| T-SND-4 | A real bass line under the title tune (D85) | R-SND-2,4 | T-SND-3 | Bass in tune down to A1 on the 800 and the 5200 | done (D85) |
 
 ## M6 — CPU governor
 

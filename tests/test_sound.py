@@ -106,7 +106,8 @@ run(1)
 if not any(c & 0x0F for _, c in voices()):
     fail("no sound after resume")
 
-# music: the title tune on voices 1 and 2, looping; effects on 3 and 4
+# music: the title tune, melody on voice 3, bass on voices 1+2 joined
+# (16 bits at 1.79 MHz, D85), looping; effects on voice 4
 NOTES = {}
 for i, (o, n) in enumerate([(o, n) for o in (3, 4, 5) for n in range(12)]):
     NOTES[i + 1] = round(63921 / (2 * 440 * 2 ** ((o - 4) + (n - 9) / 12)) - 1)
@@ -124,6 +125,25 @@ def starts(frames, voice):
     return out
 
 
+def bass(frames):
+    """16-bit AUDF2:AUDF1 of each bass note start (voice 2 sounds)."""
+    out, quiet = [], True
+    for v in frames:
+        c = v[1][1]
+        if c & 0x0F and quiet:
+            out.append(v[1][0] * 256 + v[0][0])
+        quiet = not c & 0x0F
+    return out
+
+
+def hz16(f):
+    """16-bit AUDF of f Hz at 1.79 MHz."""
+    return round(1789773 / (2 * f)) - 7
+
+
+D2, A1 = hz16(55 * 2 ** (5 / 12)), hz16(55)
+
+
 m.call("SND_INIT")
 m.call("SND_FISH")
 m.call("SND_FISH")
@@ -132,33 +152,41 @@ m.call("SND_FISH")
 a, x, y, _ = m.call("MUS_TITLE", a=1, x=2, y=3)
 if (a, x, y) != (1, 2, 3):
     fail("MUS_TITLE changed registers")
-if playing()[:2] != [0, 0] or m.byte("SN_LO") != 2:
-    fail("title: effects left on voices 1-2: %r" % playing())
+if playing()[:3] != [0, 0, 0] or m.byte("SN_LO") != 3:
+    fail("title: effects left on voices 1-3: %r" % playing())
+if m.mem._subject[AUDCTL] != 0x50:
+    fail("title: AUDCTL %02X, want 50" % m.mem._subject[AUDCTL])
 frames = run(1400)
-mel = starts(frames, 0)
+mel = starts(frames, 2)
 if mel[:6] != [A4, G4, NOTES[18], A4, C5, G4]:
     fail("title melody starts %r" % mel[:6])
 if not m.byte("MZ_ON") or len(mel) <= 13:
     fail("title tune did not loop: %d notes, on %d" % (len(mel), m.byte("MZ_ON")))
-if not starts(frames, 1):
-    fail("title: no bass")
+if bass(frames)[:5] != [D2, D2, D2, A1, D2]:
+    fail("title bass starts %r" % bass(frames)[:5])
+if any(v[0][1] for v in frames):
+    fail("title: voice 1 (the bass's low byte) heard")
 m.call("SND_BUY")
-if playing()[:2] != [0, 0] or not any(playing()[2:]):
+if playing()[:3] != [0, 0, 0] or not playing()[3]:
     fail("an effect during music: channels %r" % playing())
 m.call("MUS_STOP")
-if m.byte("MZ_ON") or m.byte("SN_LO") or m.mem[AUDF1 + 1] or m.mem[AUDF1 + 3]:
+if m.byte("MZ_ON") or m.byte("SN_LO") or m.mem[AUDF1 + 1] or m.mem[AUDF1 + 3] \
+        or m.mem[AUDF1 + 5] or m.mem._subject[AUDCTL]:
     fail("MUS_STOP left music on")
 
 # the fanfare plays once, then effects get all four voices back
 m.call("SND_INIT")
 m.call("SND_ROUND")
 frames = run(200)
-loud = [i for i, v in enumerate(frames) if v[0][1] & 0x0F or v[1][1] & 0x0F]
+loud = [i for i, v in enumerate(frames) if v[1][1] & 0x0F or v[2][1] & 0x0F]
 print("fanfare    %3d frames" % (loud[-1] + 1))
-if not 60 <= loud[-1] + 1 <= 90 or m.byte("MZ_ON") or m.byte("SN_LO"):
+if not 60 <= loud[-1] + 1 <= 90 or m.byte("MZ_ON") or m.byte("SN_LO") \
+        or m.mem._subject[AUDCTL]:
     fail("fanfare: %d frames, on %d" % (loud[-1] + 1, m.byte("MZ_ON")))
-if starts(frames, 0)[:5] != [A4, NOTES[27], NOTES[30], NOTES[29], NOTES[27]]:
-    fail("fanfare notes %r" % starts(frames, 0))
+if starts(frames, 2)[:5] != [A4, NOTES[27], NOTES[30], NOTES[29], NOTES[27]]:
+    fail("fanfare notes %r" % starts(frames, 2))
+if bass(frames)[:3] != [D2, A1, D2]:
+    fail("fanfare bass %r" % bass(frames)[:3])
 
 # paused: the music stands still
 m.call("MUS_TITLE")
