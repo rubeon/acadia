@@ -157,7 +157,7 @@ if m.byte("MAPNO") != SBX or m.byte("MAPLD") != SBX:
 frame()
 l1, l2 = line(1), line(2)
 print("status: %r / %r" % (l1, l2))
-if "ROUND   1" not in l1 or "TURNS" in l1:
+if "ROUND  1" not in l1 or "TURNS" in l1:
     fail("round number: %r" % l1)
 if l1[33:].strip() or l2[33:].strip():
     fail("player 2 on the status bar: %r / %r" % (l1, l2))
@@ -180,7 +180,7 @@ for want in (2, 3, 4):
             fail("round %d: game over or stuck (GSTATE %d)" % (want, m.byte("GSTATE")))
             break
     frame()
-    if ("ROUND %3d" % want) not in line(1):
+    if ("ROUND%3d" % want) not in line(1):
         fail("round %d: %r" % (want, line(1)))
 if m.byte("COUNT", 10 + 8) or m.byte("COUNT", 10 + 9) or m.byte("AIST"):
     fail("the CPU acted: AIST %d" % m.byte("AIST"))

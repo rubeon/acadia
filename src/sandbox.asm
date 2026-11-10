@@ -29,7 +29,7 @@
 ;  code blocks are full; SANDBOX2.ASM has the island and setup parts.
 ; =====================================================================
 
-SB_TCOL =  10           ; status column of TURNS, ROUND in SANDBOX
+SB_TCOL =  11           ; status column of TURNS, ROUND in SANDBOX
 SB_P2C  =  33           ; first column of player 2's gold bar
 SB_P2L  =  73           ; first offset of player 2's pawn (line 2)
 SB_HCOL =  NW_COL+1     ; the hint while paused (news slot, line 2)
