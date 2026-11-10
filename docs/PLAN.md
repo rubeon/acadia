@@ -22,6 +22,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 | T-INFRA-4 | ATR build target (`make atr`) with a boot loader or DOS + autorun | — | — | ATR boots in atari800 and MiSTer | todo |
 | T-INFRA-5 | Move all variables out of code into one RAM block (`src/vars.asm`); no inline `.BYTE` variables | — | — | `grep` finds no variable storage in code modules; build and display test unchanged | done |
 | T-INFRA-6 | XEX boots on the MiSTer's disk-boot loader: never a multiple of 125 bytes long (D73) | — | — | `make` pads the XEX when needed; `tests/test_xexsize.py` passes; main's build boots on MiSTer | done |
+| T-INFRA-7 | Loading screen: the logo and LOADING as soon as the XEX starts loading (D81) | — | T-REL-4 | Logo shows a few seconds after power-on on a real-speed load; `tests/test_loader.py` passes; boots with BASIC in and out, on MiSTer | in progress (Claude) |
 | T-SVC-1 | `math.asm`: 8×8→16 multiply, 16÷8 divide with rounding | R-RULE-2 | — | Unit check against table of known results | done |
 | T-SVC-2 | `rand.asm`: `RAND_N` uniform 0..N−1 | R-RULE-4 | — | Histogram over 10,000 calls within ±5% | done |
 | T-SVC-3 | `tic.asm`: 20 Hz tic + seconds, NTSC and PAL | R-TIME-1..3 | — | 60 s of game clock = 60 s real on both (`-ntsc`/`-pal`) | done |
