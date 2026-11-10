@@ -307,13 +307,13 @@ for joy, pg, d in ((8, 0, "CTDLIST"), (0, 0, "CTDLIST"), (4, 3, "SYDLIST"), (0, 
     if m.byte("CT_PG") != pg or m.byte("SDLSTL") | m.byte("SDLSTH") << 8 != m.addr(d):
         fail("stick %d: page %d display list %02X%02X, want %d %s"
              % (joy, m.byte("CT_PG"), m.byte("SDLSTH"), m.byte("SDLSTL"), pg, d))
-# fire (after letting go): the setup screen, back in DLIST's page
+# fire (after letting go): the setup screen and its display list
 m.poke("JOY0", 0)
 for fire in (0, 1):
     m.poke("FIRE0", fire)
     m.call("CT_FRAME", limit=BIG)
 m.poke("FIRE0", 0)
-if m.byte("CT_ON") or m.byte("SDLSTH") != m.addr("DLIST") >> 8:
+if m.byte("CT_ON") or m.byte("SDLSTL") | m.byte("SDLSTH") << 8 != m.addr("SU_DL"):
     fail("leaving: CT_ON %d, display list %02X%02X"
          % (m.byte("CT_ON"), m.byte("SDLSTH"), m.byte("SDLSTL")))
 
