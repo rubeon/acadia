@@ -123,3 +123,4 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 | T-5200-2 | 5200 input layer: analog sticks, keypad, second fire button (Q4, D63) | done |
 | T-5200-3 | Replace any remaining 800-only assumptions (memory map, interrupts via 5200 BIOS vectors) | todo |
 | T-5200-4 | No BIOS title screen ("COPYRIGHT 19..", Atari logo): header `$BFFD` = `$FF`, the cartridge's own start-up and VBI (D77) | done |
+| T-5200-5 | 5200 fixes: help screen names * and * reliably closes it (keypad debounce); top and bottom buttons only begin the game on the setup screen (D86) | done |

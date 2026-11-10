@@ -14,8 +14,9 @@
 ;                  zone around the centre -> JOY0, JOY1
 ;    fire          the bottom side button (SKSTAT bit 3) -> FIRE0, FIRE1
 ;    keypad 1-9    KEY 1-9, KEYPL = the controller it came from
-;    0, the top    KEY 0 for that controller (lift / park a boat)
-;    side button   (TRIG0, TRIG1)
+;    0, the top    KEY 0 for that controller (lift / park a boat);
+;    side button   (TRIG0, TRIG1) on the title and setup screens the
+;                  top button is fire instead (D86)
 ;    *             HELPK (help screen, D34)
 ;    #             info pages (D18) while held, during a round: totals,
 ;                  then each press within IN_PGTM frames of the last
@@ -40,6 +41,8 @@
 FX_UP   =  0            ; FTAP: fire let go (as INPUT.ASM)
 FX_TAP  =  1            ;       pressed, a tap so far
 FX_USED =  2            ;       held, but not a tap
+IN_HKEY =  $1B          ; the help key's screen code, for the help screen:
+                        ; ; is drawn as * in the help font (D86)
 
 ; Input state: PLATRAM bytes (MEM_5200.ASM), cleared by IN_INIT
 IN_CTL  =  PLATRAM+11   ; controller selected for the next read (0/1)
@@ -53,7 +56,11 @@ IN_J    =  PLATRAM+18   ; IN_STK: direction bits so far
 IN_TRG  =  PLATRAM+19   ; 2 bytes: per controller, top button (TRIG)
                         ; held at the last poll (1 = held)
 IN_TWO  =  PLATRAM+21   ; 1: both controllers are read (IN_SEL)
-IN_N    =  11           ; bytes IN_INIT clears (IN_CTL ... IN_TWO)
+IN_UPN  =  PLATRAM+22   ; 2 bytes: per controller, reads in a row with
+                        ; no key while IN_HELD still holds one (IN_PAD)
+IN_N    =  13           ; bytes IN_INIT clears (IN_CTL ... IN_UPN)
+IN_DEB  =  3            ; reads with no key before a key counts as let
+                        ; go (D86)
 
 IN_LO   =  74           ; pot < IN_LO: up / left (centre ~114)
 IN_HI   =  155          ; pot >= IN_HI: down / right
@@ -123,9 +130,13 @@ INPUT_POLL
         LDX #1
         JSR IN_TOP
 
-        LDX #1          ; bottom buttons: fire (D63)
-IP_FIRE LDA IN_BOT,X
-        BEQ IP_FSET
+        LDX #1          ; bottom buttons: fire (D63); on the title and
+IP_FIRE LDA GSTATE      ; setup screens the top ones too (D86)
+        CMP #GS_SETUP
+        LDA IN_BOT,X
+        BCC IP_FB
+        ORA IN_TRG,X
+IP_FB   BEQ IP_FSET
         LDA #1
 IP_FSET STA FIRE0,X
         DEX
@@ -218,16 +229,28 @@ IS_NOX  LDA IN_J
 ; ---------------------------------------------------------------------
 ;  IN_PAD -- read the keypad and bottom button of controller X, which
 ;  POKEY has scanned this frame; KEY, KEYPL, PAUSEK, HELPK and the #
-;  page on a new press.  Trashes A, Y.
+;  page on a new press.  A key counts as let go only after IN_DEB
+;  reads in a row without it, so a read that misses a key still held
+;  is no new press (on a real 5200 * opened and at once closed the
+;  help screen, D86).  Trashes A, Y.
 ; ---------------------------------------------------------------------
 IN_PAD  LDY #0          ; Y = the code held, 0 = none
         LDA SKSTAT
         AND #SK_KEY
-        BNE IA_CODE
+        BNE IA_UP
         LDA KBCODE      ; bits 1-4: the key (bits 0, 5: no lines)
         LSR A
         AND #$0F
         TAY
+        LDA #0          ; a key: the count of reads without one restarts
+        STA IN_UPN,X
+        BEQ IA_CODE     ; always
+IA_UP   LDA IN_HELD,X   ; no key read: was one held?
+        BEQ IA_CODE     ; no
+        INC IN_UPN,X    ; let go only after IN_DEB reads in a row
+        LDA IN_UPN,X
+        CMP #IN_DEB
+        BCC IA_BOT      ; until then it is still held
 IA_CODE TYA
         CMP IN_HELD,X
         BEQ IA_BOT      ; the same as last time: no new press
@@ -279,7 +302,7 @@ IA_BOT  LDA SKSTAT      ; the bottom button (fire): held or not
 ; ---------------------------------------------------------------------
 ;  IN_TOP -- controller X's top side button (TRIG): KEY 0 for that
 ;  controller when it is pressed, unless the keypad gave a key this
-;  poll.  Controller 2's only counts while both are read (IN_TWO), but
+;  poll, or the title or setup screen is up (there it fires, D86).  Controller 2's only counts while both are read (IN_TWO), but
 ;  its state is kept, so a button held when that starts is no press.
 ;  Trashes A, Y.
 ; ---------------------------------------------------------------------
@@ -290,6 +313,9 @@ IN_TOP  LDA TRIG0,X     ; 0 = pressed
         STA IN_TRG,X
         TAY
         BEQ IT_RTS      ; let go
+        LDA GSTATE      ; title and setup screens: fire, not key 0
+        CMP #GS_SETUP   ; (INPUT_POLL, D86)
+        BCS IT_RTS
         TXA
         BEQ IT_KEY      ; controller 1: always
         LDA IN_TWO

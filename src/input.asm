@@ -139,6 +139,7 @@ IP_BOTH LDA #$FF        ; both on fire: ambiguous, drop the key
 FX_UP   =  0            ; FTAP: fire let go
 FX_TAP  =  1            ;       pressed, a tap so far
 FX_USED =  2            ;       held, but not a tap
+IN_HKEY =  $28          ; the help key's screen code, for the help screen: H
 
 FIRE_TAP
         LDX #1          ; player 2, then player 1

@@ -7,7 +7,8 @@
 ;  While the list is up the game stands still as when paused (D19):
 ;  no cursors, buying, tics or round clock; TIC_SYNC drops the frames
 ;  that passed.  H does nothing while the game is paused or between
-;  rounds.
+;  rounds.  On the 5200, * opens and closes it, and the list's last
+;  line names that key (IN_HKEY, D86).
 ;
 ;  The list uses its own display list, HDLIST: the status bar, then 11
 ;  mode 5 lines from HELPSCR in the help font HLPFONT (FONT_MAP.ASM,
@@ -234,7 +235,8 @@ HLS_TTL  .SBYTE "ITEMS FOR SALE"
          .BYTE TX_END
 HLS_PRC  .SBYTE "PRICE"
          .BYTE TX_END
-HLS_BACK .SBYTE "H: BACK TO THE GAME"
+HLS_BACK .BYTE IN_HKEY  ; the help key: H on the 800, * on the 5200
+         .SBYTE ": BACK TO THE GAME"
          .BYTE TX_END
 HLN_1   .SBYTE "FORT"
         .BYTE TX_END
