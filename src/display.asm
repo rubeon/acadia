@@ -44,6 +44,11 @@ C_LIGHT =  $2C          ; COLPF2 -- sand: beach, crops, sails
 C_WHITE =  $0E          ; COLPF3 -- white (inverse chars): fort, school,
                         ;           hospital, walls, smoke, surf, waves
 
+; Help screen (HELP.ASM, D83): the setup screen's colours (SETUP.ASM's
+; C_SUBK, C_TITLE; literals, as SETUP.ASM comes later)
+C_HBK   =  $00          ; COLBK  -- black
+C_HTXT  =  $1C          ; COLPF2 -- yellow text (and the tiles' sand)
+
 ; Pause band (PAUSE.ASM, D69): the bottom corner rows PB_ROW-PB_ROW+2
 PB_ROW  =  19           ; the band's first character row (odd)
 PB_RLEN =  48           ; bytes per row: wide (WROW, SHADE.ASM)
@@ -157,16 +162,18 @@ DM_ROWS         LDA #1
         PLA
         RTI
 DM_HPRE LDA #>HLPFONT   ; help screen (HELP.ASM): its font, grass, not
-        LDX MAPCOL+1    ; row 0's corner sea (D55), and the darker sea
-        LDY MAPCOL      ; behind it; normal width
+        LDX MAPCOL+1    ; row 0's corner sea (D55), and black behind it
+        LDY #C_HBK      ; as on the setup screen (D83); normal width
         STA WSYNC
         STA CHBASE
         STX COLPF0
         STY COLBK
         JMP DM_COLS
-DM_HELP LDA #0          ; no fish (HDLIST has no row DLIs)
-        STA HPOSP3
-        STA HPOSP2      ; no weather either
+DM_HELP LDA #C_HTXT     ; the setup's yellow text (D83)
+        STA COLPF2
+        STY HPOSP3      ; Y = 0: no fish (HDLIST has no row DLIs)
+        STY HPOSP2      ; no weather either
+        TYA
         JSR DLI_MSL     ; nor pirates
         JMP DM_ROWS
 
