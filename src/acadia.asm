@@ -100,6 +100,14 @@ START
         .INCLUDE "title.asm"            ; TITLE.ASM uses their equates
 
 ; ---------------------------------------------------------------------
+;  The stats screen's summary page and its counts (D84), after the help
+;  screen's memory: every other block is full; must end below $4800
+; ---------------------------------------------------------------------
+        *= SYCODE
+        .INCLUDE "stats4.asm"
+SYEND                           ; must stay below MFA00 ($4800)
+
+; ---------------------------------------------------------------------
 ;  The pause band's font (D69), 1K aligned
 ; ---------------------------------------------------------------------
         .INCLUDE "font_pause.asm"

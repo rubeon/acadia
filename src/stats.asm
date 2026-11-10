@@ -6,8 +6,10 @@
 ;  shows this screen: the status bar (final scores and the winner), the
 ;  page names, a line chart of one value over the rounds and, under it,
 ;  the round numbers and each player's total and best round.  The stick
-;  flips the page: SCORE (each round's score, 0-100), PEOPLE, INCOME.
-;  Fire or a key goes on to the setup screen.
+;  flips the page: SUMMARY first (STATS4.ASM, D84: what each player
+;  bought, gold by source, boats lost by cause), then SCORE (each
+;  round's score, 0-100), PEOPLE, INCOME.  Fire or a key goes on to the
+;  setup screen.
 ;
 ;  The chart is 64 lines of ANTIC mode D (160 x 2-line pixels, 4
 ;  colours, 40 bytes a line) in three pieces of memory that are free
@@ -37,7 +39,9 @@ CT_GCOL =  6            ; grid lines start at this byte column
 CT_DOTS =  $44          ; a byte of grid line: a PF0 dot every 2 pixels
 CT_COL1 =  $AA          ; a byte of 10 pixels: player 1's line
 CT_COL2 =  $FF          ; a byte of 11 pixels: player 2's line
-CT_NPGS =  3            ; pages: score, people, income
+CT_NPGS =  4            ; pages: score, people, income, summary
+CT_SUMP =  3            ; the summary page (CT_PG; its name comes first)
+SY_NCLR =  58           ; COUNT ... SYLOST (VARS.ASM): bytes GAME_START clears
 CT_NDLI =  6            ; DLIs in CTDLIST
 CT_WLEN =  17           ; the winner's part of status line 2 (TX_W1)
 CT_WCOL =  12           ; ... moved here: "PLAYER 1 WINS!" centred
@@ -51,7 +55,7 @@ CT_TAB  =  CTTXT        ; the page names
 CT_XL   =  CTTXT+40     ; the round numbers
 CT_LEG  =  CTTXT+80     ; the legend: pawns, totals, best rounds
 CT_HINT =  CTTXT+120    ; the hint at the bottom (TX_NEWG)
-CT_TAB0 =  4            ; column of the first page name
+CT_TAB0 =  2            ; column of the first page name
 
 ; colours: the status lines keep the status bar's (STATUS.ASM); below
 ; them the setup screen's (D78): black, yellow text, the current page
@@ -118,8 +122,9 @@ CI_MAX  LDA #$0F        ; 9999
 ; ---------------------------------------------------------------------
 CT_ENTER
         JSR PM_HIDE     ; no cursors or boats
+        LDA #CT_SUMP
+        STA CT_PG       ; the summary page first (D84)
         LDA #0
-        STA CT_PG       ; the score page first
         STA CT_ARM
         LDX #79         ; blank the 4 text lines (160 bytes: two
 CE_TXT  STA CTTXT,X     ; stores, as BPL stops at 128)
@@ -146,13 +151,19 @@ CE_N    STA CT_N
         ; fall through: draw the page
 
 ; ---------------------------------------------------------------------
-;  CT_DRAW -- draw page CT_PG: its name lit, the grid, both lines.
-;  Takes a few frames.  Trashes A, X, Y.
+;  CT_DRAW -- draw page CT_PG: its name lit, the grid, both lines (the
+;  summary page: SY_DRAW).  Takes a few frames.  Trashes A, X, Y.
 ; ---------------------------------------------------------------------
 CT_DRAW
-        JSR CT_LEGD     ; the legend for this page (D80)
         JSR CT_TABS
+        LDA CT_PG
+        CMP #CT_SUMP
+        BCC CT_CHRT
+        JMP SY_DRAW     ; the summary page (STATS4.ASM, D84)
+CT_CHRT JSR CT_LEGD     ; the legend for this page (D80)
         JSR CT_CLR
+        LDA #<CTDLIST   ; the chart's display list (the summary has its
+        STA SDLSTL      ; own, in the same page)
         JSR CT_SCALE
         JSR CT_GRID
         LDA CT_PG       ; series: 2 per page, player 1's first
@@ -603,10 +614,10 @@ CTGLY   .BYTE $54,$44,$44,$44,$54   ; 0
         .BYTE $54,$44,$54,$04,$50   ; 9
 
 ; page names, from column CT_TAB0; each page's first and last column
-TX_TABS .SBYTE "SCORE        PEOPLE        INCOME"
-CT_TABL =  33
-CTTABS  .BYTE 4,17,31
-CTTABE  .BYTE 8,22,36
+TX_TABS .SBYTE "SUMMARY    SCORE    PEOPLE    INCOME"
+CT_TABL =  36
+CTTABS  .BYTE 13,22,32,2        ; by CT_PG: score, people, income, summary
+CTTABE  .BYTE 17,27,37,8
 
 ; legend: each player's pawn (STFONT icons), its column, its colour
 CTPWN   .BYTE $62,$E4

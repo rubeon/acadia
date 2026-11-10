@@ -97,15 +97,16 @@ EB_PAY  LDA EB_P        ; X = player x 2, for GOLD
         STA GOLD+1,X    ; pay
         LDA EB_LO
         STA GOLD,X
-        LDA EB_ITEM
-        CMP #I_REBL
-        BEQ EB_REB
         LDA EB_P        ; COUNT + player x 10 + item
         BEQ EB_CNT
         LDA #10
 EB_CNT  CLC
         ADC EB_ITEM
         TAX
+        INC SYBLT,X     ; bought, rebels too (the summary page, D84)
+        LDA EB_ITEM
+        CMP #I_REBL
+        BEQ EB_REB
         INC COUNT,X
         LDY EB_R        ; put it on the map
         LDX EB_C
@@ -410,7 +411,7 @@ EI_BON  CLC
         ADC #0
         STA EG_AMT+1
         LDX EC_P
-        JSR ECO_EARN
+        JSR SY_INC      ; ECO_EARN, kept apart as fishing / factories (D84)
         LDA #10         ; flat 10, not counted as earned ($5A24)
         STA EG_AMT
         LDA #0

@@ -35,6 +35,7 @@ CTBM0   =  $2800        ; stats chart lines 0-24 (D61), 1K
 CTBM1   =  $2C00        ; lines 25-49, 1K
 CTBM2   =  MAPSCR       ; lines 50-63: the map, drawn again later
 CTTXT   =  HELPSCR      ; four mode 4 lines: the help screen's memory
+SYSCR   =  CTBM0        ; the summary page's 10 text lines (D84), page aligned
 RAMEND  =  $4000        ; $3000-$3FFF free
 
 ; ---------------------------------------------------------------------
@@ -51,8 +52,8 @@ TTFONTA =  $6800        ; title screen font TTFONT (D70)
 HLPFNTA =  $6C00        ; help font HLPFONT, then the wave frames WVDATA
 STFONTA =  $7000        ; status bar font STFONT (D54)
 DLBASE  =  $7400        ; display list page (DISPLAY.ASM); island
-                        ; constants (ISLANDS.ASM) follow, to ~$752F
-MAPSRC  =  $7540        ; each map's data block MAPS0 ...; then code
+                        ; constants (ISLANDS.ASM) follow, to ~$755A (D84)
+MAPSRC  =  $7580        ; each map's data block MAPS0 ...; then code
                         ; block 2 (ACADIA5200.ASM)
 TITLEGFX = $B800        ; title graphics (D70): logo, scene, colour
                         ; tables, 1828 bytes, to $BF23 (one 4K block)

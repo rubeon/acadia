@@ -90,6 +90,12 @@ FN_C    *= *+1          ; FORT_NEAR: neighbour column
 ;  Economy (ECONOMY.ASM)
 ; ---------------------------------------------------------------------
 COUNT   *= *+20         ; items owned: COUNT+k player 1, COUNT+10+k player 2
+                        ; the summary page's counts (STATS4.ASM, D84)
+                        ; follow COUNT, so GAME_START clears them with it:
+SYBLT   *= *+20         ;   items bought, as COUNT (rebels too)
+SYGOLD  *= *+12         ;   gold earned, 16 bits: player x 6 + source x 2
+                        ;   (0 fishing, 2 crops, 4 factories)
+SYLOST  *= *+6          ;   boats lost: player x 3 + cause (SY_WHY)
 EB_ITEM *= *+1          ; ECO_BUY: item being bought
 EB_P    *= *+1          ; ECO_BUY: buying player
 EB_LO   *= *+1          ; ECO_BUY: gold after paying, low byte
@@ -451,7 +457,7 @@ CTY     *= *+CT_MAXR    ; CT_LINE: each round's chart line
 CTDB    *= *+5          ; CT_DIGS: digits, the first first
 CT_ON   *= *+1          ; 1 while the stats screen is up (ST_VBI)
 CT_DI   *= *+1          ; the next DLI's colours (CT_DLI)
-CT_PG   *= *+1          ; page: 0 score, 1 people, 2 gold
+CT_PG   *= *+1          ; page: 0 score, 1 people, 2 income, 3 summary
 CT_J    *= *+1          ; stick left / right last frame
 CT_ARM  *= *+1          ; 1 once fire and keys were let go
 CT_N    *= *+1          ; rounds on the chart
@@ -490,6 +496,11 @@ CT_TX2  *= *+1          ; CT_XLAB, CT_LEGD: text offset
 CT_TC   *= *+1          ; CT_TNUM: colour bits
 CT_P    *= *+1          ; CT_LEGD: player
 CT_M5   *= *+1          ; CT_XLAB: round number mod 5
+SY_WHY  *= *+1          ; what sinks boats now: 0 weather, 1 pirates, 2 PT boats
+SY_T    *= *+1          ; SY_AT: column
+SY_I    *= *+1          ; SY_DRAW: offset in SYTXT
+SY_R    *= *+1          ; SY_NUM: row
+SY_C    *= *+1          ;   and the column the number ends at
 
 ; ---------------------------------------------------------------------
 VAREND

@@ -105,7 +105,7 @@ GF_T1   JSR GAME_TIC
         BNE GF_TIC      ; fish only during a round
         JSR FISH_TIC
         JSR WTH_TIC
-        JSR PIR_TIC
+        JSR SY_PIR      ; PIR_TIC, its sinkings counted as pirates' (D84)
         JSR AI_TIC      ; the CPU thinks (1 player)
         JMP GF_TIC
 GF_SHOW JSR FISH_SHOW

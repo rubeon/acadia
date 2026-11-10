@@ -63,6 +63,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 | T-SCR-8 | Setup screen with the title's "Acadia" logo and sunset sky at the top left, the options under it (D71) | R-MODE-3 | T-SCR-6, T-REL-4 | Logo and sky as on the title; every line, the minimap and the prompt visible; 800 and 5200 builds | done |
 | T-SCR-9 | Stats screen's chart area in the setup screen's colours: black, yellow text, the current page white; status lines stay blue (D78); the winner centred, the fire hint at the bottom (D79); the legend's totals and best round follow the page (D80) | R-SCR-7 | T-SCR-7, T-SCR-8 | Every zone of the stats screen in the new colours; both players' lines and the grid readable; 800 and 5200 builds | done (Claude) |
 | T-SCR-10 | Help screen in the setup screen's colours: black background, yellow text, white keys and names; status lines unchanged (D83) | R-CTL-2 | T-SCR-3, T-SCR-8 | Help screen black with the setup's yellow, every tile readable on black; 800 and 5200 builds, 0 warnings | done (Claude) |
+| T-SCR-11 | Stats screen: a SUMMARY page first, per player the items bought, the gold from fishing, crops and factories, and the boats lost to weather, pirates and PT boats (D84) | R-SCR-7 | T-SCR-9 | Counts kept during play and cleared at a new game; the three gold sources add up to the INCOME page's total; the stick reaches every page both ways; 800 and 5200 builds, 0 warnings | in progress (Claude) |
 
 ## M4 — Moving things
 

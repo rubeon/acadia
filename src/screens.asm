@@ -61,7 +61,7 @@ GS_KP
         STA FTAP        ; is no tap (D60)
         STA FTAP+1
         LDA #0
-        LDX #19
+        LDX #SY_NCLR-1  ; COUNT and the summary's counts (D84)
 GN_CNT  STA COUNT,X
         DEX
         BPL GN_CNT

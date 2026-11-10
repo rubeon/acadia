@@ -414,7 +414,7 @@ FISH_TOUCH
         STA EG_AMT+1
         LDA #1
         STA EG_AMT
-        JSR ECO_EARN
+        JSR SY_FISH     ; ECO_EARN, counted as fishing (D84)
         STX FC_T
         JSR STAT_SHOW
         JSR SND_FISH
