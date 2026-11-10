@@ -13,15 +13,16 @@
 ;  further frame AUDF moves by the slide (signed: + lower, - higher).
 ;
 ;  Four channels, one per POKEY voice; while music plays (MUSIC.ASM)
-;  only voices 3 and 4, from SN_LO up.  A new effect takes a free
+;  only voice 4, from SN_LO up.  A new effect takes a free
 ;  channel, else the one playing the lowest priority if that is no
 ;  higher than its own, else it is dropped.  SFXPRI gives each
 ;  effect's priority.
 ;
 ;  While PAUSED is set the driver stands still; PAUSE_ON silences
 ;  POKEY and each channel rewrites its voice every frame, so play
-;  picks up where it was.  AUDCTL stays 0: 64 kHz clock, and bit 7
-;  clear so RANDOM keeps its 17-bit polynomial (RAND.ASM).
+;  picks up where it was.  AUDCTL is 0 (64 kHz clock) except while
+;  music plays, which joins voices 1 and 2 (MUSIC.ASM, D85); bit 7
+;  stays clear so RANDOM keeps its 17-bit polynomial (RAND.ASM).
 ;
 ;  All effects are composed for Acadia; none is taken from the
 ;  original (R-SND-4).  Durations are in frames, so they run 6/5 as
@@ -212,7 +213,7 @@ SP_GOT  LDA #0          ; the VBI leaves the channel alone while it is
 SND_VBI
         LDA PAUSED
         BNE SV_DONE
-        JSR MUS_VBI     ; the music (voices 1 and 2)
+        JSR MUS_VBI     ; the music (voices 1-3)
         LDX #SN_CH-1
 SV_CH   LDA SN_ON,X
         BEQ SV_NEXT

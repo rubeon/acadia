@@ -2,23 +2,32 @@
 ;  MUSIC.ASM -- music: a title tune and an end-of-round fanfare
 ;  (T-SND-3: R-SND-2, -4; D42)
 ;
-;  Two voices, POKEY 1 (melody) and 2 (bass), driven from SND_VBI.
-;  While music plays the sound effects use only voices 3 and 4
-;  (SN_LO = 2); a tune that starts takes voices 1 and 2 from any effect
-;  playing there.  The title tune loops on the setup screen until a
-;  game starts; the fanfare plays once at the end of each round.
+;  Two voices, driven from SND_VBI: the melody on POKEY voice 3, and
+;  the bass on voices 1 and 2 joined into one 16-bit voice clocked at
+;  1.79 MHz (AUDCTL = MZ_CTL; D85), so it reaches down to A1 in tune.
+;  Voice 1 is the low byte and stays silent; voice 2 sounds.  While
+;  music plays the sound effects use only voice 4 (SN_LO = 3); a tune
+;  that starts takes voices 1-3 from any effect playing there.  The
+;  title tune loops on the title and setup screens until a game starts;
+;  the fanfare plays once at the end of each round.
 ;
-;  Each voice is a list of (note, frames) pairs in MUSDAT: note 1-36 is
-;  C3-B5 (NOTEF), 0 a rest, $FF the end (back to the start if the tune
-;  loops).  A note starts at its voice's volume (INSVOL) and falls by 1
-;  every INSRATE frames to INSSUS; its last frame is silent, so repeated
-;  notes are heard apart.  Both tunes are composed for Acadia
-;  (R-SND-4).  Lengths are in frames: 6/5 slower on PAL.
+;  Each voice is a list of (note, frames) pairs in MUSDAT: a melody
+;  note is 1-36, C3-B5 (NOTEF), a bass note an index into BASFL/BASFH
+;  (B_ equates); 0 is a rest, $FF the end (back to the start if the
+;  tune loops).  A note starts at its voice's volume (INSVOL) and falls
+;  by 1 every INSRATE frames to INSSUS; its last frame is silent, so
+;  repeated notes are heard apart.  Both tunes are composed for Acadia
+;  (R-SND-4).  Lengths are in frames: 6/5 slower on PAL.  The tables
+;  and tunes are in MUSDATA.ASM (on the 800 after the summary page, as
+;  code block 2 is full).
 ; =====================================================================
 
 TU_TITL =  0            ; tunes
 TU_FANF =  1
 INSRATE =  3            ; frames per volume step down
+MZ_CTL  =  $50          ; AUDCTL while music plays: voices 1+2 joined
+                        ; (bit 4), voice 1 at 1.79 MHz (bit 6); bit 7
+                        ; stays clear (RAND.ASM)
 
 N_C3  =  1
 N_CS3 =  2
@@ -57,6 +66,20 @@ N_A5  =  34
 N_AS5 =  35
 N_B5  =  36
 
+; bass notes: indices into BASFL / BASFH (only the notes the tunes use)
+B_A1  =  1
+B_AS1 =  2
+B_C2  =  3
+B_CS2 =  4
+B_D2  =  5
+B_E2  =  6
+B_F2  =  7
+B_G2  =  8
+B_A2  =  9
+B_AS2 =  10
+B_C3  =  11
+B_D3  =  12
+
 ; ---------------------------------------------------------------------
 ;  MUS_TITLE -- start the title tune (loops).  MUS_FANF -- start the
 ;  end-of-round fanfare.  Both keep A, X and Y.
@@ -77,16 +100,20 @@ MZ_GO   STX SN_SX
         RTS
 
 ; ---------------------------------------------------------------------
-;  MUS_PLAY -- start tune A on voices 1 and 2.  Trashes A, X, Y.
+;  MUS_PLAY -- start tune A on voices 1-3.  Trashes A, X, Y.
 ; ---------------------------------------------------------------------
 MUS_PLAY
         TAY
         LDA #0          ; the VBI leaves the music alone meanwhile
         STA MZ_ON
-        STA SN_ON       ; and no effect on voices 1 and 2
+        STA SN_ON       ; and no effect on voices 1-3
         STA SN_ON+1
-        LDA #2
+        STA SN_ON+2
+        STA AUDC1       ; the bass's low byte: never heard
+        LDA #3
         STA SN_LO
+        LDA #MZ_CTL     ; join voices 1 and 2
+        STA AUDCTL
         LDA MUSLP,Y
         STA MZ_LOOP
         LDA MUSV0,Y
@@ -111,7 +138,9 @@ MP_V    STA MZ_CNT,X    ; first note at the next VBI
 MUS_STOP
         LDA #0
         STA MZ_ON
-        STA SN_LO
+        STA AUDC3
+MS_OFF  STA SN_LO       ; (A = 0; MUS_VBI joins here at a tune's end)
+        STA AUDCTL      ; voices 1 and 2 apart again, 64 kHz
         STA AUDC1
         STA AUDC2
         RTS
@@ -134,7 +163,7 @@ MV_NEXT DEX
         ORA MZ_ACT+1
         BNE MV_DONE
         STA MZ_ON
-        STA SN_LO
+        JMP MS_OFF
 MV_DONE RTS
 
 ; MV_ONE -- one frame of voice X.  X kept; trashes A, Y.
@@ -157,14 +186,11 @@ MV_NOTE STA MZ_N
         STA MZ_POS,X
         LDA #0
         STA MZ_DT,X
-        LDY MZ_N
-        BEQ MV_REST
-        LDA NOTEF-1,Y
+        LDA MZ_N        ; MZ_F keeps the note; MV_OUT looks it up
         STA MZ_F,X
+        BEQ MV_REST
         LDA INSVOL,X
-        STA MZ_VOL,X
-        JMP MV_OUT
-MV_REST STA MZ_VOL,X    ; (A = 0)
+MV_REST STA MZ_VOL,X    ; (a rest: A = 0)
         JMP MV_OUT
 MV_DEC  INC MZ_DT,X     ; the note dies away to its sustain
         LDA MZ_DT,X
@@ -177,12 +203,23 @@ MV_DEC  INC MZ_DT,X     ; the note dies away to its sustain
         BEQ MV_OUT
         BCC MV_OUT
         DEC MZ_VOL,X
-MV_OUT  TXA             ; write the voice: AUDF1 + 2 x voice
-        ASL A
-        TAY
-        LDA MZ_F,X
-        STA AUDF1,Y
-        LDA MZ_VOL,X
+MV_OUT  LDY MZ_F,X      ; write the voice (a rest's note 0 reads the
+        TXA             ; byte before the table: its volume is 0)
+        BNE MV_BAS
+        LDA NOTEF-1,Y   ; the melody: voice 3
+        STA AUDF3
+        JSR MV_VOL
+        STA AUDC3
+        RTS
+MV_BAS  LDA BASFL-1,Y   ; the bass: voices 1+2, 16 bits
+        STA AUDF1
+        LDA BASFH-1,Y
+        STA AUDF2
+        JSR MV_VOL
+        STA AUDC2
+        RTS
+; MV_VOL -- A = voice X's AUDC this frame.  Keeps X, Y.
+MV_VOL  LDA MZ_VOL,X
         BEQ MV_C
         LDA MZ_CNT,X    ; last frame of the note: silent
         CMP #2
@@ -190,62 +227,13 @@ MV_OUT  TXA             ; write the voice: AUDF1 + 2 x voice
         BCC MV_C
         LDA MZ_VOL,X
         ORA INSDIST,X
-MV_C    STA AUDC1,Y
-        RTS
+MV_C    RTS
 MV_END  LDA #0          ; this voice is done: quiet
         STA MZ_ACT,X
-        TXA
-        ASL A
-        TAY
-        LDA #0
+        LDY MZAUDC,X
         STA AUDC1,Y
         RTS
 
-; per voice: distortion, starting volume, sustain volume
-INSDIST .BYTE SD_PURE,SD_PURE
-INSVOL  .BYTE 8,7
-INSSUS  .BYTE 4,3
+; per voice: its AUDC's offset from AUDC1 (melody voice 3, bass 2)
+MZAUDC  .BYTE 4,2
 
-; AUDF of notes 1-36, C3-B5, at the 64 kHz clock (pure tone; within
-; 1.3 % of equal temperament)
-NOTEF   .BYTE 243,230,217,204,193,182,172,162,153,144,136,128
-        .BYTE 121,114,108,102,96,91,85,81,76,72,68,64
-        .BYTE 60,57,53,50,47,45,42,40,37,35,33,31
-
-; per tune: loops?, each voice's start in MUSDAT
-MUSLP   .BYTE 1,0
-MUSV0   .BYTE MT_MEL-MUSDAT,MF_MEL-MUSDAT
-MUSV1   .BYTE MT_BAS-MUSDAT,MF_BAS-MUSDAT
-
-; lengths (frames): a 4/4 bar of the title is MW; the title moves in
-; halves and quarters only (D45)
-MQ      =  30           ; quarter
-MH      =  60           ; half
-MDH     =  90           ; dotted half
-MW      =  120          ; whole
-
-MUSDAT
-; title, melody: 9 bars of slow 4/4 in D minor, few and long notes
-; (Dm Bb F C Dm Gm A Dm, then a bar's rest before it comes round)
-MT_MEL  .BYTE N_A4,MW
-        .BYTE N_G4,MH, N_F4,MH
-        .BYTE N_A4,MDH, N_C5,MQ
-        .BYTE N_G4,MW
-        .BYTE N_F4,MH, N_A4,MH
-        .BYTE N_D5,MDH, N_C5,MQ
-        .BYTE N_E4,MH, N_CS4,MH
-        .BYTE N_D4,MW
-        .BYTE 0,MW
-        .BYTE $FF
-; title, bass: one root a bar
-MT_BAS  .BYTE N_D3,MW, N_AS3,MW, N_F3,MW, N_C3,MW
-        .BYTE N_D3,MW, N_G3,MW, N_A3,MW, N_D3,MW
-        .BYTE 0,MW
-        .BYTE $FF
-; fanfare, melody: up the D minor chord, a step down to D
-MF_MEL  .BYTE N_A4,8, N_D5,8, N_F5,8, N_E5,12, N_D5,36
-        .BYTE $FF
-; fanfare, bass: D, A, D
-MF_BAS  .BYTE N_D3,24, N_A3,12, N_D3,36
-        .BYTE $FF
-MUSEND

@@ -104,6 +104,7 @@ START
 ; ---------------------------------------------------------------------
         .INCLUDE "font_pause.asm"
         .INCLUDE "stats4.asm"   ; the summary page (D84), in the font's
+        .INCLUDE "musdata.asm"  ; the music's tunes (D85): CODE2 is full
 SYEND                           ; free 872 bytes: below TTFONTA ($A400)
 
 ; ---------------------------------------------------------------------

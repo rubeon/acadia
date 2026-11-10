@@ -66,6 +66,7 @@ START
         .INCLUDE "ai.asm"
         .INCLUDE "sound.asm"
         .INCLUDE "music.asm"
+        .INCLUDE "musdata.asm"          ; its tables and tunes (D85)
         .INCLUDE "pause.asm"
         .INCLUDE "help.asm"
         .INCLUDE "screens.asm"
