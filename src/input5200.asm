@@ -59,7 +59,7 @@ IN_TWO  =  PLATRAM+21   ; 1: both controllers are read (IN_SEL)
 IN_UPN  =  PLATRAM+22   ; 2 bytes: per controller, reads in a row with
                         ; no key while IN_HELD still holds one (IN_PAD)
 IN_N    =  13           ; bytes IN_INIT clears (IN_CTL ... IN_UPN)
-IN_DEB  =  3            ; reads with no key before a key counts as let
+IN_DEB  =  2            ; reads with no key before a key counts as let
                         ; go (D86)
 
 IN_LO   =  74           ; pot < IN_LO: up / left (centre ~114)
