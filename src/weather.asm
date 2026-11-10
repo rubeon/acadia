@@ -339,7 +339,7 @@ WH_RAIN LDA WH_K        ; over a crop: rain count for its owner
         STA EG_AMT
         LDA #0
         STA EG_AMT+1
-        JSR ECO_EARN
+        JSR SY_CROP     ; ECO_EARN, counted as crops (D84)
         JSR STAT_SHOW
         JMP SND_RAIN
 WH_DONE RTS
@@ -355,7 +355,7 @@ WTH_SMITE
         LDX WH_P
         LDA #0
         STA WDMG,X
-WS_GONE JSR WS_COUNT    ; one fewer of the item
+WS_GONE JSR SY_LOSS     ; one fewer of the item (WS_COUNT; a boat: lost, D84)
         LDX WH_C        ; the square's terrain again
         LDY WH_R
         LDA #0

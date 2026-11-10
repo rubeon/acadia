@@ -98,7 +98,7 @@ PT_NEXT LDX PT_I
         DEX
         CPX #P_SLOT
         BCS PT_ONE
-        JMP PT_TIC
+        JMP SY_PT       ; PT_TIC, its sinkings counted as PT boats' (D84)
 
 ; ---------------------------------------------------------------------
 ;  PIR_HIT -- pirate X against the boats.  Trashes A, X, Y.

@@ -43,7 +43,7 @@ on the Atari. Requirement IDs (`R-...`) are referenced from PLAN.md.
 | R-SCR-4 | Moving objects (cursors, boats, fish, pirates, weather) as player/missile graphics, with multiplexing if needed (Q2). |
 | R-SCR-5 | Each item recognisable by shape, not only colour; each player's items distinguishable (Q3). |
 | R-SCR-6 | End-of-round summary screen with each player's round score, as in the original. |
-| R-SCR-7 | After the final scores, a stats screen charts each player's round score, population and income (gold earned each round) over the rounds (not in the original). |
+| R-SCR-7 | After the final scores, a stats screen charts each player's round score, population and income (gold earned each round) over the rounds (not in the original). Its first page sums up each player's game: the items bought, the gold earned from fishing, crops and factories, and the boats lost to weather, pirates and PT boats. |
 
 ## 5. Controls
 

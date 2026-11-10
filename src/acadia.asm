@@ -103,6 +103,8 @@ START
 ;  The pause band's font (D69), 1K aligned
 ; ---------------------------------------------------------------------
         .INCLUDE "font_pause.asm"
+        .INCLUDE "stats4.asm"   ; the summary page (D84), in the font's
+SYEND                           ; free 872 bytes: below TTFONTA ($A400)
 
 ; ---------------------------------------------------------------------
 ;  Run address

@@ -65,3 +65,4 @@ CTBM0   =  $9C00        ; chart lines 0-24 (not loaded, D57)
 CTBM1   =  $BC00        ; lines 25-49 (not loaded, D57)
 CTBM2   =  $3400        ; lines 50-63: MAPSCR (the map, drawn again later)
 CTTXT   =  $4400        ; four mode 4 lines: HELPSCR (the help screen's memory)
+SYSCR   =  CTBM0        ; the summary page's 10 text lines (D84), page aligned

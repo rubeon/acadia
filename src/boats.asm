@@ -221,7 +221,7 @@ BOAT_LOSE
         STX WH_P
         LDA BOATK,X
         STA WH_K
-        JSR WS_COUNT    ; one fewer boat
+        JSR SY_LOSS     ; one fewer boat (WS_COUNT), counted as lost (D84)
         LDX WH_P
         LDA #0          ; back to the cursor
         STA BOATK,X

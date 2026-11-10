@@ -199,8 +199,8 @@ for n, seed in ((10, 1), (50, 2), (2, 3), (1, 4), (23, 5)):
             if want not in leg:
                 fail("n %d page %d legend %r, want %r" % (n, pg, leg, want))
         # page names: this one inverse
-        tabs = [m.byte("CT_TAB", c) for c in (4, 17, 31)]
-        if [t >= 0x80 for t in tabs] != [i == pg for i in range(3)]:
+        tabs = [m.byte("CT_TAB", c) for c in (13, 22, 32, 2)]   # SUMMARY first (D84)
+        if [t >= 0x80 for t in tabs] != [i == pg for i in range(4)]:
             fail("page %d names: %r" % (pg, ["%02X" % t for t in tabs]))
     xl = text(40)
     if not xl.strip().startswith("1") or str(n) not in xl:
@@ -231,7 +231,8 @@ if text(40).split()[-2:] != ["40", "47"]:
 # --- the stick flips pages, both ways round -----------------------------
 m.poke("CT_PG", 0)
 m.poke("CT_J", 0)
-for joy, want in ((8, 1), (0, 1), (8, 2), (0, 2), (8, 0), (0, 0), (4, 2), (4, 2), (0, 2), (4, 1)):
+for joy, want in ((8, 1), (0, 1), (8, 2), (0, 2), (8, 3), (0, 3), (8, 0), (0, 0), (4, 3), (4, 3),
+                  (0, 3), (4, 2)):
     m.poke("JOY0", joy)
     m.call("CT_FRAME", limit=BIG)
     if m.byte("CT_PG") != want:
