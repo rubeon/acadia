@@ -139,7 +139,7 @@ MUS_STOP
         LDA #0
         STA MZ_ON
         STA AUDC3
-MS_OFF  STA SN_LO       ; (A = 0; MUS_VBI joins here at a tune's end)
+MU_OFF  STA SN_LO       ; (A = 0; MUS_VBI joins here at a tune's end)
         STA AUDCTL      ; voices 1 and 2 apart again, 64 kHz
         STA AUDC1
         STA AUDC2
@@ -163,7 +163,7 @@ MV_NEXT DEX
         ORA MZ_ACT+1
         BNE MV_DONE
         STA MZ_ON
-        JMP MS_OFF
+        JMP MU_OFF
 MV_DONE RTS
 
 ; MV_ONE -- one frame of voice X.  X kept; trashes A, Y.
@@ -174,8 +174,9 @@ MV_ONE  DEC MZ_CNT,X
         CMP #$FF
         BNE MV_NOTE
         LDA MZ_LOOP     ; the end: again, or this voice is done
-        BEQ MV_END
-        LDY MZ_ST,X
+        BNE MV_AGN
+        JMP MV_END      ; (out of a branch's reach)
+MV_AGN  LDY MZ_ST,X
         LDA MUSDAT,Y
 MV_NOTE STA MZ_N
         LDA MUSDAT+1,Y
