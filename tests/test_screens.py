@@ -124,7 +124,8 @@ if m.byte("GSTATE") != GS_OVER:
     fail("fire held over from the round restarted the game")
 frame()
 frame(fire0=True)                         # fire: the stats screen (D61)
-if m.byte("GSTATE") != GS_OVER or m.byte("CT_ON") != 1 or m.byte("SDLSTL") != m.addr("CTDLIST") & 0xFF:
+if m.byte("GSTATE") != GS_OVER or m.byte("CT_ON") != 1 \
+        or m.byte("SDLSTL") | m.byte("SDLSTH") << 8 != m.addr("SYDLIST"):   # the summary first (D84)
     fail("fire did not show the stats screen (state %d)" % m.byte("GSTATE"))
 if "FIRE OR KEY: NEW GAME" not in line(2):
     fail("stats screen line 2: %r" % line(2))

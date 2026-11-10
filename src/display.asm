@@ -677,30 +677,3 @@ CTDLIST
         .BYTE DL_JVB
         .WORD CTDLIST
 
-; The stats screen's summary page (STATS4.ASM, D84): the status bar and
-; the page names as in CTDLIST, then 10 text lines from SYSCR (the
-; chart's memory), the hint where CTDLIST has it.  The same 6 DLIs: two
-; in blank lines after the page names, so the text gets the legend's
-; colours (zone 5: yellow, red, turquoise)
-SYDLIST
-        .BYTE DL_BLANK6,DL_BLANK8       ; 22 lines as in DLIST (D75)
-        .BYTE DL_DLI+DL_BLANK8          ; DLI 0: status line 1's colours
-        .BYTE DL_DLI+DL_LMS+DL_MODE4    ; status line 1; DLI 1: line 2's
-        .WORD STATUS1
-        .BYTE DL_DLI+DL_MODE4           ; line 2; DLI 2: the page names'
-        .BYTE DL_BLANK4
-        .BYTE DL_DLI+DL_LMS+DL_MODE4    ; page names; DLI 3
-        .WORD CT_TAB
-        .BYTE DL_DLI+DL_BLANK2          ; DLI 4
-        .BYTE DL_DLI+DL_BLANK2          ; DLI 5: the text's colours
-        .BYTE DL_BLANK8
-        .BYTE DL_LMS+DL_MODE4           ; text line 0
-        .WORD SYSCR
-        .BYTE DL_BLANK6,DL_MODE4,DL_BLANK6,DL_MODE4,DL_BLANK6,DL_MODE4
-        .BYTE DL_BLANK6,DL_MODE4,DL_BLANK6,DL_MODE4,DL_BLANK6,DL_MODE4
-        .BYTE DL_BLANK6,DL_MODE4,DL_BLANK6,DL_MODE4,DL_BLANK6,DL_MODE4
-        .BYTE DL_BLANK8,DL_BLANK2       ; (line 206, as in CTDLIST)
-        .BYTE DL_LMS+DL_MODE4           ; the hint (CT_HINT)
-        .WORD CT_HINT
-        .BYTE DL_JVB
-        .WORD SYDLIST

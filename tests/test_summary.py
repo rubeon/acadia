@@ -181,8 +181,6 @@ if any(lost(0, c) for c in range(3)):
 
 # --- the display list -----------------------------------------------------
 dl = m.addr("SYDLIST")
-if dl >> 8 != m.addr("DLIST") >> 8 or dl >> 8 != m.addr("CTDLIST") >> 8:
-    fail("SYDLIST %04X not in DLIST's page" % dl)
 lines, text_lines, dlis, lms, pc, hint_at = 0, 0, 0, [], dl, None
 while True:
     op = m.mem[pc]
@@ -210,10 +208,11 @@ if dlis != m.addr("CT_NDLI") or lines != 214 or hint_at != 206:
 want = [m.addr("STATUS1"), m.addr("CT_TAB"), m.addr("SYSCR"), m.addr("CT_HINT")]
 if lms != want or m.addr("SYSCR") & 0xFF:
     fail("SYDLIST screen addresses %r" % ["%04X" % a for a in lms])
-if pc + 3 > (dl | 0xFF) + 1:
-    fail("SYDLIST runs past its page (%04X)" % pc)
-if "SYEND" in m.sym and m.addr("SYEND") > 0x4800:
-    fail("STATS4.ASM ends at %04X, past $4800" % m.addr("SYEND"))
+if (pc + 2) >> 10 != dl >> 10:
+    fail("SYDLIST %04X-%04X crosses a 1K boundary" % (dl, pc + 2))
+if m.addr("SYEND") > m.addr("TTFONTA") or m.addr("SY_DRAW") < m.addr("PSFONTA"):
+    fail("STATS4.ASM at %04X-%04X, not between the pause and title fonts"
+         % (m.addr("SY_DRAW"), m.addr("SYEND")))
 
 # --- the page ------------------------------------------------------------
 m.call("GAME_NEW", limit=BIG)
@@ -233,8 +232,7 @@ m.call("GAME_OVER", limit=BIG)
 for i in range(1000):                    # an old chart in the memory
     m.mem[m.addr("SYSCR") + i] = 0xAA
 m.call("CT_ENTER", limit=BIG)
-if m.byte("CT_PG") != m.addr("CT_SUMP") or m.byte("SDLSTL") != dl & 0xFF \
-        or m.byte("SDLSTH") != dl >> 8:
+if m.byte("CT_PG") != m.addr("CT_SUMP") or m.byte("SDLSTL") | m.byte("SDLSTH") << 8 != dl:
     fail("CT_ENTER: page %d, display list %02X%02X"
          % (m.byte("CT_PG"), m.byte("SDLSTH"), m.byte("SDLSTL")))
 
@@ -306,10 +304,18 @@ for joy, pg, d in ((8, 0, "CTDLIST"), (0, 0, "CTDLIST"), (4, 3, "SYDLIST"), (0, 
                    (4, 2, "CTDLIST"), (0, 2, "CTDLIST"), (8, 3, "SYDLIST")):
     m.poke("JOY0", joy)
     m.call("CT_FRAME", limit=BIG)
-    if m.byte("CT_PG") != pg or m.byte("SDLSTL") != m.addr(d) & 0xFF:
-        fail("stick %d: page %d display list %02X, want %d %s"
-             % (joy, m.byte("CT_PG"), m.byte("SDLSTL"), pg, d))
+    if m.byte("CT_PG") != pg or m.byte("SDLSTL") | m.byte("SDLSTH") << 8 != m.addr(d):
+        fail("stick %d: page %d display list %02X%02X, want %d %s"
+             % (joy, m.byte("CT_PG"), m.byte("SDLSTH"), m.byte("SDLSTL"), pg, d))
+# fire (after letting go): the setup screen, back in DLIST's page
 m.poke("JOY0", 0)
+for fire in (0, 1):
+    m.poke("FIRE0", fire)
+    m.call("CT_FRAME", limit=BIG)
+m.poke("FIRE0", 0)
+if m.byte("CT_ON") or m.byte("SDLSTH") != m.addr("DLIST") >> 8:
+    fail("leaving: CT_ON %d, display list %02X%02X"
+         % (m.byte("CT_ON"), m.byte("SDLSTH"), m.byte("SDLSTL")))
 
 print("summary: %d failed" % fails)
 sys.exit(1 if fails else 0)

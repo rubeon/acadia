@@ -22,9 +22,9 @@
 ;            PT_TIC) PT boats; anything else (WTH_TIC) is weather
 ;  GAME_START clears them with COUNT (SY_NCLR bytes).
 ;
-;  On the 800 this file is its own segment at SYCODE ($45B8, after the
-;  help screen's memory; it must end below $4800); on the 5200 in code
-;  block 2.
+;  It sits after the pause band's font (FONT_PAUSE.ASM, 152 of its 1K),
+;  on the 800 and the 5200: every code block is full.  SYEND must stay
+;  below the title font (TTFONTA) at the next 1K.
 ; =====================================================================
 
 SY_LC1  =  12           ; items: player 1's numbers end at this column
@@ -41,8 +41,9 @@ SY_LR0  =  6            ; the first line of boats lost (weather)
 ; ---------------------------------------------------------------------
 SY_DRAW
         JSR CT_CLR      ; no chart left in SYSCR (its memory)
-        LDA #<SYDLIST   ; (same page as CTDLIST: one store switches)
-        STA SDLSTL
+        LDA #<SYDLIST
+        LDX #>SYDLIST
+        JSR SY_DL
         LDX #0
 SY_REC  LDA SYTXT,X     ; a record: line, column, characters, $FF
         BMI SY_NUMS     ; line $FF: the end
@@ -165,6 +166,20 @@ SY_AT
         LDA ZPTR+1
         ADC #>SYSCR     ; (SYSCR is page aligned)
         STA ZPTR+1
+        RTS
+
+; ---------------------------------------------------------------------
+;  SY_DL -- show display list A (low) / X (high).  The VBI copies
+;  SDLSTL/H at VCOUNT 124, so both bytes are stored while VCOUNT is
+;  under SY_VMAX: never half a change.  Trashes Y.
+; ---------------------------------------------------------------------
+SY_VMAX =  100
+SY_DL
+        LDY VCOUNT
+        CPY #SY_VMAX
+        BCS SY_DL       ; too near the VBI: wait
+        STA SDLSTL
+        STX SDLSTH
         RTS
 
 ; ---------------------------------------------------------------------
@@ -312,3 +327,33 @@ SYTXT   .BYTE 0,0
         .BYTE $FF,SY_LR0+2,19
         .SBYTE "PT BOATS"
         .BYTE $FF,$FF
+
+; SYDLIST -- the summary page's display list: the status bar and the
+; page names as in CTDLIST, then 10 text lines from SYSCR (the chart's
+; memory), the hint where CTDLIST has it.  The same 6 DLIs: two in
+; blank lines after the page names, so the text gets the legend's
+; colours (zone 5: yellow, red, turquoise).  Not in DLIST's page (it is
+; full): SY_DL switches both bytes; it must not cross a 1K boundary
+; (this file sits inside the pause font's 1K)
+SYDLIST
+        .BYTE DL_BLANK6,DL_BLANK8       ; 22 lines as in DLIST (D75)
+        .BYTE DL_DLI+DL_BLANK8          ; DLI 0: status line 1's colours
+        .BYTE DL_DLI+DL_LMS+DL_MODE4    ; status line 1; DLI 1: line 2's
+        .WORD STATUS1
+        .BYTE DL_DLI+DL_MODE4           ; line 2; DLI 2: the page names'
+        .BYTE DL_BLANK4
+        .BYTE DL_DLI+DL_LMS+DL_MODE4    ; page names; DLI 3
+        .WORD CT_TAB
+        .BYTE DL_DLI+DL_BLANK2          ; DLI 4
+        .BYTE DL_DLI+DL_BLANK2          ; DLI 5: the text's colours
+        .BYTE DL_BLANK8
+        .BYTE DL_LMS+DL_MODE4           ; text line 0
+        .WORD SYSCR
+        .BYTE DL_BLANK6,DL_MODE4,DL_BLANK6,DL_MODE4,DL_BLANK6,DL_MODE4
+        .BYTE DL_BLANK6,DL_MODE4,DL_BLANK6,DL_MODE4,DL_BLANK6,DL_MODE4
+        .BYTE DL_BLANK6,DL_MODE4,DL_BLANK6,DL_MODE4,DL_BLANK6,DL_MODE4
+        .BYTE DL_BLANK8,DL_BLANK2       ; (line 206, as in CTDLIST)
+        .BYTE DL_LMS+DL_MODE4           ; the hint (CT_HINT)
+        .WORD CT_HINT
+        .BYTE DL_JVB
+        .WORD SYDLIST

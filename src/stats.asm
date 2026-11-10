@@ -163,7 +163,8 @@ CT_DRAW
 CT_CHRT JSR CT_LEGD     ; the legend for this page (D80)
         JSR CT_CLR
         LDA #<CTDLIST   ; the chart's display list (the summary has its
-        STA SDLSTL      ; own, in the same page)
+        LDX #>CTDLIST   ; own, in another page)
+        JSR SY_DL
         JSR CT_SCALE
         JSR CT_GRID
         LDA CT_PG       ; series: 2 per page, player 1's first
@@ -216,10 +217,11 @@ CF_KEYS LDA FIRE0
 CF_DONE RTS
 CF_ARMD CMP #0
         BEQ CF_DONE
+        LDA #<CTDLIST   ; DLIST's page again: setup switches by the
+        LDX #>CTDLIST   ; low byte only (the summary's is elsewhere)
+        JSR SY_DL
         LDA #0          ; the status bar's DLIs again
         STA CT_ON
-        LDA #>DLIST     ; setup switches by the low byte only
-        STA SDLSTH
         JMP SETUP_ENTER ; back to the setup screen (R-MODE-4)
 
 ; ---------------------------------------------------------------------

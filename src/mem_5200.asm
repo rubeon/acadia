@@ -52,8 +52,8 @@ TTFONTA =  $6800        ; title screen font TTFONT (D70)
 HLPFNTA =  $6C00        ; help font HLPFONT, then the wave frames WVDATA
 STFONTA =  $7000        ; status bar font STFONT (D54)
 DLBASE  =  $7400        ; display list page (DISPLAY.ASM); island
-                        ; constants (ISLANDS.ASM) follow, to ~$755A (D84)
-MAPSRC  =  $7580        ; each map's data block MAPS0 ...; then code
+                        ; constants (ISLANDS.ASM) follow, to ~$7543
+MAPSRC  =  $7548        ; each map's data block MAPS0 ...; then code
                         ; block 2 (ACADIA5200.ASM)
 TITLEGFX = $B800        ; title graphics (D70): logo, scene, colour
                         ; tables, 1828 bytes, to $BF23 (one 4K block)
