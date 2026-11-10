@@ -23,8 +23,10 @@
 ;    SB_REBR  REB_ROUND, player 1 only in SANDBOX
 ;    SB_WIN   GAME_OVER's line 2: no winner in SANDBOX
 ;    SB_LINE, SB_MM, SB_NPL, SB_LSTP  the stats screen: player 1 only
-;  It sits after the stats summary page in the pause font's block on
-;  both machines, as the code blocks are full.
+;    SB_AI    AI_TIC's test: no CPU in SANDBOX
+;  It sits in the free end of STANDARD's map font 2 (MFNT02E: codes
+;  past its last character are never drawn) on both machines, as the
+;  code blocks are full; SANDBOX2.ASM has the island and setup parts.
 ; =====================================================================
 
 SB_TCOL =  10           ; status column of TURNS, ROUND in SANDBOX
@@ -38,6 +40,15 @@ SB_HCOL =  NW_COL+1     ; the hint while paused (news slot, line 2)
 SB_ON   LDA MAPNO
         EOR #MAP_SBX
         RTS
+
+; ---------------------------------------------------------------------
+;  SB_AI -- Z clear (A = 1) if player 2 is the CPU: a 1-player game,
+;  not SANDBOX (AI_TIC).  Trashes A.
+; ---------------------------------------------------------------------
+SB_AI   JSR SB_ON
+        BEQ SQ_ARTS     ; SANDBOX: A = 0
+        JMP AI_ON
+SQ_ARTS RTS
 
 ; ---------------------------------------------------------------------
 ;  SB_TRN -- status line 1's round field (STAT_DRAW): rounds left, 2

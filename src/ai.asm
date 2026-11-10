@@ -537,9 +537,7 @@ AZ_YES  SEC
 ;  Trashes A, X, Y, ZPTR.
 ; ---------------------------------------------------------------------
 AI_TIC
-        JSR SB_ON       ; no CPU in SANDBOX (D87)
-        BEQ AT_DONE
-        JSR AI_ON
+        JSR SB_AI       ; a CPU? (not in SANDBOX, D87)
         BEQ AT_DONE
         DEC AITMR
         BNE AT_DONE

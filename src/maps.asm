@@ -60,14 +60,8 @@ ML_PART CPY #<MAPBLK    ; then the rest (Y = 0 here)
         INY
         BNE ML_PART
 ML_AI   JSR PLAT_MAP    ; the machine's part (5200: fonts to RAM, D62)
-        LDA MAPLD
-        CMP #MAP_RND
-        BNE ML_AIT
-        JSR RM_GEN      ; RANDOM: new islands on the sea
-        LDA MAPLD
-        CMP #MAP_SBX
-        BNE ML_AIT
-        JSR SB_GEN      ; SANDBOX: its island on the sea (D87)
+        JSR SB_MAPG     ; RANDOM: new islands on the sea (RM_GEN);
+                        ; SANDBOX: its island (SB_GEN, D87)
 ML_AIT  LDX #2          ; AI_DN, AI_UP, AI_HD
 ML_TBL  STX ML_T
         JSR ML_STEPS
@@ -368,35 +362,6 @@ RC_ROW  CMP #ML_ROW
 RC_DONE STA RM_C
         STX RM_R
         RTS
-
-; ---------------------------------------------------------------------
-;  SB_GEN -- SANDBOX (D87): its island on the open sea of the live
-;  tables (RANDOM's block): land where SBLAND has a bit, player 0's;
-;  its harbour, then the land squares' tiles as RANDOM's.
-;  Trashes A, X, Y.
-; ---------------------------------------------------------------------
-SB_GEN  LDY #0          ; square SB_SQ0 + Y
-        LDX #0          ; SBLAND byte
-SG_BYTE LDA SBLAND,X
-        STA RM_K
-        LDA #8
-        STA RM_I        ; bits left in it
-SG_BIT  ASL RM_K
-        BCC SG_SEA
-        LDA #K_LAND
-        STA ISLKIND+SB_SQ0,Y
-SG_SEA  INY
-        CPY #SB_NSQ
-        BEQ SG_HARB
-        DEC RM_I
-        BNE SG_BIT
-        INX
-        BNE SG_BYTE     ; always
-SG_HARB LDA #K_HARB
-        STA ISLKIND+SB_HSQ
-        LDA #SB_HTL
-        STA ISLTILE+SB_HSQ
-        JMP RM_TILES
 
 RMLO    .BYTE 1,11      ; first column of each side
 RMST    .BYTE 104,115   ; start squares: row 5, columns 4 and 15

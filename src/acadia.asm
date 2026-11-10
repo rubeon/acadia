@@ -104,8 +104,15 @@ START
 ; ---------------------------------------------------------------------
         .INCLUDE "font_pause.asm"
         .INCLUDE "stats4.asm"   ; the summary page (D84), in the font's
-        .INCLUDE "sandbox.asm"  ; the SANDBOX map (D87), the same
-SYEND                           ; free 872 bytes: below TTFONTA ($A400)
+        .INCLUDE "sandbox2.asm" ; the SANDBOX map's island, setup (D87)
+SYEND                           ; must stay below TTFONTA ($A400)
+
+; ---------------------------------------------------------------------
+;  The SANDBOX map's game part (D87), in the free end of STANDARD's
+;  map font 2: its codes past MFNT02E are never drawn
+; ---------------------------------------------------------------------
+        *= MFNT02E
+        .INCLUDE "sandbox.asm"
 
 ; ---------------------------------------------------------------------
 ;  Run address

@@ -1288,6 +1288,9 @@ def main():
             out.append("MFNT%d%d" % (mi, fi))
             for bs in q["fixed_chars"] + f:
                 out.append("        .BYTE " + hexes(bs))
+            n = len(q["fixed_chars"]) + len(f)
+            out.append("MFNT%d%dE          ; its end: codes %d-127 are never drawn, so the" % (mi, fi, n))
+            out.append("                  ; %d bytes up to the next 1K are free (D87)" % (1024 - 8 * n))
     out.append("")
     out.append("; help font (T-SCR-3, mode 5): fixed tiles at codes 2t, 2t+1 (HLPCH,")
     out.append("; HLPCHR), then 3 x 5 letters and digits at screen code + HELP_OFS")

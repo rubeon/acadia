@@ -338,28 +338,6 @@ SP_OK   JSR SU_OK
         BCS SU_SETF
 
 ; ---------------------------------------------------------------------
-;  SU_OK -- C set if line X can be chosen, clear if it shows "-": CPU
-;  LEVEL with 2 players; with the SANDBOX map (D87) all but SECONDS
-;  and MAP.  Keeps X.  Trashes A.
-; ---------------------------------------------------------------------
-SU_OK   CPX #SU_FMAP
-        BEQ SO_YES
-        LDA SU_VAL+SU_FMAP
-        CMP #MAP_SBX+1
-        BNE SO_STD
-        CPX #SU_FSEC    ; SANDBOX: SECONDS and MAP only
-        BEQ SO_YES
-SO_NO   CLC
-        RTS
-SO_STD  CPX #SU_FLVL    ; CPU LEVEL: 1 player only
-        BNE SO_YES
-        LDA SU_VAL+SU_FPLY
-        CMP #2
-        BEQ SO_NO
-SO_YES  SEC
-        RTS
-
-; ---------------------------------------------------------------------
 ;  SU_CLAMP -- bring the current line's value into range
 ;  SU_CLX   -- the same for line X (X kept).  Trashes A.
 ; ---------------------------------------------------------------------

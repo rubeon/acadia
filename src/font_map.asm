@@ -219,6 +219,8 @@ MFNT00
         .BYTE $3C,$CF,$FF,$FC,$5F,$5C,$5F,$5F
         .BYTE $D5,$D5,$D5,$D5,$F5,$F5,$D5,$D5
         .BYTE $FF,$FF,$6C,$5F,$5C,$5F,$73,$7C
+MFNT00E          ; its end: codes 118-127 are never drawn, so the
+                  ; 80 bytes up to the next 1K are free (D87)
 ; map 1 (STANDARD) font 1: character rows 11,12,13,14,15,16, 56 coast characters
         *= MFA01          ; $8800 on the 800 (MEM_A800.ASM)
 MFNT01
@@ -335,6 +337,8 @@ MFNT01
         .BYTE $3F,$CF,$F7,$F7,$57,$57,$57,$57
         .BYTE $F5,$35,$D5,$D5,$D5,$D5,$D5,$D5
         .BYTE $57,$57,$57,$57,$57,$57,$57,$57
+MFNT01E          ; its end: codes 113-127 are never drawn, so the
+                  ; 120 bytes up to the next 1K are free (D87)
 ; map 1 (STANDARD) font 2: character rows 17,18, 18 coast characters
         *= MFA02          ; $8C00 on the 800 (MEM_A800.ASM)
 MFNT02
@@ -413,6 +417,8 @@ MFNT02
         .BYTE $5C,$5F,$5C,$5F,$7F,$7C,$F3,$FC
         .BYTE $D5,$D5,$F5,$35,$FF,$FF,$3C,$CF
         .BYTE $57,$57,$5F,$5F,$F3,$FC,$CC,$30
+MFNT02E          ; its end: codes 75-127 are never drawn, so the
+                  ; 424 bytes up to the next 1K are free (D87)
 ; map 2 (RANDOM) font 0: character rows 3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18, 48 coast characters
         *= MFA10          ; $A800 on the 800 (MEM_A800.ASM)
 MFNT10
@@ -521,6 +527,8 @@ MFNT10
         .BYTE $5F,$5F,$5C,$5F,$5C,$5F,$5F,$5C
         .BYTE $33,$CC,$FF,$FF,$D5,$55,$55,$55
         .BYTE $CC,$FF,$FF,$F5,$55,$55,$55,$55
+MFNT10E          ; its end: codes 105-127 are never drawn, so the
+                  ; 184 bytes up to the next 1K are free (D87)
 
 ; help font (T-SCR-3, mode 5): fixed tiles at codes 2t, 2t+1 (HLPCH,
 ; HLPCHR), then 3 x 5 letters and digits at screen code + HELP_OFS
