@@ -94,6 +94,7 @@ ROMEND                          ; must stay below TITLEGFX (MKCART.PY)
 ; ---------------------------------------------------------------------
         .INCLUDE "font_pause.asm"
         .INCLUDE "stats4.asm"   ; the summary page (D84), in the font's
+        .INCLUDE "sandbox.asm"  ; the SANDBOX map (D87), the same
 SYEND                           ; free 872 bytes: below TTFONTA ($6800)
 
 ; ---------------------------------------------------------------------

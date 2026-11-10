@@ -215,24 +215,38 @@ check([1, 120, 1, 3], "CPU level left from EASY goes round to HARD")
 tap(stick=DOWN)
 if m.byte("SU_FLD") != MAP or row(4)[28:36] != "STANDARD":
     fail("1 player: down from CPU LEVEL: field %d, %r" % (m.byte("SU_FLD"), row(4)))
-# the map line: names and minimaps, digits 1-2, going round
-for d, name, mp in (("2", "  RANDOM", 1), ("3", "  RANDOM", 1), ("1", "STANDARD", 0)):
+# the map line: names and minimaps, digits 1-3, going round
+for d, name, mp in (("2", "  RANDOM", 1), ("3", " SANDBOX", 2), ("4", " SANDBOX", 2),
+                    ("1", "STANDARD", 0)):
     typ(d)
     if row(4)[28:36] != name:
         fail("map %s: %r" % (d, row(4)))
     if minimap() != [m.byte("MMAP%d" % mp, i) for i in range(66)]:
         fail("map %s: minimap not map %d's" % (d, mp + 1))
-for n, want in ((1, 2), (2, 1), (3, 2)):
+for n, want in ((1, 2), (2, 3), (3, 1)):
     tap(stick=RIGHT)
     if m.byte("SU_VAL", MAP) != want:
         fail("map right x %d: %d" % (n, m.byte("SU_VAL", MAP)))
 tap(stick=LEFT)
 tap(stick=LEFT)
 if m.byte("SU_VAL", MAP) != 2:
-    fail("map left x 2 from RANDOM: %d" % m.byte("SU_VAL", MAP))
+    fail("map left x 2 from STANDARD: %d" % m.byte("SU_VAL", MAP))
 tap(stick=LEFT)
 if m.byte("SU_VAL", MAP) != 1:
     fail("map left: %d" % m.byte("SU_VAL", MAP))
+# SANDBOX (D87): ROUNDS, PLAYERS and CPU LEVEL show "-" and are skipped
+typ("3")
+if [row(i)[35] for i in (0, 2, 3)] != ["-"] * 3 or row(1)[33:36] != "120":
+    fail("SANDBOX lines: %r" % [row(i) for i in range(4)])
+tap(stick=DOWN)
+if m.byte("SU_FLD") != 1:
+    fail("SANDBOX: down from MAP went to %d" % m.byte("SU_FLD"))
+tap(stick=UP)
+if m.byte("SU_FLD") != MAP:
+    fail("SANDBOX: up from SECONDS went to %d" % m.byte("SU_FLD"))
+typ("1")
+if row(0)[35] == "-" or m.byte("SU_VAL", MAP) != 1:
+    fail("STANDARD again: %r" % row(0))
 tap(stick=DOWN)
 if m.byte("SU_FLD") != ROUNDS:
     fail("1 player: down from MAP went to %d" % m.byte("SU_FLD"))

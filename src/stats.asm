@@ -171,9 +171,7 @@ CT_CHRT JSR CT_LEGD     ; the legend for this page (D80)
         ASL A
         ORA #1
         STA CT_S        ; player 2 first, so player 1 is on top
-        LDA #CT_COL2
-        STA CT_C
-        JSR CT_LINE
+        JSR SB_LINE     ; (none in SANDBOX, D87)
         DEC CT_S
         LDA #CT_COL1
         STA CT_C
@@ -288,8 +286,7 @@ CS_FIND LDA #$FF        ; the lowest and highest values on the page
         ASL A
         STA CT_S
         JSR CT_MM       ; player 1
-        INC CT_S
-        JSR CT_MM       ; player 2
+        JSR SB_MM       ; player 2 (not in SANDBOX, D87)
         LDX #0
 CS_STEP STX CT_SI       ; try each step, smallest first
         LDA CTSTPL,X

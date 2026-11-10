@@ -413,6 +413,27 @@ STANDARD = [
     "....................",
 ]
 
+# Map 3, SANDBOX (D87): one big island, about two normal ones, for a
+# player alone with no round limit.  It has no block or fonts of its
+# own: MAP_LOAD takes RANDOM's open sea and SB_GEN draws this outline
+# on it with RANDOM's coast pieces (SBLAND, SB_HSQ, SB_HTL below).
+# 'H' is the harbour; only rows 2-8 may hold land.
+SANDBOX = [
+    "....................",
+    "....................",
+    ".....###....###.....",
+    "...#######.######...",
+    "..H##############...",
+    "...##############...",
+    "....############....",
+    "......###..###......",
+    "......##.....#......",
+    "....................",
+    "....................",
+]
+SB_NAME = " SANDBOX"
+SB_ROW0, SB_NROW = 2, 7        # SBLAND's rows: 2-8
+
 # Map 2, RANDOM: the open sea only.  MAP_LOAD draws a new pair of
 # islands on it for every game, from the coast pieces (generic_art).
 SEA = ["." * 20] * 11
@@ -1168,6 +1189,43 @@ def preview(p, path):
     write_png(path, rgb, w, h)
 
 
+def sandbox(rnd):
+    """SANDBOX (D87) as SB_GEN draws it on RANDOM's sea: the outline
+    checked, its land as bits, its harbour, and its tile grid."""
+    o = SANDBOX
+    land = {(r, c) for r in range(ROWS) for c in range(COLS) if o[r][c] == "#"}
+    assert all(SB_ROW0 <= r < SB_ROW0 + SB_NROW and 0 < c < COLS - 1 for r, c in land), \
+        "SANDBOX: land only in rows 2-8, not at the edge"
+    seen, st = set(), [(0, 0)]
+    while st:
+        r, c = st.pop()
+        if (r, c) in seen or (r, c) in land or not (0 <= r < ROWS and 0 <= c < COLS):
+            continue
+        seen.add((r, c))
+        st += [(r + 1, c), (r - 1, c), (r, c + 1), (r, c - 1)]
+    assert len(seen) + len(land) == ROWS * COLS, "SANDBOX: sea shut in"
+    (hr, hc), = [(r, c) for r in range(ROWS) for c in range(COLS) if o[r][c] == "H"]
+    if (hr, hc + 1) in land:
+        htile = T["T_PIER_E"]
+    elif (hr, hc - 1) in land:
+        htile = T["T_PIER_W"]
+    else:
+        sys.exit("SANDBOX: the harbour needs land beside it")
+    bits = [1 if (r, c) in land else 0 for r in range(SB_ROW0, SB_ROW0 + SB_NROW) for c in range(COLS)]
+    bits += [0] * (-len(bits) % 8)
+    sbland = [int("".join(map(str, bits[i:i + 8])), 2) for i in range(0, len(bits), 8)]
+    kinds = [[K_LAND if (r, c) in land else K_HARB if (r, c) == (hr, hc) else K_SEA
+              for c in range(COLS)] for r in range(ROWS)]
+    tg = [row[:] for row in rnd["tgrid"]]
+    for (r, c) in land:
+        m = sum(b for b, (dr, dc) in ((1, (-1, 0)), (2, (0, 1)), (4, (1, 0)), (8, (0, -1)))
+                if (r + dr, c + dc) in land)
+        tg[r][c] = grass_tile(r, c) if m == 15 else rnd["gentile"][m]
+    tg[hr][hc] = htile
+    return dict(rnd, name=SB_NAME, outline=o, generic=False, kinds=kinds, tgrid=tg,
+                sbland=sbland, hsq=hr * COLS + hc, htile=htile, nland=len(land))
+
+
 def main():
     prev_dir = None
     if "--preview" in sys.argv:
@@ -1178,7 +1236,9 @@ def main():
     p = ps[0]
     for q in ps[1:] + [cf]:
         assert q["fixed_chars"] == p["fixed_chars"] and q["anim"] == p["anim"]
+    sb = sandbox(ps[MAP_RND])
     if prev_dir:
+        preview(sb, os.path.join(prev_dir, "map-sandbox.png"))
         for q in ps:
             preview(q, os.path.join(prev_dir, "map-%s.png" % q["name"].strip().lower()))
         for seed in range(3):
@@ -1355,28 +1415,29 @@ def main():
     out.append("WV_PH   = %d" % WV_PH)
     out.append("N_TILES = %d" % ntiles)
     out.append("N_FONTS = %d" % N_FONTS)
-    out.append("N_MAPS  = %d" % len(ps))
+    out.append("N_MAPS  = %d" % (len(ps) + 1))
     out.append("MAP_RND = %d" % MAP_RND)
+    out.append("MAP_SBX = %d   ; SANDBOX (D87): RANDOM's block, then SB_GEN" % len(ps))
     out.append("")
     out.append("; The maps' data blocks (D56), each laid out as TILECH ... FONTPG")
     out.append("        *= MAPSRC         ; $%04X on the 800 (MEM_A800.ASM)" % MAPSRC)
-    out.append("MAPSL   .BYTE " + ",".join("<MAPS%d" % i for i in range(len(ps))))
-    out.append("MAPSH   .BYTE " + ",".join(">MAPS%d" % i for i in range(len(ps))))
+    out.append("MAPSL   .BYTE " + ",".join("<MAPS%d" % i for i in range(len(ps))) + ",<MAPS%d" % MAP_RND)
+    out.append("MAPSH   .BYTE " + ",".join(">MAPS%d" % i for i in range(len(ps))) + ",>MAPS%d" % MAP_RND)
     for mi, q in enumerate(ps):
         out.append("; map %d: %s" % (mi + 1, q["name"].strip()))
         out += map_block(q, mi, False)
     out.append("MAPSEND")
     out.append("; MAPNAME: each map's name on the setup screen")
     out.append("MAPNAME")
-    for q in ps:
+    for q in ps + [sb]:
         out.append('        .SBYTE "%s"' % q["name"])
     out.append("; MMAPL / MMAPH: each map's minimap on the setup screen (D65):")
     out.append("; MM_ROWS rows of MM_W bytes, ANTIC mode A (01 land, 10 sea)")
-    out.append("MMAPL   .BYTE " + ",".join("<MMAP%d" % i for i in range(len(ps))))
-    out.append("MMAPH   .BYTE " + ",".join(">MMAP%d" % i for i in range(len(ps))))
+    out.append("MMAPL   .BYTE " + ",".join("<MMAP%d" % i for i in range(len(ps) + 1)))
+    out.append("MMAPH   .BYTE " + ",".join(">MMAP%d" % i for i in range(len(ps) + 1)))
     out.append("MM_W    = %d" % MM_W)
     out.append("MM_ROWS = %d" % ROWS)
-    for mi, q in enumerate(ps):
+    for mi, q in enumerate(ps + [sb]):
         mm = minimap(q)
         out.append("MMAP%d" % mi)
         for r in range(ROWS):
@@ -1388,6 +1449,13 @@ def main():
     out.append("; x 4 + column AND 3 (grass_pick); for RM_GEN")
     out.append("RNDTILE .BYTE " + hexes(ps[MAP_RND]["gentile"]))
     out.append("GRSTL   .BYTE " + hexes([grass_tile(r, c) for r in range(4) for c in range(4)]))
+    out.append("; SANDBOX (D87): SBLAND, its land squares in rows %d-%d as bits, 7 first," % (SB_ROW0, SB_ROW0 + SB_NROW - 1))
+    out.append("; row by row; SB_HSQ, its harbour square; SB_HTL, the pier's tile")
+    out.append("SBLAND  .BYTE " + hexes(sb["sbland"]))
+    out.append("SB_SQ0  = %d   ; SBLAND's first square" % (SB_ROW0 * COLS))
+    out.append("SB_NSQ  = %d  ; and how many" % (SB_NROW * COLS))
+    out.append("SB_HSQ  = %d" % sb["hsq"])
+    out.append("SB_HTL  = %d" % sb["htile"])
     open("src/islands.asm", "w").write("\n".join(out) + "\n")
 
     for q in ps:
@@ -1395,5 +1463,7 @@ def main():
               % (q["name"].strip(), len(q["tiles"]), len(q["fonts"]),
                  "/".join(str(len(f)) for f in q["fonts"]), "".join(map(str, q["rowfont"]))))
         print("\n".join(q["stats"]))
+    print("map SANDBOX: %d land squares on RANDOM's sea, %d bytes of SBLAND, harbour square %d"
+          % (sb["nland"], len(sb["sbland"]), sb["hsq"]))
 
 main()

@@ -20,13 +20,14 @@ WV_N    = 5
 WV_PH   = 4
 N_TILES = 101
 N_FONTS = 3
-N_MAPS  = 2
+N_MAPS  = 3
 MAP_RND = 1
+MAP_SBX = 2   ; SANDBOX (D87): RANDOM's block, then SB_GEN
 
 ; The maps' data blocks (D56), each laid out as TILECH ... FONTPG
         *= MAPSRC         ; $AC00 on the 800 (MEM_A800.ASM)
-MAPSL   .BYTE <MAPS0,<MAPS1
-MAPSH   .BYTE >MAPS0,>MAPS1
+MAPSL   .BYTE <MAPS0,<MAPS1,<MAPS1
+MAPSH   .BYTE >MAPS0,>MAPS1,>MAPS1
 ; map 1: STANDARD
 MAPS0
         .BYTE $00,$01,$84,$08,$0C,$90,$94,$18,$1C,$1F,$23,$27,$00,$2B,$2E,$32
@@ -144,10 +145,11 @@ MAPSEND
 MAPNAME
         .SBYTE "STANDARD"
         .SBYTE "  RANDOM"
+        .SBYTE " SANDBOX"
 ; MMAPL / MMAPH: each map's minimap on the setup screen (D65):
 ; MM_ROWS rows of MM_W bytes, ANTIC mode A (01 land, 10 sea)
-MMAPL   .BYTE <MMAP0,<MMAP1
-MMAPH   .BYTE >MMAP0,>MMAP1
+MMAPL   .BYTE <MMAP0,<MMAP1,<MMAP2
+MMAPH   .BYTE >MMAP0,>MMAP1,>MMAP2
 MM_W    = 6
 MM_ROWS = 11
 MMAP0
@@ -174,8 +176,27 @@ MMAP1
         .BYTE $0A,$AA,$A9,$6A,$AA,$A0   ; .........##.........
         .BYTE $0A,$AA,$AA,$AA,$AA,$A0   ; ....................
         .BYTE $0A,$AA,$AA,$AA,$AA,$A0   ; ....................
+MMAP2
+        .BYTE $0A,$AA,$AA,$AA,$AA,$A0   ; ....................
+        .BYTE $0A,$AA,$AA,$AA,$AA,$A0   ; ....................
+        .BYTE $0A,$A9,$5A,$A5,$6A,$A0   ; .....###....###.....
+        .BYTE $0A,$95,$55,$95,$56,$A0   ; ...#######.######...
+        .BYTE $0A,$95,$55,$55,$56,$A0   ; ...##############...
+        .BYTE $0A,$95,$55,$55,$56,$A0   ; ...##############...
+        .BYTE $0A,$A5,$55,$55,$5A,$A0   ; ....############....
+        .BYTE $0A,$AA,$56,$95,$AA,$A0   ; ......###..###......
+        .BYTE $0A,$AA,$5A,$A9,$AA,$A0   ; ......##.....#......
+        .BYTE $0A,$AA,$AA,$AA,$AA,$A0   ; ....................
+        .BYTE $0A,$AA,$AA,$AA,$AA,$A0   ; ....................
 ; RNDTILE: RANDOM's coast piece for each mask of land neighbours
 ; (1 N, 2 E, 4 S, 8 W) but 15; GRSTL: its grass tile by row AND 3
 ; x 4 + column AND 3 (grass_pick); for RM_GEN
 RNDTILE .BYTE $30,$31,$32,$33,$34,$35,$36,$37,$38,$39,$3A,$3B,$3C,$3D,$3E
 GRSTL   .BYTE $01,$15,$14,$13,$13,$13,$13,$13,$14,$15,$01,$13,$15,$13,$15,$13
+; SANDBOX (D87): SBLAND, its land squares in rows 2-8 as bits, 7 first,
+; row by row; SB_HSQ, its harbour square; SB_HTL, the pier's tile
+SBLAND  .BYTE $07,$0E,$01,$FD,$F8,$1F,$FF,$81,$FF,$F8,$0F,$FF,$00,$39,$C0,$03,$04,$00
+SB_SQ0  = 40   ; SBLAND's first square
+SB_NSQ  = 140  ; and how many
+SB_HSQ  = 82
+SB_HTL  = 15

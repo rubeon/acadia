@@ -352,8 +352,7 @@ IN_SEL  LDA DEMO
         LDA GSTATE      ; play or a round summary
         CMP #GS_OVER
         BCS IL_ONE
-        LDA SU_VAL+SU_FPLY
-        CMP #2
+        JSR AI_ON       ; 1 player (or SANDBOX, D87): one
         BNE IL_ONE
         LDA #1          ; 2 players: both read,
         STA IN_TWO
