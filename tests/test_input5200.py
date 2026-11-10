@@ -124,7 +124,7 @@ for d in "0123456789":
             frame(pad=hold)
             check("key %s held" % d, key(), None)
             check("KEYDOWN while held", m.byte("KEYDOWN"), 1)
-        for _ in range(2):
+        for _ in range(4):                      # IN_DEB (2) reads each
             frame()
         check("KEYDOWN let go", m.byte("KEYDOWN"), 0)
 
@@ -206,6 +206,25 @@ for k, var in (("*", "HELPK"), ("P", "PAUSEK")):
     frame(pad=(k, None))
     check(k + " 1 player held", m.byte(var), 0)
 
+# --- a key held that one read misses is still held (D86): no second
+#     press; two reads without it let it go ---
+for players in (1, 2):
+    setup(players=players)
+    while m.byte("CONSOL") & 3 != 0:
+        frame()
+    hits = 0
+    for held in (1, 1, 0, 1, 1, 0, 1):          # reads of controller 1
+        frame(pad=("*", None) if held else (None, None))
+        hits += m.byte("HELPK")
+        if players == 2:
+            frame()                              # controller 2's read
+            hits += m.byte("HELPK")
+    check("* with 1-read dropouts, %d players: one press" % players, hits, 1)
+    for _ in range(2 * players):
+        frame()
+    frame(pad=("*", None))
+    check("* after 2 reads up, %d players: a new press" % players, m.byte("HELPK"), 1)
+
 # --- START: CONKEY's START bit while held, on any screen ---
 for gs in (PLAY, SETUP):
     setup(players=1, gstate=gs)
@@ -213,6 +232,8 @@ for gs in (PLAY, SETUP):
     check("START held (GSTATE %d)" % gs, m.byte("CONKEY"), 1)
     frame(pad=("S", None))
     check("START still held", m.byte("CONKEY"), 1)
+    frame()
+    check("START one read up: still held", m.byte("CONKEY"), 1)
     frame()
     check("START let go", m.byte("CONKEY"), 0)
 setup(players=2)
@@ -245,6 +266,7 @@ for _ in range(200):                             # held long: totals all along
         fail("# held: CONKEY %d" % m.byte("CONKEY"))
         break
 frame()
+frame()
 check("# held long, then the next press", (hash_press(hold=1), hash_press()), (2, 4))
 # # in a 2-player round, pressed on both controllers at once: one step
 setup(players=2)
@@ -253,8 +275,8 @@ for _ in range(3):
     for _ in range(4):
         frame(pad=("#", "#"))
     pages.append(m.byte("CONKEY"))
-    frame()
-    frame()
+    for _ in range(4):
+        frame()
 check("# on both controllers", pages, [1, 2, 4])
 # not on the setup screen (# would begin the game there): no page
 setup(players=1, gstate=SETUP)

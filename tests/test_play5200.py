@@ -4,8 +4,8 @@
 The cartridge's start-up (MAIN_INIT's steps), then GAME_FRAME once per
 simulated frame with the BIOS's pot shadows, the triggers, KBCODE,
 SKSTAT and CONSOL faked: the title screen, the setup screen, a game
-started with START, the stick, buying, the top button, *, PAUSE and
-#; then a 2-player game's keys per controller.
+started with the top button, then with START, the stick, buying, the
+top button, * (with keypad dropouts), PAUSE and #; then a 2-player game's keys per controller.
 """
 
 import os
@@ -79,6 +79,18 @@ for pots in ((C, HI, C, C), (C, HI, C, C), (LO, C, C, C)):
 check("1 player chosen", m.byte("SU_VAL", m.sym["SU_FPLY"]), 1)
 press("#")                                   # # does not begin a game here
 check("# on the setup screen", m.byte("GSTATE"), GS_SETUP)
+# the top button is fire here, not key 0: it types no 0 into ROUNDS (D86)
+rounds = m.byte("SU_VAL")
+frame(1, trig=(0, 1))
+check("the top button on the setup screen: no key 0", m.byte("KEY"), 0xFF)
+check("the top button on the setup screen: fire", m.byte("FIRE0"), 1)
+check("the top button begins the game", m.byte("GSTATE"), 0)
+check("ROUNDS kept", m.byte("NUMTRN"), rounds)
+frame(5)
+m.poke("SU_VAL", 5, 60, 1)                   # back to setup, 1 player
+m.call("SETUP_ENTER")
+frame(10)
+check("setup again", m.byte("GSTATE"), GS_SETUP)
 press("S")
 check("START begins the game", m.byte("GSTATE"), 0)
 
@@ -101,8 +113,21 @@ frame(5)
 # * opens and closes the help screen
 press("*")
 check("* opens help", m.byte("HELPON"), 1)
+# its last line names * (";" + HELP_OFS: a * in the help font), not H
+a = m.addr("HELPSCR") + 40 * (m.sym["HL_ROWS"] - 1) + m.sym["HL_CKEY"]
+check("help: the key to go back", m.byte(a) & 0x7F, m.sym["IN_HKEY"] + m.sym["HELP_OFS"])
 press("*")
 check("* closes help", m.byte("HELPON"), 0)
+# a held * the keypad misses for a read or two is no new press (D86)
+frame(4, pad=("*", None))
+frame(1)
+frame(4, pad=("*", None))
+frame(1)
+frame(4, pad=("*", None))
+check("* held with dropouts: help opens once", m.byte("HELPON"), 1)
+frame(6)
+press("*")
+check("* closes help again", m.byte("HELPON"), 0)
 
 # PAUSE pauses and resumes
 press("P")
