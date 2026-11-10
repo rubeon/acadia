@@ -25,13 +25,16 @@ LAB5200  := build/acadia5200.lab
 
 all: $(XEX)
 
-# the loader (D57) first, then its INITAD, then the game: ATasm sorts a
-# file's segments by address, so it can't put them in this order itself
-$(XEX): $(SRC) | build
-	$(ATASM) -Isrc -obuild/loader.xex src/loader.asm
+# the loader (D57, D81) first, then its INITAD, then the game, the title
+# graphics (the logo, $8000) first, in chunks with a loading bar step
+# after each: ATasm sorts a file's segments by address, so it can't put
+# them in this order itself (tools/xexjoin.py)
+$(XEX): $(SRC) tools/xexjoin.py | build
+	$(ATASM) -Isrc -obuild/loader.xex -lbuild/loader.lab src/loader.asm
 	$(ATASM) -Isrc -obuild/ldrinit.xex src/ldrinit.asm
 	$(ATASM) -Isrc -obuild/game.xex -l$(LAB) src/acadia.asm
-	cat build/loader.xex build/ldrinit.xex build/game.xex > $@
+	$(PYTHON) tools/xexjoin.py $@ build/loader.xex build/ldrinit.xex \
+	  build/game.xex build/loader.lab src/loader.asm
 	@# MiSTer's disk-boot XEX loader hangs (black screen) on a file whose
 	@# size is a multiple of 125 bytes (D73): then add a 1-byte segment
 	@# at $$0600 (5 bytes: start, end, one $$00), which nothing loads at
