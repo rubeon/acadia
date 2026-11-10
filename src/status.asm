@@ -49,8 +49,9 @@ ST_COLS
 ;  ST_VBI -- each frame (VBI_D): the two backgrounds and each line's
 ;  PF1 (STBK; attract mode applied), and VDSLST back at the first DLI
 ;  (the stats screen's CT_DLI, the title screen's TT_DLI, the setup
-;  screen's SU_DLI).
-;  Trashes A.
+;  screen's SU_DLI).  On the title and setup screens it then moves
+;  the clouds (TT_CLD, D82).
+;  Trashes A (title, setup: A, X, Y).
 ; ---------------------------------------------------------------------
 ST_VBI
         LDA #C_STOP
@@ -85,12 +86,12 @@ SV_TT   LDA #<TT_DLI
         STA VDSLST
         LDA #>TT_DLI
         STA VDSLST+1
-        RTS
+        JMP TT_CLD      ; the clouds (D82)
 SV_SU   LDA #<SU_DLI
         STA VDSLST
         LDA #>SU_DLI
         STA VDSLST+1
-        RTS
+        JMP TT_CLD      ; the clouds (D82)
 SV_CT   LDA #0
         STA CT_DI
         LDA #<CT_DLI

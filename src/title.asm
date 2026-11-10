@@ -14,8 +14,8 @@
 ;  A DLI on the last blank line runs TT_DLI, which sets COLBK, COLPF0
 ;  and COLPF1 every second scan line for the whole picture, and moves
 ;  and colours the cloud players; ST_VBI (STATUS.ASM) points VDSLST at
-;  it while GSTATE is GS_TITLE.  Each frame TT_CLD moves the clouds
-;  that are due, and TT_ANIM scatters new glitter on one row of the
+;  it while GSTATE is GS_TITLE, and each frame runs TT_CLD, which moves
+;  the clouds that are due (D82).  TT_ANIM scatters new glitter on one row of the
 ;  water every TT_GRT frames (the rows in turn; the sun stays put,
 ;  Rube) and, after TT_PSEC seconds with nothing touched, shows PRESS
 ;  FIRE.
@@ -151,8 +151,7 @@ TF_TIC  JSR TIC_NEXT
         BNE TF_TIC      ; not a new second
         INC TI_SEC
         BNE TF_TIC
-TF_TDON JSR TT_CLD      ; the clouds
-        JSR TT_ANIM     ; the glitter, the prompt
+TF_TDON JSR TT_ANIM     ; the glitter, the prompt
         LDA TI_SEC
         CMP #DM_IDLE
         BCC TF_KEYS
@@ -234,8 +233,8 @@ TT_LEAVE
 ; ---------------------------------------------------------------------
 ;  TT_CINI -- the clouds as players 0-2, quadruple width, behind the
 ;  playfield, each cloud at its start and its lane's table filled.
-;  TT_CSZ: only the players' width and priority.  Trashes A, X, Y,
-;  TT_N (TT_CSZ: A).
+;  TT_CSZ: only the players' width and priority.  Trashes A, X, Y
+;  (TT_CSZ: A).
 ; ---------------------------------------------------------------------
 TT_CINI
         JSR TT_CSZ
@@ -263,8 +262,8 @@ TT_CSZ  LDA #TT_QUAD
 ;  setup screen's logo sits where the title's does (D75).  From the
 ;  title (GSTATE still GS_TITLE) the clouds stay where they are, their
 ;  positions and lane tables kept; from the stats screen, whose game
-;  drew over them, they start again (TT_CINI).  SETUP_FRAME moves them with TT_CLD; SU_GO
-;  empties P/M memory again.  Trashes A, X, Y, TT_N.
+;  drew over them, they start again (TT_CINI).  The VBI moves them
+;  (TT_CLD); SU_GO empties P/M memory again.  Trashes A, X, Y.
 ; ---------------------------------------------------------------------
 SU_NCP  =  SU_SKY1-TC_PAIR ; pairs of shapes copied
 
@@ -286,9 +285,12 @@ SC_SHP  LDA TCP0,X
         JMP TT_CSZ      ; from the title: where they were (D75)
 
 ; ---------------------------------------------------------------------
-;  TT_CLD -- each frame: every cloud whose time has come moves one
-;  colour clock left (every TC_PER+1 frames: the high ones faster).
-;  Trashes A, X, Y, TT_N.
+;  TT_CLD -- each frame, from the VBI (ST_VBI, on the title and setup
+;  screens, D82): every cloud whose time has come moves one colour
+;  clock left (every TC_PER+1 frames: the high ones faster).  In the
+;  VBI every step lands on its frame and before TT_DLI / SU_DLI read
+;  the tables, so a cloud never moves late or shears for a frame.
+;  Trashes A, X, Y.
 ; ---------------------------------------------------------------------
 TT_CLD
         LDX #TC_NUM-1
@@ -305,24 +307,26 @@ TK_NEXT DEX
 ; ---------------------------------------------------------------------
 ;  TK_FILL -- cloud X's position into its lane's table (TT_HA or TT_HB)
 ;  for its pairs of lines and the two above (where TT_DLI moves the
-;  player(s) there).  Keeps X; trashes A, Y, TT_N.
+;  player(s) there).  No variables, so the VBI (TT_CLD) and the main
+;  loop (TT_CINI) can both run it.  Keeps X; trashes A, Y.
 ; ---------------------------------------------------------------------
 TK_FILL
-        LDA TC_E,X
-        STA TT_N
-        LDY TC_A,X
         LDA TC_L,X
         BNE TK_B
+        LDY TC_E,X      ; from the last pair up
+TK_A    DEY
         LDA TT_CX,X
-TK_A    STA TT_HA,Y
-        INY
-        CPY TT_N
+        STA TT_HA,Y
+        TYA
+        CMP TC_A,X      ; down to the first
         BNE TK_A
         RTS
-TK_B    LDA TT_CX,X
-TK_BL   STA TT_HB,Y
-        INY
-        CPY TT_N
+TK_B    LDY TC_E,X
+TK_BL   DEY
+        LDA TT_CX,X
+        STA TT_HB,Y
+        TYA
+        CMP TC_A,X
         BNE TK_BL
         RTS
 

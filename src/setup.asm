@@ -198,8 +198,7 @@ SL_ROW  LDA TTBK,X      ; a logo row: 2 scan lines
 ; ---------------------------------------------------------------------
 ;  SETUP_FRAME -- each frame of the setup screen.  Trashes A, X, Y.
 ; ---------------------------------------------------------------------
-SETUP_FRAME
-        JSR TT_CLD      ; the clouds drift (TITLE.ASM)
+SETUP_FRAME             ; (the clouds drift in the VBI: TT_CLD, D82)
         LDA JOY0        ; either stick, either fire button
         ORA JOY1
         STA SU_J
