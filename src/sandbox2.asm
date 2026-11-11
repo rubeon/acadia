@@ -6,6 +6,8 @@
 ;             SANDBOX's (SB_GEN)
 ;    SB_GEN   SANDBOX's island on RANDOM's open sea
 ;    SU_OK    can the setup screen's line X be chosen?
+;    SB_SYP   the stats summary page's players: in SANDBOX player 1's
+;             numbers only, and player 2's pawns blank
 ; =====================================================================
 
 ; ---------------------------------------------------------------------
@@ -72,3 +74,23 @@ SO_STD  CPX #SU_FLVL    ; CPU LEVEL: 1 player only
 SO_YES  SEC
         RTS
 
+
+; ---------------------------------------------------------------------
+;  SB_SYP -- (SY_DRAW, its names drawn) X = the last player, as SB_LSTP;
+;  in SANDBOX (X = 0) also player 2's pawns blank in the page's three
+;  headings (BUILT, GOLD FROM, BOATS LOST: SYTXT).  Trashes A, Y.
+; ---------------------------------------------------------------------
+SB_SYP  JSR SB_LSTP
+        TXA
+        BNE SQ_YRTS     ; 2 players: X = 1
+        LDY #SB_NPW-1   ; A = 0: blank
+SQ_YPW  LDX SBPWO,Y
+        STA SYSCR,X
+        DEY
+        BPL SQ_YPW
+        TAX             ; X = 0 again
+SQ_YRTS RTS
+
+SBPWO   .BYTE 15,16,38,39   ; line 0: BUILT's, GOLD FROM's player 2 pawn
+        .BYTE 238,239       ; line 5 (5 x 40 + 38): BOATS LOST's
+SB_NPW  =  6

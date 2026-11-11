@@ -65,8 +65,9 @@ SY_CH   LDA SYTXT,X
         INY
         BNE SY_CH       ; (always)
 
-SY_NUMS JSR SB_LSTP     ; the numbers, player 2 first (X = 1; in
-                        ; SANDBOX player 1 only, X = 0, D87)
+SY_NUMS JSR SB_SYP      ; the numbers, player 2 first (X = 1; in
+                        ; SANDBOX player 1 only, X = 0, and player
+                        ; 2's pawns blank, D87)
 SY_PL   STX CT_P
         LDA CTPCOL,X    ; in the player's colour
         STA CT_TC

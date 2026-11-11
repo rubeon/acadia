@@ -212,6 +212,20 @@ if "SANDBOX FINISHED FIRE OR KEY" not in line(2):
 if "P2" in line(1):
     fail("game over line 1 shows player 2: %r" % line(1))
 
+# the stats screen's summary page: player 1's pawns, no player 2's
+P2PAWNS = (15, 16, 38, 39, 238, 239)    # BUILT, GOLD FROM, BOATS LOST
+
+
+def pawns():
+    return [m.byte("SYSCR", o) for o in P2PAWNS]
+
+
+m.call("CT_ENTER", limit=LONG)
+if any(pawns()):
+    fail("SANDBOX summary shows player 2's pawns: %r" % pawns())
+if [m.byte("SYSCR", o) for o in (11, 12)] != [0x62, 0x63]:
+    fail("SANDBOX summary: no player 1 pawn")
+
 # not SANDBOX: pause + START does nothing
 m.poke("SU_VAL", 2, 30, 2, 2, 1)
 m.call("SU_GO", limit=LONG)
@@ -223,6 +237,9 @@ if m.byte("GSTATE") == GS_OVER or not m.byte("PAUSED"):
     fail("STANDARD: pause + START: GSTATE %d, PAUSED %d" % (m.byte("GSTATE"), m.byte("PAUSED")))
 if "START: END GAME" in line(2):
     fail("STANDARD shows the sandbox hint: %r" % line(2))
+m.call("CT_ENTER", limit=LONG)
+if pawns() != [0xE4, 0xE5] * 3:
+    fail("STANDARD summary: player 2's pawns %r" % pawns())
 
 print("sandbox: %d failed" % fails)
 sys.exit(1 if fails else 0)
