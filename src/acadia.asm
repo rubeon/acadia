@@ -113,6 +113,7 @@ SYEND                           ; must stay below TTFONTA ($A400)
 ; ---------------------------------------------------------------------
         *= MFNT02E
         .INCLUDE "sandbox.asm"
+        .INCLUDE "sbx_data.asm" ; its minimap and land (generated)
 
 ; ---------------------------------------------------------------------
 ;  Run address

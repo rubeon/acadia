@@ -1440,7 +1440,7 @@ def main():
     out.append("MMAPH   .BYTE " + ",".join(">MMAP%d" % i for i in range(len(ps) + 1)))
     out.append("MM_W    = %d" % MM_W)
     out.append("MM_ROWS = %d" % ROWS)
-    for mi, q in enumerate(ps + [sb]):
+    for mi, q in enumerate(ps):
         mm = minimap(q)
         out.append("MMAP%d" % mi)
         for r in range(ROWS):
@@ -1452,14 +1452,26 @@ def main():
     out.append("; x 4 + column AND 3 (grass_pick); for RM_GEN")
     out.append("RNDTILE .BYTE " + hexes(ps[MAP_RND]["gentile"]))
     out.append("GRSTL   .BYTE " + hexes([grass_tile(r, c) for r in range(4) for c in range(4)]))
-    out.append("; SANDBOX (D87): SBLAND, its land squares in rows %d-%d as bits, 7 first," % (SB_ROW0, SB_ROW0 + SB_NROW - 1))
-    out.append("; row by row; SB_HSQ, its harbour square; SB_HTL, the pier's tile")
-    out.append("SBLAND  .BYTE " + hexes(sb["sbland"]))
+    out.append("; SANDBOX (D87): its minimap MMAP%d and SBLAND are in SBX_DATA.ASM, with" % len(ps))
+    out.append("; SANDBOX.ASM: this block must end below $BC00 (D57)")
     out.append("SB_SQ0  = %d   ; SBLAND's first square" % (SB_ROW0 * COLS))
     out.append("SB_NSQ  = %d  ; and how many" % (SB_NROW * COLS))
     out.append("SB_HSQ  = %d" % sb["hsq"])
     out.append("SB_HTL  = %d" % sb["htile"])
     open("src/islands.asm", "w").write("\n".join(out) + "\n")
+
+    # sbx_data.asm: SANDBOX's minimap and land (D87), out of the $AC00
+    # block, which must end below $BC00 (D57); with SANDBOX.ASM
+    out = banner("SBX_DATA.ASM", "SANDBOX's data (D87): its minimap (MMAPL/MMAPH point here)\n"
+                 ";  and its land squares in rows %d-%d as bits, 7 first, row by row\n"
+                 ";  (SB_GEN).  Placed after SANDBOX.ASM in the free end of a map font." % (SB_ROW0, SB_ROW0 + SB_NROW - 1))
+    mm = minimap(sb)
+    out.append("MMAP%d" % len(ps))
+    for r in range(ROWS):
+        out.append("        .BYTE " + hexes(mm[r * MM_W:(r + 1) * MM_W]) + "   ; " + "".join(
+            "#" if sb["kinds"][r][c] & 0x7F == K_LAND else "." for c in range(COLS)))
+    out.append("SBLAND  .BYTE " + hexes(sb["sbland"]))
+    open("src/sbx_data.asm", "w").write("\n".join(out) + "\n")
 
     for q in ps:
         print("map %s: %d tiles, %d fonts (coast characters per font %s), character rows -> font %s"

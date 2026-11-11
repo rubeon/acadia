@@ -103,6 +103,7 @@ SYEND                           ; must stay below TTFONTA ($6800)
 ; ---------------------------------------------------------------------
         *= MFNT02E
         .INCLUDE "sandbox.asm"
+        .INCLUDE "sbx_data.asm" ; its minimap and land (generated)
 
 ; ---------------------------------------------------------------------
 ;  RAM: the variables and the live map's tables, reserved only
