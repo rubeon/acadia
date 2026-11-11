@@ -207,7 +207,7 @@ if "START: END GAME" not in line(2):
 frame(console=START)
 if m.byte("GSTATE") != GS_OVER or m.byte("PAUSED"):
     fail("pause + START: GSTATE %d, PAUSED %d" % (m.byte("GSTATE"), m.byte("PAUSED")))
-if "SANDBOX FINISHED" not in line(2):
+if "SANDBOX FINISHED FIRE OR KEY" not in line(2):
     fail("game over line 2: %r" % line(2))
 if "P2" in line(1):
     fail("game over line 1 shows player 2: %r" % line(1))
