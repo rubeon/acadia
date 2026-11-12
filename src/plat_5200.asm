@@ -9,8 +9,10 @@
 ;  GPRIOR, COLRSH, DRKMSK, HW_5200.ASM) and map 1 in the live tables.
 ;  The map fonts are ROM, but WAVE_ANI writes into them, so PLAT_MAP
 ;  copies the live map's fonts into RAM (RMFONT0-2) and points ROWFONT
-;  and FONTPG there.  PLAT_VBI, chained after the deferred VBI, copies
-;  CHBAS and GPRIOR to the hardware each frame, as the 800's OS does.
+;  and FONTPG there.  BT_VBI (BOOT5200.ASM) copies CHBAS and GPRIOR
+;  to the hardware each frame before the deferred VBI, as the 800's OS
+;  does (D89); PLAT_VBI, chained after the deferred VBI, now only ends
+;  it.
 ;  PLAT_RST (RESET5200.ASM, in code block 2, as block 1 is full) is
 ;  the keypad's RESET key: back to the title (D76).
 ; =====================================================================
@@ -55,14 +57,11 @@ PLAT_INIT
 
 ; ---------------------------------------------------------------------
 ;  PLAT_VBI -- end of the deferred VBI (VBI_D chains here through
-;  OLDVBD): the font and priority shadows to the hardware, then the
-;  VBI's end (BT_XIT, BOOT5200.ASM)
+;  OLDVBD): the VBI's end (BT_XIT, BOOT5200.ASM).  It copied CHBAS and
+;  GPRIOR here until D89: VBI_D can run into the screen, and CHBASE
+;  then changed during the status bar or the map (flicker, D89).
 ; ---------------------------------------------------------------------
 PLAT_VBI
-        LDA CHBAS
-        STA CHBASE
-        LDA GPRIOR
-        STA PRIOR
         JMP (PV_OLD)
 
 ; ---------------------------------------------------------------------

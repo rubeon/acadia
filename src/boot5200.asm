@@ -71,8 +71,9 @@ BT_VECN =  12           ; bytes in BT_VECS
 ;  saved; RTCLOK counted, ATRACT every 256 frames; unless CRITIC is
 ;  set, the display list and DMA shadows to ANTIC, the colour shadows
 ;  to GTIA (attract mode: shifted and dimmed once ATRACT reaches $80),
-;  the pots read into PADDL0-7 and a new pot scan; then the deferred
-;  VBI (VVBLKD), which ends at BT_XIT.
+;  the font and priority shadows (CHBAS, GPRIOR) as the 800's OS does,
+;  before the deferred VBI (D89), the pots read into PADDL0-7 and a
+;  new pot scan; then the deferred VBI (VVBLKD), which ends at BT_XIT.
 ; ---------------------------------------------------------------------
 BT_VBI  PHA
         TXA
@@ -104,6 +105,10 @@ BV_COL  LDA PCOLR0,X    ; COLPM0-3, COLPF0-3, COLBK
 BV_SET  STA COLPM0,X
         DEX
         BPL BV_COL
+        LDA CHBAS       ; the status bar's font before its first line,
+        STA CHBASE      ; however long the deferred VBI takes (D89)
+        LDA GPRIOR
+        STA PRIOR
         LDX #7
 BV_POT  LDA POT0,X      ; the controllers' pots
         STA PADDL0,X
