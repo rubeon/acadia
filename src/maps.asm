@@ -60,10 +60,8 @@ ML_PART CPY #<MAPBLK    ; then the rest (Y = 0 here)
         INY
         BNE ML_PART
 ML_AI   JSR PLAT_MAP    ; the machine's part (5200: fonts to RAM, D62)
-        LDA MAPLD
-        CMP #MAP_RND
-        BNE ML_AIT
-        JSR RM_GEN      ; RANDOM: new islands on the sea
+        JSR SB_MAPG     ; RANDOM: new islands on the sea (RM_GEN);
+                        ; SANDBOX: its island (SB_GEN, D87)
 ML_AIT  LDX #2          ; AI_DN, AI_UP, AI_HD
 ML_TBL  STX ML_T
         JSR ML_STEPS
@@ -253,6 +251,10 @@ RG_HSET STA ISLTILE,Y
         STA ISLKIND,Y
         DEX
         BPL RG_HARB
+        ; fall through
+; RM_TILES -- every land square's tile: the coast piece for its land
+; neighbours (RNDTILE), or grass (GRSTL).  Trashes A, X, Y.
+RM_TILES
         LDY #MAPSIZE-ML_ROW-1 ; the land squares' tiles (none in
 RG_TILE LDA ISLKIND,Y   ; the first or last row)
         AND #K_KIND

@@ -6,7 +6,8 @@
 ;  and a person for population, and each player's numbers in that
 ;  player's cursor colour.  Mode 4 shows COLBK behind the text, so a
 ;  DLI on the blank line above sets line 1's background and one on
-;  line 1 sets line 2's; the border above stays black.  The gold bar
+;  line 1 sets line 2's; the border above stays black, and so do both
+;  lines on every screen that shows them (D88).  The gold bar
 ;  needs a third gold, so while line 1 shows the bars (ST_L1) its PF1
 ;  is dark gold instead of player 1's red.
 ; =====================================================================
@@ -15,11 +16,12 @@ C_SGOLD =  $2C          ; COLPF0: the gold bar, the people's heads
 C_SRED  =  $48          ; COLPF1: player 1 (C_CUR0, a step brighter)
 C_SWHT  =  $0C          ; COLPF2: text
 C_STURQ =  $AC          ; COLPF3: player 2 (C_CUR1), inverse characters
-C_SBK1  =  $84          ; the stats screen's title line background
+C_SBK1  =  $00          ; the stats screen's title line background:
+                        ; black, as in play (D88)
 C_STOP  =  $00          ; line 1 background in play: black (D69)
-C_SBK2  =  $80          ; a shade darker (the stats screen's line 2)
-C_SPOP  =  C_SEA        ; line 2 (people) background: the map's dark
-                        ; corner blue, so it runs into them (D67)
+C_SBK2  =  $00          ; the stats screen's line 2: black too (D88)
+                        ; line 2 (people) in play and paused: black,
+                        ; as line 1 (STBK+1; the map's sea until D88)
 C_SDKG  =  $26          ; COLPF1 on line 1 while it shows the gold bars:
                         ; their dark gold (ST_L1; the numbers there are
                         ; white, line 2 keeps the players' colours)
@@ -58,10 +60,7 @@ ST_VBI
         EOR COLRSH
         AND DRKMSK
         STA STBK
-        LDA MAPPAL      ; C_SPOP: the map's sea, so it dims with the
-        EOR COLRSH      ; dark corners when paused (D69)
-        AND DRKMSK
-        STA STBK+1
+        STA STBK+1      ; line 2 black too (D88)
         LDA ST_L1
         EOR COLRSH
         AND DRKMSK

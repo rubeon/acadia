@@ -52,9 +52,8 @@ GAME_START
         JSR MUS_STOP    ; the title tune ends
         JSR ST_COLS     ; the status bar's font and colours (D54)
         JSR KP_OFF      ; port 2: a stick, or in a 1-player game a
-        LDA SU_VAL+SU_FPLY ; keypad if one is plugged in (D49, D58)
-        CMP #1
-        BNE GS_KP
+        JSR AI_ON       ; keypad if one is plugged in (D49, D58;
+        BEQ GS_KP       ; SANDBOX too, D87)
         JSR KP_AUTO
 GS_KP
         LDA #FX_USED    ; fire still held from the setup screen
@@ -135,31 +134,27 @@ STAT_DRAW
         LDA #4          ; the numbers are white (D54)
         LDX #ST_G0
         JSR TXT_DEC
-        LDA NUMTRN      ; rounds left
-        SEC
-        SBC CURTRN
-        LDX #0
-        JSR NUM16
-        LDA #2
-        LDX #ST_TRN
-        JSR TXT_DEC
+        JSR SB_TRN      ; rounds left (SANDBOX: the round, D87)
         LDA REMSEC
         LDX #0
         JSR NUM16
         LDA #3
         LDX #ST_TIME
         JSR TXT_DEC
-        LDA GOLD+2
-        LDX GOLD+3
-        JSR NUM16
-        LDA #4
-        LDX #ST_G1
-        JSR TXT_DEC
         LDA POP         ; line 2: populations (D44)
         LDX POP+1
         JSR NUM16
         LDA #5
         LDX #ST_P0
+        JSR TXT_DEC
+        JSR SB_ON       ; SANDBOX: no player 2 (D87)
+        BNE SL_P2
+        JMP SB_HIDE
+SL_P2   LDA GOLD+2
+        LDX GOLD+3
+        JSR NUM16
+        LDA #4
+        LDX #ST_G1
         JSR TXT_DEC
         LDA POP+2
         LDX POP+3
@@ -184,8 +179,9 @@ GS_DONE RTS
 ROUND_END
         JSR SND_ROUND
         JSR ECO_ROUND   ; (records the round for the stats screen, D61)
-        JSR REB_ROUND   ; then a rebel more or less for each player
-        INC CURTRN
+        JSR SB_REBR     ; then a rebel more or less for each player
+                        ; (REB_ROUND; SANDBOX: player 1's only, D87)
+        JSR SB_RND      ; CURTRN + 1, at most 255 (D87)
         LDA #0
         STA INFOK
         LDA #GS_SUM1
@@ -229,7 +225,9 @@ GT_TOT  LDA SCORE,X
         LDA #<TX_TOT
         LDY #>TX_TOT
         JMP SHOW_PAIR
-GT_NEXT LDA CURTRN      ; totals done: next round or game over
+GT_NEXT JSR SB_ON       ; totals done: SANDBOX goes on (D87),
+        BEQ GT_RND
+        LDA CURTRN      ; else next round or game over
         CMP NUMTRN
         BCC GT_RND
         JMP GAME_OVER
@@ -276,7 +274,8 @@ GO_P2   LDA #<TX_W2
         BNE GO_LINE
 GO_DRAW LDA #<TX_TIE
         LDY #>TX_TIE
-GO_LINE LDX #40         ; status line 2: the winner, then the prompt
+GO_LINE JSR SB_WIN      ; (SANDBOX: no winner, D87)
+        LDX #40         ; status line 2: the winner, then the prompt
         JSR TXT_STR
         LDA #<TX_CHRT
         LDY #>TX_CHRT
@@ -390,10 +389,6 @@ SH_CLR  STA STATUS1,X
         LDY #>TX_P1
         LDX #0
         JSR TXT_STR
-        LDA #<TX_P2
-        LDY #>TX_P2
-        LDX #SP_P2
-        JSR TXT_STR
         LDA SV0
         LDX SV0+1
         JSR NUM16
@@ -401,6 +396,12 @@ SH_CLR  STA STATUS1,X
         LDX #SP_V0
         LDY #TX_RED
         JSR ST_DEC
+        JSR SB_ON       ; SANDBOX: player 1 only (D87)
+        BEQ SP_RTS
+        LDA #<TX_P2
+        LDY #>TX_P2
+        LDX #SP_P2
+        JSR TXT_STR
         LDA SV1
         LDX SV1+1
         JSR NUM16
@@ -408,6 +409,7 @@ SH_CLR  STA STATUS1,X
         LDX #SP_V1
         LDY #TX_TURQ
         JMP ST_DEC
+SP_RTS  RTS
 
 ; Texts (screen codes); titles are 22 characters, centred
 TX_P1   .BYTE $30+TX_RED,$11+TX_RED,TX_END     ; "P1" in red (STFONT)

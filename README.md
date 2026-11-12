@@ -55,10 +55,20 @@ the title plays a short demo game.
 | SECONDS PER ROUND | 30-120, in steps of 5 |
 | PLAYERS | 1 (against the computer) or 2 |
 | CPU LEVEL | EASY, MEDIUM or HARD (1 player only) |
-| MAP | STANDARD (the original's islands) or RANDOM (a new pair every game) |
+| MAP | STANDARD (the original's islands), RANDOM (a new pair every game) or SANDBOX (see below) |
 
 Stick up/down (or SELECT) picks a line, stick left/right changes it,
 and you can also type a number. START or fire begins the game.
+
+### Sandbox
+
+Pick SANDBOX on the MAP line to build at your own pace: one player
+alone on one big island, about twice the usual size, with no computer
+opponent and no limit on the number of rounds. Weather, pirates and
+rebels still come as in a normal game, so forts and PT boats have
+work to do. ROUNDS, PLAYERS and CPU LEVEL don't apply and show `-`.
+When you're done, pause (`P`, or `PAUSE` on the 5200) and press
+START: the final score and the stats screen follow as usual.
 
 ## How to play
 

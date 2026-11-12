@@ -423,6 +423,9 @@ RM_R    *= *+1          ; RM_GEN: a row
 RM_C    *= *+1          ; RM_GEN: a column
 RM_K    *= *+1          ; RM_GEN: a count, or the land neighbours
 RM_I    *= *+1          ; RM_GEN: a square or harbour row kept
+SB_OLDC *= *+1          ; SB_PKEY: START last frame (SANDBOX, D87)
+SB_NEWC *= *+1          ;   START pressed this frame
+SB_HNT  *= *+1          ;   1: its hint is in the news slot
 
 ; ---------------------------------------------------------------------
 ;  Boat wakes (TRAIL.ASM, D59)

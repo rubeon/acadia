@@ -16,7 +16,9 @@ The file loads in this order:
   5. the game's RUNAD.
 ATasm writes a file's segments in address order, so it can't do this
 itself.  Fails when a file does not parse, there is no segment at
-$8000, or there are more chunks than LD_TAB has room for."""
+$8000, there are more chunks than LD_TAB has room for, or a segment
+loads at $9C00-$9FFF or $BC00-$BFFF: the OS's screen while the file
+loads, and again after a warm RESET, which would overwrite it (D57)."""
 
 import re
 import sys
@@ -25,6 +27,7 @@ CHUNK = 1024            # bytes of the game between two bar steps
 FIRST = 0x8000          # TITLEGFX: the logo, loaded first
 RUNAD = 0x02E0
 INITAD = 0x02E2
+OS_SCR = ((0x9C00, 0x9FFF), (0xBC00, 0xBFFF))   # never loaded (D57)
 
 
 def segments(data, name):
@@ -70,6 +73,12 @@ def main():
     gsegs = segments(open(game, "rb").read(), game)
     runad = [s for s in gsegs if s[0] == RUNAD]
     data = [s for s in gsegs if s[0] != RUNAD]
+    for start, body in data:
+        end = start + len(body) - 1
+        for lo, hi in OS_SCR:
+            if start <= hi and end >= lo:
+                sys.exit("xexjoin: segment $%04X-$%04X loads into the OS screen at "
+                         "$%04X-$%04X (D57)" % (start, end, lo, hi))
     first = [s for s in data if s[0] == FIRST]
     if not first or not runad:
         sys.exit("xexjoin: no segment at $%04X or no RUNAD" % FIRST)

@@ -72,6 +72,6 @@ CY_BNUM STX CT_TX2
         JSR CT_TNUM
         LDX CT_P
         INX
-        CPX #2
+        JSR SB_NPL      ; CPX #2 (SANDBOX: #1, D87)
         BCC CY_PL
         RTS

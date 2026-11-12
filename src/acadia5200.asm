@@ -94,7 +94,16 @@ ROMEND                          ; must stay below TITLEGFX (MKCART.PY)
 ; ---------------------------------------------------------------------
         .INCLUDE "font_pause.asm"
         .INCLUDE "stats4.asm"   ; the summary page (D84), in the font's
-SYEND                           ; free 872 bytes: below TTFONTA ($6800)
+        .INCLUDE "sandbox2.asm" ; the SANDBOX map's island, setup (D87)
+SYEND                           ; must stay below TTFONTA ($6800)
+
+; ---------------------------------------------------------------------
+;  The SANDBOX map's game part (D87), in the free end of STANDARD's
+;  map font 2: its codes past MFNT02E are never drawn
+; ---------------------------------------------------------------------
+        *= MFNT02E
+        .INCLUDE "sandbox.asm"
+        .INCLUDE "sbx_data.asm" ; its minimap and land (generated)
 
 ; ---------------------------------------------------------------------
 ;  RAM: the variables and the live map's tables, reserved only

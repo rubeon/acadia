@@ -54,7 +54,8 @@ ECO_BUY
         CMP #I_REBL
         BCC EB_LND      ; 1-6: on land
         BNE EB_BOAT     ; 8, 9: boats
-        JMP EB_PAY      ; 7: a rebel for the other island
+        JMP SB_REB      ; 7: a rebel for the other island (none in
+                        ; SANDBOX: refused, D87)
 EB_BOAT TXA             ; a boat: into this player's harbour
         JSR MAP_HARB
         STX EB_C

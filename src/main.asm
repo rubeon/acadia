@@ -85,12 +85,12 @@ GF_OVER CMP #GS_OVER
 GF_RUN  JSR FIRE_TAP    ; a tap of fire is key 0 (D60)
         JSR HELP_KEY    ; H / HELP: price list (D34)
         BNE GF_SHOW     ; help is up: nothing moves
-        JSR PAUSE_KEY   ; P: pause / resume (D19)
+        JSR SB_PKEY     ; P: pause / resume (D19; SANDBOX: START ends, D87)
         BNE GF_SHOW     ; paused: nothing moves
         LDA GSTATE
         BNE GF_TICS     ; round summary: nothing moves either
         JSR AI_FRAME    ; 1 player: the CPU's stick (D39)
-        JSR CUR_MOVE
+        JSR SB_CUR      ; CUR_MOVE (SANDBOX: no player 2, D87)
         JSR ECO_KEY     ; buy with digit keys (D17)
         JSR INFO_KEYS   ; console keys: info pages (D18)
         JSR WAVE_ANI    ; the waves move (D51)

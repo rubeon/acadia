@@ -8,7 +8,9 @@
 ;    PLAYERS             1-2
 ;    CPU LEVEL           EASY, MEDIUM, HARD (1 player only; skipped
 ;                        with 2)
-;    MAP                 STANDARD, RANDOM (N_MAPS names, MAPNAME)
+;    MAP                 STANDARD, RANDOM, SANDBOX (N_MAPS names,
+;                        MAPNAME); with SANDBOX (D87) ROUNDS, PLAYERS
+;                        and CPU LEVEL show "-" and are skipped
 ;  Stick up/down or SELECT picks a line; stick left/right changes it
 ;  (held: repeats), going round from one end of its range to the other,
 ;  or digits type a number.  START or fire begins.  Typed numbers are
@@ -37,6 +39,7 @@
 GS_SETUP = 4            ; GSTATE while the setup screen is up
 
 SU_NF   =  5            ; number of lines (fields)
+SU_FSEC =  1            ; SECONDS field
 SU_FPLY =  2            ; PLAYERS field
 SU_FLVL =  3            ; CPU LEVEL field: 1 player only
 SU_FMAP =  4            ; MAP field: map 1 to N_MAPS
@@ -99,6 +102,11 @@ SE_MUS
         STA SU_ARM
         STA SU_FLD
         STA SU_TYPD
+        TAX             ; SANDBOX: SECONDS first, not ROUNDS (D87)
+        JSR SU_OK
+        BCS SE_FLD
+        INC SU_FLD
+SE_FLD
         JSR SU_CLDS     ; the clouds; no cursors, fish, weather or
                         ; pirates (TITLE.ASM)
         LDA #0
@@ -306,43 +314,28 @@ SG_CLMP JSR SU_CLX
         JMP GAME_START  ; game has them
 
 ; ---------------------------------------------------------------------
-;  SU_NEXT / SU_PREV -- move to the next / previous line, bringing the
-;  line left into range; CPU LEVEL is skipped with 2 players
-;  (PLAYERS and MAP are then next to each other).
+;  SU_NEXT / SU_PREV -- move to the next / previous line that can be
+;  chosen (SU_OK), bringing the line left into range.
 ;  Trashes A, X.
 ; ---------------------------------------------------------------------
 SU_NEXT JSR SU_CLAMP
-        LDX SU_FLD
-        INX
+SN_STEP INX
         CPX #SU_NF
-        BCC SN_LVL
+        BCC SN_OK
         LDX #0
-SN_LVL  CPX #SU_FLVL
-        BCC SU_SETF
-        CPX #SU_FMAP
-        BCS SU_SETF
-        LDA SU_VAL+SU_FPLY
-        CMP #2
-        BNE SU_SETF
-        LDX #SU_FMAP    ; 2 players: no CPU level
+SN_OK   JSR SU_OK
+        BCC SN_STEP
 SU_SETF STX SU_FLD
         LDA #0
         STA SU_TYPD
         RTS
 SU_PREV JSR SU_CLAMP
-        LDX SU_FLD
-        DEX
-        BPL SP_LVL
+SP_STEP DEX
+        BPL SP_OK
         LDX #SU_NF-1
-SP_LVL  CPX #SU_FLVL
-        BCC SU_SETF
-        CPX #SU_FMAP
+SP_OK   JSR SU_OK
+        BCC SP_STEP
         BCS SU_SETF
-        LDA SU_VAL+SU_FPLY
-        CMP #2
-        BNE SU_SETF
-        LDX #SU_FPLY
-        BNE SU_SETF
 
 ; ---------------------------------------------------------------------
 ;  SU_CLAMP -- bring the current line's value into range
@@ -427,8 +420,8 @@ SD_RTS  RTS
 
 ; ---------------------------------------------------------------------
 ;  SU_DRAW -- redraw the five value lines and the minimap: the current
-;  line white with a ">", the others yellow; "-" for CPU LEVEL with 2
-;  players, a level's name (SULVN) for CPU LEVEL, a map's name
+;  line white with a ">", the others yellow; "-" for a line that can't
+;  be chosen (SU_OK), a level's name (SULVN) for CPU LEVEL, a map's name
 ;  (MAPNAME) for MAP.
 ;  Trashes A, X, Y, ZPTR, TPTR, M_NUM.
 ; ---------------------------------------------------------------------
@@ -452,14 +445,13 @@ SW_LAB  LDA SULAB_L,X
         LDX SU_I
         CPX #SU_FMAP
         BEQ SW_MAP
-        CPX #SU_FLVL
-        BNE SW_NUM
-        LDA SU_VAL+SU_FPLY
-        CMP #2
-        BNE SW_LVL
-        LDA #SC_DASH    ; no CPU in a 2-player game
+        JSR SU_OK
+        BCS SW_VAL
+        LDA #SC_DASH    ; no CPU in a 2-player game; SANDBOX (D87)
         STA STATUS1+SU_COLV+2
         BNE SW_COPY
+SW_VAL  CPX #SU_FLVL
+        BNE SW_NUM
 SW_LVL  LDA SU_VAL+SU_FLVL ; level 1 up: x 6 = SU_LVLW
         SEC
         SBC #1

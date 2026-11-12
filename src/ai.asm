@@ -59,9 +59,13 @@ AI_INIT
         RTS
 
 ; ---------------------------------------------------------------------
-;  AI_ON -- Z clear (A = 1) in a 1-player game.  Trashes A.
+;  AI_ON -- Z clear (A = 1) in a 1-player game, SANDBOX included (D87:
+;  the keys are player 1's and stick 2 is ignored, but AI_TIC does
+;  nothing there).  Trashes A.
 ; ---------------------------------------------------------------------
-AI_ON   LDA SU_VAL+SU_FPLY
+AI_ON   JSR SB_ON
+        BEQ AO_YES
+        LDA SU_VAL+SU_FPLY
         CMP #1
         BEQ AO_YES
         LDA #0
@@ -533,7 +537,7 @@ AZ_YES  SEC
 ;  Trashes A, X, Y, ZPTR.
 ; ---------------------------------------------------------------------
 AI_TIC
-        JSR AI_ON
+        JSR SB_AI       ; a CPU? (not in SANDBOX, D87)
         BEQ AT_DONE
         DEC AITMR
         BNE AT_DONE
