@@ -1,6 +1,6 @@
 ; =====================================================================
 ;  AI.ASM -- the CPU governor of 1-player games (T-AI-1, T-AI-2,
-;  T-AI-3: R-AI-1 to -5; D39, D40)
+;  T-AI-3, T-AI-4: R-AI-1 to -5; D39, D40, D90)
 ;
 ;  In a 1-player game the CPU plays player 2 (the right island) by the
 ;  same rules as a person: it steers player 2's cursor with a virtual
@@ -42,6 +42,9 @@ AI_FAR  =  48           ; pirate this close: park in the harbour,
                         ; don't lift the boat
 AI_HGAP =  12           ; hurricane this close to touching: flee
 AI_STUCK = 3            ; decisions without moving: stop fishing
+AI_KEEP =  16           ; the school it went for counts this much nearer
+AI_SDH  =  4            ; a school this close to row 5's top:
+                        ; the side (above, below) it chose before
 AS_BUY  =  1            ; AIST: walking to a square to buy on it
 AS_GOB  =  2            ;   walking to its parked fishing boat
 AS_FISH =  3            ;   steering the boat after a school
@@ -141,6 +144,10 @@ AF_FISH STA AIST
         LDA #0
         STA AI_STK
         STA AI_FL
+        STA AI_SD       ; no side, no open sea, no school chosen yet
+        STA AI_OPN
+        LDA #$FF
+        STA AI_SC
 AF_DONE RTS
 
 ; ---------------------------------------------------------------------
@@ -180,11 +187,9 @@ AB_PARK LDA #AI_FAR      ; a pirate about: home first
         JSR AI_WAY
         PLP
         BCC AB_HERE
-        LDA AI_BV       ; not there yet: on
-        BNE AB_GO
-        JSR AI_STEER    ; the harbour square itself
-        LDA JOY1
-        BNE AB_DONE
+        JSR AI_STEER    ; on (the next square, or the harbour itself)
+        LDA JOY1        ; there, or a pirate in the way (AI_AVOID):
+        BNE AB_DONE     ; park here if it can
 AB_HERE LDX #AI_P       ; free sea under it?  park there
         LDY CURROW,X
         LDA CURCOL,X
@@ -215,21 +220,36 @@ AB_HOME JSR AI_STEER    ; else towards the harbour
         TAX
         LDA AB_WAY,X
         STA JOY1
-        RTS
+        JMP AI_AVOID    ; not into a pirate
 AB_GO   JMP AI_STEER
 AB_FISH LDY #1          ; the school's side: 1 above (rows 0-4),
-        LDA AI_TY       ; 2 below
+        LDA AI_TY       ; 2 below; within AI_SDH of the middle, the
+        CMP #5*8-AI_SDH ; side it chose last (D90: a school drifting
+        BCC AB_SIDE     ; across the middle doesn't turn it back and
+        INY             ; forth)
+        CMP #5*8+AI_SDH
+        BCS AB_SIDE
+        LDY AI_SD
+        BNE AB_SIDE
+        LDY #1          ; none yet: by the middle
         CMP #5*8
         BCC AB_SIDE
         INY
-AB_SIDE LDA CURROW+AI_P ; the boat out in the open sea on that
-        CPY #1          ; side: straight at it
+AB_SIDE STY AI_SD
+        CPY AI_OPN      ; been out in the open sea on that side since
+        BEQ AB_GO       ; it chose it: straight at it (D90)
+        LDA #0
+        STA AI_OPN
+        LDA CURROW+AI_P ; out in the open sea on that side now?
+        CPY #1
         BNE AB_DNS
         CMP #2
-        BCC AB_GO
+        BCC AB_OPEN
         BCS AB_NEAR     ; always
 AB_DNS  CMP #MAPROWS-2
-        BCS AB_GO
+        BCC AB_NEAR
+AB_OPEN STY AI_OPN      ; then straight at it from now on
+        JMP AI_STEER
 AB_NEAR LDA AI_TX       ; within a square of it both ways: straight
         SEC             ; at it
         SBC CURX+AI_P
@@ -332,7 +352,8 @@ AW_DN   LDA AI_DN,X
         RTS
 
 ; AI_STEER -- JOY1 towards map pixel AI_TX, AI_TY for the CPU's
-; cursor or boat (its top left corner).  Trashes A.
+; boat (its top left corner), then round any pirate (AI_AVOID).
+; Trashes A, X, Y.
 AI_STEER
         LDA CURX+AI_P
         CMP AI_TX
@@ -349,12 +370,147 @@ AE_V    LDA CURY+AI_P
         LDA #J_UP
 AE_VS   ORA JOY1
         STA JOY1
-AE_DONE RTS
+AE_DONE ; fall through
+
+; ---------------------------------------------------------------------
+;  AI_AVOID -- keep JOY1 out of the box of AI_NEAR pixels round each
+;  pirate (D90), where AI_FLEE would send the boat running: a move
+;  that would step into it is dropped (moving across when the pirate
+;  is less than AI_NEAR away up or down, up or down when it is less
+;  than AI_NEAR away across, and at the box's corner the up or down
+;  half of a diagonal), so the boat slides along the box's edge as it
+;  does along a coast and goes round the pirate instead of running at
+;  it, away and back at it again.  Where the move across is dropped
+;  and the boat has no up or down to go on, it steps aside, away from
+;  the pirate, unless its target is in the box (then it waits there).
+;  Trashes A, X, Y.
+; ---------------------------------------------------------------------
+AI_AVOID
+        LDX #P_SLOT+1
+AV_ONE  LDA FACT,X
+        BEQ AV_NEXT
+        LDA FXH,X       ; dx = pirate - boat (top left corners)
+        SEC
+        SBC #8
+        SEC
+        SBC CURX+AI_P
+        STA AN_C
+        JSR AV_ABS
+        CMP #AI_NEAR+1
+        BCS AV_NEXT     ; a step from the box at least
+        STA AN_N        ; |dx|
+        LDA FYH,X       ; dy
+        SEC
+        SBC #8
+        SEC
+        SBC CURY+AI_P
+        STA AN_R
+        JSR AV_ABS
+        CMP #AI_NEAR+1
+        BCS AV_NEXT
+        STA AN_T        ; |dy|
+        JSR AV_BOX
+AV_NEXT DEX
+        CPX #P_SLOT
+        BCS AV_ONE
+        RTS
+
+; AV_BOX -- the boat a step from pirate X's box (it is never inside:
+; AI_FLEE runs first): AN_C, AN_R = dx, dy, AN_N, AN_T = |dx|, |dy|;
+; one of them is AI_NEAR.  X kept; trashes A, Y.
+AV_BOX  LDA #0
+        STA AI_I        ; the move dropped (0: none)
+        LDA AN_T        ; up or down less than AI_NEAR: no move across
+        CMP #AI_NEAR    ; towards it
+        BCS AV_V
+        LDA AN_C
+        LDY #0
+        JSR AV_DROP
+AV_V    LDA AN_C        ; still moving across towards it (at the
+        LDY #0          ; corner)?  then no up or down towards it
+        JSR AV_TWD
+        AND JOY1
+        BNE AV_VD
+        LDA AN_N        ; nor with it less than AI_NEAR across
+        CMP #AI_NEAR
+        BCS AV_SIDE
+AV_VD   LDA AN_R
+        LDY #2
+        JSR AV_DROP
+AV_SIDE LDA AI_I        ; a move dropped and none on the other axis:
+        BEQ AV_DONE     ; step aside, away from the pirate
+        LDA AI_TX       ; but not if the target is in the box: wait
+        SEC
+        SBC FXH,X
+        CLC
+        ADC #8+AI_NEAR-1
+        CMP #2*AI_NEAR-1
+        BCS AV_OUT
+        LDA AI_TY
+        SEC
+        SBC FYH,X
+        CLC
+        ADC #8+AI_NEAR-1
+        CMP #2*AI_NEAR-1
+        BCC AV_DONE
+AV_OUT  LDA AI_I
+        AND #J_LEFT+J_RIGHT
+        BEQ AV_SV
+        LDA JOY1        ; across dropped: up or down, if it has none
+        AND #J_UP+J_DOWN
+        BNE AV_DONE
+        LDY #J_UP       ; pirate below (or level): up
+        LDA AN_R
+        BPL AV_SET
+        LDY #J_DOWN
+        BNE AV_SET      ; always
+AV_SV   LDA JOY1        ; up or down dropped: across, if it has none
+        AND #J_LEFT+J_RIGHT
+        BNE AV_DONE
+        LDY #J_LEFT     ; pirate to the right (or level): left
+        LDA AN_C
+        BPL AV_SET
+        LDY #J_RIGHT
+AV_SET  TYA
+        ORA JOY1
+        STA JOY1
+AV_DONE RTS
+
+; AV_DROP -- drop JOY1's move towards the pirate on one axis (A, Y as
+; for AV_TWD), noting it in AI_I.  Trashes A, Y.
+AV_DROP JSR AV_TWD
+        AND JOY1
+        BEQ AV_DRZ
+        STA AI_I
+        EOR JOY1
+        STA JOY1
+AV_DRZ  RTS
+
+; AV_ABS -- A = |A| (signed).  Trashes nothing else.
+AV_ABS  BPL AV_POS
+        EOR #$FF
+        CLC
+        ADC #1
+AV_POS  RTS
+
+; AV_TWD -- A = the stick bit towards the pirate on one axis: A = its
+; signed distance, Y = 0 across, 2 up or down; 0 if the distance is
+; 0.  Trashes Y.
+AV_TWD  CMP #0
+        BEQ AV_TZ
+        BPL AV_TP
+        INY
+AV_TP   LDA AV_TW,Y
+AV_TZ   RTS
+
+AV_TW   .BYTE J_RIGHT,J_LEFT,J_DOWN,J_UP
 
 ; ---------------------------------------------------------------------
 ;  AI_SCHOOL -- the school nearest the CPU's boat: its top left corner
-;  (held to the map) in AI_TX, AI_TY.  C set if no school is out.
-;  Trashes A, X, Y.
+;  (held to the map) in AI_TX, AI_TY.  The one it went for last (AI_SC)
+;  counts AI_KEEP pixels nearer, so it doesn't turn from one to the
+;  other and back when they are about as far (D90).  C set if no
+;  school is out.  Trashes A, X, Y.
 ; ---------------------------------------------------------------------
 AI_SCHOOL
         LDA #$FF
@@ -365,7 +521,13 @@ AI_SCHOOL
 AH_ONE  LDA FACT,X
         BEQ AH_NEXT
         JSR AI_DIST     ; |dx| + |dy| to slot X, at most 255
-        CMP AI_BV
+        CPX AI_SC
+        BNE AH_CMP
+        SEC             ; the one it went for last: nearer
+        SBC #AI_KEEP
+        BCS AH_CMP
+        LDA #0
+AH_CMP  CMP AI_BV
         BCS AH_NEXT
         STA AI_BV
         STX AI_V
@@ -373,6 +535,7 @@ AH_NEXT DEX
         BPL AH_ONE
         LDX AI_V
         BMI AH_NONE
+        STX AI_SC
         LDA FXH,X       ; top left: FXH - 8, FYH - 8, within the map
         SEC
         SBC #8

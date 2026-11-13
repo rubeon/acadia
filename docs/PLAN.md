@@ -90,6 +90,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 | T-AI-1 | Purchase strategy over the scoring formulas | R-AI-1,2 | M3 | Beats a do-nothing player; scores ≥ 50/round on average after round 5 | done (D39) |
 | T-AI-2 | Boat handling | R-AI-3 | M4, T-AI-1 | Catches fish, intercepts pirates | done (D40; fishing boat fishes and flees pirates, PT boats not steered) |
 | T-AI-3 | Difficulty levels | R-AI-4 | T-AI-1 | 3 levels, visibly different | done (D39) |
+| T-AI-4 | Steadier CPU boat steering: no shaking back and forth round one place, near pirates or elsewhere | R-AI-3 | T-AI-2 | Goes round or waits for a pirate instead of fleeing and coming back; keeps one school and one side of the islands | in progress (Claude, D90) |
 
 ## M7 — Release
 

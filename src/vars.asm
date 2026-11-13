@@ -364,6 +364,9 @@ AN_T    *= *+1          ; AI_NBR: neighbour column
 AI_FJ   *= *+1          ; AI_FLEE: the way away
 AI_FL   *= *+1          ; AI_FLEE: frames left to keep it
 AI_TB   *= *+1          ; AI_WAY: 0 home, 1 above, 2 below the islands
+AI_SD   *= *+1          ; AB_FISH: the school's side, 1 above, 2 below
+AI_OPN  *= *+1          ; AB_FISH: the side whose open sea it has reached
+AI_SC   *= *+1          ; AI_SCHOOL: the school it went for ($FF: none)
 
 ; ---------------------------------------------------------------------
 ;  News line (NEWS.ASM, D44)
