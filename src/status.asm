@@ -122,21 +122,22 @@ DLI_ST
         PLA
         RTI
 
+; DLI_ST2 runs on line 1's last scan line, where ANTIC fetches font
+; data: only A is saved and only COLBK is loaded before WSYNC, so the
+; 5200's slower NMI entry still reaches it in time (D89); with more
+; work first, it sometimes waited a whole extra line (flicker).
+; PF1 can follow WSYNC, as line 2's first scan line has no text.
 DLI_ST2
         PHA
-        TXA
-        PHA
         LDA STBK+1
-        LDX STBK+3
         STA WSYNC
         STA COLBK
-        STX COLPF1
+        LDA STBK+3
+        STA COLPF1
         LDA #<DLI_MAP
         STA VDSLST
         LDA #>DLI_MAP
         STA VDSLST+1
-        PLA
-        TAX
         PLA
         RTI
 

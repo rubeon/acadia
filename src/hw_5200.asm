@@ -157,7 +157,7 @@ VKYBDI  =  $0208        ; keypad IRQ vector
 VKYBDF  =  $020A        ; keypad deferred vector
 
 ; The 800's OS shadows the BIOS lacks: RAM bytes (MEM_5200.ASM's
-; PLATRAM), copied to the hardware by PLAT_VBI (PLAT_5200.ASM)
+; PLATRAM), copied to the hardware by BT_VBI (BOOT5200.ASM, D89)
 CHBAS   =  PLATRAM      ; CHBASE, each frame
 GPRIOR  =  PLATRAM+1    ; PRIOR, each frame
 COLRSH  =  PLATRAM+2    ; attract colour shift: 0 for now (T-5200-3)

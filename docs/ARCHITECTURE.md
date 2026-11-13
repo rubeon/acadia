@@ -27,7 +27,7 @@ Current files are marked ✓; the rest are planned (see PLAN.md).
 | `src/acadia5200.asm` ✓ | — | The 5200 build (32K cartridge, D62): `START`, the ROM layout, RAM reservations, cartridge header |
 | `src/main.asm` ✓ | — | Shared by both builds (D62): ZP allocation, `MAIN_INIT` (start-up; calls `PLAT_INIT` after `VARS_INIT`), `RESTART` (RESET: a fresh stack, then `MAIN_INIT` again, D76), `MAIN`, `GAME_FRAME`, `VARS_INIT` |
 | `src/plat_a800.asm` ✓ | platform | The 800's hooks: `PLAT_INIT` (RESET to `RESTART` through `DOSINI`, map 1 loaded, D76), `PLAT_MAP` (an `RTS`) |
-| `src/plat_5200.asm` ✓ | platform | The 5200's hooks (D62): `PLAT_INIT` (shadow bytes, `PLAT_VBI` after `VBI_D`, map 1 loaded), `PLAT_MAP` (the live map's fonts from ROM into RAM, `FONTPG` / `ROWFONT` pointed there), `PLAT_VBI` (`CHBAS`, `GPRIOR` to the hardware), `PLAT_RST` (in `reset5200.asm`, code block 2, as block 1 is full; the keypad's RESET: the BIOS's VBI back in `VVBLKD`, wait for the key to be let go, `RESTART`, D76) |
+| `src/plat_5200.asm` ✓ | platform | The 5200's hooks (D62): `PLAT_INIT` (shadow bytes, `PLAT_VBI` after `VBI_D`, map 1 loaded), `PLAT_MAP` (the live map's fonts from ROM into RAM, `FONTPG` / `ROWFONT` pointed there), `PLAT_VBI` (the deferred VBI's end; `CHBAS`, `GPRIOR` go to the hardware in `BT_VBI`, D89), `PLAT_RST` (in `reset5200.asm`, code block 2, as block 1 is full; the keypad's RESET: the BIOS's VBI back in `VVBLKD`, wait for the key to be let go, `RESTART`, D76) |
 | `src/boot5200.asm` ✓ | platform | The 5200's start-up without the BIOS screen (D77): `BT_INIT` (RAM, chips and zero page cleared, our vectors, keypad scan), `BT_VBI` (the BIOS's VBI work), `BT_XIT`, `BT_IRQ` |
 | `src/input5200.asm` ✓ | platform | 5200 input layer: a stub (nothing pressed) until T-5200-2 |
 | `src/hw_a800.asm` ✓ | platform | Hardware and OS shadow equates |
@@ -216,10 +216,11 @@ BREAK IRQ, as input is polled.
 (`VDSLST`) by writing the RAM vectors with `NMIEN = 0`, then
 re-enabling NMIs. The deferred VBI chains to the previous handler via
 the saved pointer `OLDVBD`. No OS routine is ever called. On the 5200
-that previous handler is `PLAT_VBI`, which copies `CHBAS` and `GPRIOR`
-(RAM bytes there: the BIOS has no such shadows) to the hardware and
-then jumps to the previous deferred vector (D62): `BT_XIT`, the end of
-`BT_VBI`, the cartridge's own immediate VBI (D77).
+that previous handler is `PLAT_VBI`, which only jumps to the previous
+deferred vector (D62): `BT_XIT`, the end of `BT_VBI`, the cartridge's
+own immediate VBI (D77). `BT_VBI` copies `CHBAS` and `GPRIOR` (RAM
+bytes there: the BIOS has no such shadows) to the hardware before the
+deferred VBI, as the 800's OS does (D89).
 
 **Start-up and hooks (D62):** each build's `START` does its machine's
 set-up and jumps to `MAIN_INIT` (`main.asm`). `PLAT_INIT` runs right
