@@ -116,15 +116,15 @@ DLI_MAP
         PHA
         LDA HELPON
         BNE DM_HPRE
+        LDA ROWFONT     ; row 0's font now: this blank line shows none
+        STA CHBASE
         LDA #DMA_W      ; the map: rows 0-2 in a wide playfield, so the
-        LDX ROWFONT     ; dark corners reach the screen's edge (D67);
-        LDY ROWPF0      ; first, before row 0's DMA starts; its font
-        STA WSYNC       ; and PF0 (the border) next
-        STA DMACTL
-        STX CHBASE
-        STY COLPF0
-        LDA ROWBK       ; map palette from RAM (VBI_D: MAPPAL, attract;
-        STA COLBK       ; sea and grass shaded per row, D51)
+        LDX ROWBK       ; dark corners reach the screen's edge (D67);
+        LDY ROWPF0      ; first, before row 0's DMA starts; then its
+        STA WSYNC       ; sea (COLBK) and corners (PF0) while ANTIC
+        STA DMACTL      ; leaves the CPU time: a 4th store after WSYNC
+        STX COLBK       ; landed after row 0's first line, so the sea
+        STY COLPF0      ; began a line below the corners (D89)
 DM_COLS LDA MAPCOL+2
         STA COLPF1
         LDA MAPCOL+3
