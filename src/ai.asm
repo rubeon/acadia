@@ -45,6 +45,8 @@ AI_STUCK = 3            ; decisions without moving: stop fishing
 AI_KEEP =  16           ; the school it went for counts this much nearer
 AI_SDH  =  4            ; a school this close to row 5's top:
                         ; the side (above, below) it chose before
+AI_SDS  =  3            ; AI_SD: the side, 1 above, 2 below (0: none)
+AI_SDO  =  $80          ; AI_SD: out in that side's open sea
 AS_BUY  =  1            ; AIST: walking to a square to buy on it
 AS_GOB  =  2            ;   walking to its parked fishing boat
 AS_FISH =  3            ;   steering the boat after a school
@@ -95,8 +97,9 @@ AF_KEY  LDA #0
         STA JOY1
         STA FIRE1
         LDA AIST
-        BEQ AF_DONE     ; nothing under way
-        CMP #AS_FISH
+        BNE AF_ANY
+        RTS             ; nothing under way
+AF_ANY  CMP #AS_FISH
         BCC AF_WALK
         JMP AI_BOAT     ; steering its fishing boat
 AF_WALK LDX #AI_P
@@ -145,7 +148,6 @@ AF_FISH STA AIST
         STA AI_STK
         STA AI_FL
         STA AI_SD       ; no side, no open sea, no school chosen yet
-        STA AI_OPN
         LDA #$FF
         STA AI_SC
 AF_DONE RTS
@@ -229,17 +231,20 @@ AB_FISH LDY #1          ; the school's side: 1 above (rows 0-4),
         INY             ; forth)
         CMP #5*8+AI_SDH
         BCS AB_SIDE
-        LDY AI_SD
+        LDA AI_SD
+        AND #AI_SDS
+        TAY
         BNE AB_SIDE
         LDY #1          ; none yet: by the middle
+        LDA AI_TY
         CMP #5*8
         BCC AB_SIDE
         INY
-AB_SIDE STY AI_SD
-        CPY AI_OPN      ; been out in the open sea on that side since
-        BEQ AB_GO       ; it chose it: straight at it (D90)
-        LDA #0
-        STA AI_OPN
+AB_SIDE TYA             ; been out in the open sea on that side since
+        ORA #AI_SDO     ; it chose it: straight at it (D90)
+        CMP AI_SD
+        BEQ AB_GO
+        STY AI_SD       ; this side, not out in its open sea yet
         LDA CURROW+AI_P ; out in the open sea on that side now?
         CPY #1
         BNE AB_DNS
@@ -248,7 +253,9 @@ AB_SIDE STY AI_SD
         BCS AB_NEAR     ; always
 AB_DNS  CMP #MAPROWS-2
         BCC AB_NEAR
-AB_OPEN STY AI_OPN      ; then straight at it from now on
+AB_OPEN TYA             ; then straight at it from now on
+        ORA #AI_SDO
+        STA AI_SD
         JMP AI_STEER
 AB_NEAR LDA AI_TX       ; within a square of it both ways: straight
         SEC             ; at it
@@ -415,95 +422,7 @@ AV_NEXT DEX
         BCS AV_ONE
         RTS
 
-; AV_BOX -- the boat a step from pirate X's box (it is never inside:
-; AI_FLEE runs first): AN_C, AN_R = dx, dy, AN_N, AN_T = |dx|, |dy|;
-; one of them is AI_NEAR.  X kept; trashes A, Y.
-AV_BOX  LDA #0
-        STA AI_I        ; the move dropped (0: none)
-        LDA AN_T        ; up or down less than AI_NEAR: no move across
-        CMP #AI_NEAR    ; towards it
-        BCS AV_V
-        LDA AN_C
-        LDY #0
-        JSR AV_DROP
-AV_V    LDA AN_C        ; still moving across towards it (at the
-        LDY #0          ; corner)?  then no up or down towards it
-        JSR AV_TWD
-        AND JOY1
-        BNE AV_VD
-        LDA AN_N        ; nor with it less than AI_NEAR across
-        CMP #AI_NEAR
-        BCS AV_SIDE
-AV_VD   LDA AN_R
-        LDY #2
-        JSR AV_DROP
-AV_SIDE LDA AI_I        ; a move dropped and none on the other axis:
-        BEQ AV_DONE     ; step aside, away from the pirate
-        LDA AI_TX       ; but not if the target is in the box: wait
-        SEC
-        SBC FXH,X
-        CLC
-        ADC #8+AI_NEAR-1
-        CMP #2*AI_NEAR-1
-        BCS AV_OUT
-        LDA AI_TY
-        SEC
-        SBC FYH,X
-        CLC
-        ADC #8+AI_NEAR-1
-        CMP #2*AI_NEAR-1
-        BCC AV_DONE
-AV_OUT  LDA AI_I
-        AND #J_LEFT+J_RIGHT
-        BEQ AV_SV
-        LDA JOY1        ; across dropped: up or down, if it has none
-        AND #J_UP+J_DOWN
-        BNE AV_DONE
-        LDY #J_UP       ; pirate below (or level): up
-        LDA AN_R
-        BPL AV_SET
-        LDY #J_DOWN
-        BNE AV_SET      ; always
-AV_SV   LDA JOY1        ; up or down dropped: across, if it has none
-        AND #J_LEFT+J_RIGHT
-        BNE AV_DONE
-        LDY #J_LEFT     ; pirate to the right (or level): left
-        LDA AN_C
-        BPL AV_SET
-        LDY #J_RIGHT
-AV_SET  TYA
-        ORA JOY1
-        STA JOY1
-AV_DONE RTS
-
-; AV_DROP -- drop JOY1's move towards the pirate on one axis (A, Y as
-; for AV_TWD), noting it in AI_I.  Trashes A, Y.
-AV_DROP JSR AV_TWD
-        AND JOY1
-        BEQ AV_DRZ
-        STA AI_I
-        EOR JOY1
-        STA JOY1
-AV_DRZ  RTS
-
-; AV_ABS -- A = |A| (signed).  Trashes nothing else.
-AV_ABS  BPL AV_POS
-        EOR #$FF
-        CLC
-        ADC #1
-AV_POS  RTS
-
-; AV_TWD -- A = the stick bit towards the pirate on one axis: A = its
-; signed distance, Y = 0 across, 2 up or down; 0 if the distance is
-; 0.  Trashes Y.
-AV_TWD  CMP #0
-        BEQ AV_TZ
-        BPL AV_TP
-        INY
-AV_TP   LDA AV_TW,Y
-AV_TZ   RTS
-
-AV_TW   .BYTE J_RIGHT,J_LEFT,J_DOWN,J_UP
+; AV_BOX and its helpers: AI2.ASM (D90, in a map font's free end)
 
 ; ---------------------------------------------------------------------
 ;  AI_SCHOOL -- the school nearest the CPU's boat: its top left corner
@@ -925,40 +844,4 @@ AS_END  LDA AI_BV
 AS_NONE SEC             ; no free land
         RTS
 
-; ---------------------------------------------------------------------
-;  AI_NBR -- how many of the 8 squares around X, Y hold a building
-;  (not a rebel).  Out: A.  X, Y kept.
-; ---------------------------------------------------------------------
-AI_NBR
-        STX AN_C
-        STY AN_R
-        LDA #0
-        STA AN_N
-        LDA #7
-        STA AN_I
-AN_LOOP LDX AN_I
-        LDA AN_C
-        CLC
-        ADC NBR_DC,X
-        CMP #MAPSQ      ; also catches -1
-        BCS AN_NEXT
-        STA AN_T
-        LDA AN_R
-        CLC
-        ADC NBR_DR,X
-        CMP #MAPROWS
-        BCS AN_NEXT
-        TAY
-        LDX AN_T
-        JSR MAP_GET
-        CMP #0
-        BEQ AN_NEXT
-        CMP #I_REBL
-        BEQ AN_NEXT
-        INC AN_N
-AN_NEXT DEC AN_I
-        BPL AN_LOOP
-        LDX AN_C
-        LDY AN_R
-        LDA AN_N
-        RTS
+; AI_NBR: AI3.ASM (D90, in a map font's free end)

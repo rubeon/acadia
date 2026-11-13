@@ -324,7 +324,6 @@ PR_FLAP *= *+1          ; PIR_SHOW: frames for the flags, not while paused
 PS_I    *= *+1          ; PIR_SHOW: slot
 PS_A0   *= *+1          ; PIR_SHOW: pirate 2's rows
 PS_A1   *= *+1
-PS_N    *= *+1          ; PIR_SHOW: bytes left
 
 ; ---------------------------------------------------------------------
 ;  Rebels (REBELS.ASM, T-ECO-5)
@@ -360,13 +359,14 @@ AN_C    *= *+1          ; AI_NBR: square
 AN_R    *= *+1
 AN_N    *= *+1          ; AI_NBR: count
 AN_I    *= *+1          ; AI_NBR: neighbour 7-0
+AI_SC   =  AN_I         ; AI_SCHOOL: the school it went for ($FF: none);
+                        ; AI_NBR runs only while not out in the boat
 AN_T    *= *+1          ; AI_NBR: neighbour column
 AI_FJ   *= *+1          ; AI_FLEE: the way away
 AI_FL   *= *+1          ; AI_FLEE: frames left to keep it
 AI_TB   *= *+1          ; AI_WAY: 0 home, 1 above, 2 below the islands
-AI_SD   *= *+1          ; AB_FISH: the school's side, 1 above, 2 below
-AI_OPN  *= *+1          ; AB_FISH: the side whose open sea it has reached
-AI_SC   *= *+1          ; AI_SCHOOL: the school it went for ($FF: none)
+AI_SD   *= *+1          ; AB_FISH: the school's side (AI_SDS), + AI_SDO
+                        ; once out in that side's open sea (D90)
 
 ; ---------------------------------------------------------------------
 ;  News line (NEWS.ASM, D44)
