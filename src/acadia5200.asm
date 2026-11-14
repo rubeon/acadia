@@ -106,6 +106,18 @@ SYEND                           ; must stay below TTFONTA ($6800)
         .INCLUDE "sbx_data.asm" ; its minimap and land (generated)
 
 ; ---------------------------------------------------------------------
+;  Parts of the CPU governor (D90), in the free ends of two more map
+;  fonts, as code block 2 is full on the 800: AI2.ASM must end below
+;  MFA10 + $400, AI3.ASM below MFA01 + $400 (ATasm warns if not)
+; ---------------------------------------------------------------------
+        *= MFNT10E
+        .INCLUDE "ai2.asm"
+AI2END
+        *= MFNT01E
+        .INCLUDE "ai3.asm"
+AI3END
+
+; ---------------------------------------------------------------------
 ;  RAM: the variables and the live map's tables, reserved only
 ; ---------------------------------------------------------------------
         .INCLUDE "vars.asm"

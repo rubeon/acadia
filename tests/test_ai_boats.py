@@ -275,6 +275,82 @@ for n in range(40):
 if ways[:30] != [ways[0]] * 30 or not ways[0] & J_LEFT:
     fail("flee: stick %r" % ways)
 
+# D90: round a pirate, not at it: a move into the box of 20 pixels
+# round it is dropped; with no other move left it steps aside, unless
+# its target is in the box
+def avoid(bxy, pxy, joy, txy):
+    for s in range(4):
+        m.mem[m.addr("FACT") + s] = 0
+    school(m, 2, *pxy)
+    boat_at(m, *bxy)
+    m.poke("AI_TX", txy[0])
+    m.poke("AI_TY", txy[1])
+    m.poke("JOY1", joy)
+    m.call("AI_AVOID")
+    return m.byte("JOY1")
+
+
+m = machine(9, 2)
+for bxy, pxy, joy, txy, want in (
+        ((50, 50), (70, 50), J_RIGHT, (100, 50), J_UP),          # level: up
+        ((50, 50), (70, 55), J_RIGHT, (100, 50), J_UP),          # below: up
+        ((50, 50), (70, 45), J_RIGHT, (100, 50), J_DOWN),        # above: down
+        ((50, 50), (70, 50), J_RIGHT | J_UP, (100, 30), J_UP),   # slides
+        ((50, 50), (70, 70), J_RIGHT | J_DOWN, (100, 100), J_RIGHT),  # corner
+        ((50, 50), (70, 50), J_RIGHT, (75, 50), 0),              # target in box
+        ((50, 50), (71, 50), J_RIGHT, (100, 50), J_RIGHT),       # not near
+        ((50, 50), (70, 50), J_LEFT, (0, 50), J_LEFT),           # away from it
+        ((50, 30), (50, 50), J_DOWN, (50, 100), J_LEFT),         # below: left
+        ((50, 30), (45, 50), J_DOWN, (50, 100), J_RIGHT),        # left of it
+        ((50, 30), (60, 50), J_DOWN | J_RIGHT, (90, 100), J_RIGHT)):
+    got = avoid(bxy, pxy, joy, txy)
+    if got != want:
+        fail("avoid: boat %r pirate %r stick %d: %d, want %d" % (bxy, pxy, joy, got, want))
+
+# D90: a still pirate in the lane below the islands, the school beyond
+# it: the boat comes up to the box and waits, it doesn't run at it and
+# away again
+m = with_boat(6, 2)
+m.poke("BOATK", 0, I_FSBT)
+m.poke("AIST", AS_FISH)
+boat_at(m, 16, 76)
+m.poke("CURCOL", 0, 2)
+m.poke("CURROW", 0, 10)
+xs = []
+for n in range(400):
+    quiet(m)
+    school(m, 0, 120, 76)
+    school(m, 2, 70, 76)                 # still, between them
+    m.poke("AITMR", 255)
+    frame(m)
+    if m.byte("BOATK", 1) != I_FSBT:
+        fail("lane: boat lost or parked at frame %d" % n)
+        break
+    xs.append(m.byte("CURX", 1))
+turns = sum(1 for a, b, c in zip(xs, xs[1:], xs[2:]) if (b - a) * (c - b) < 0)
+if turns > 1 or max(xs) > 70 - 20:
+    fail("lane: %d turns, got to x %d (pirate at 70): %r" % (turns, max(xs), xs[::20]))
+
+# D90: two schools about as far: it keeps to the one it went for
+m = machine(10, 2)
+for s in range(4):
+    m.mem[m.addr("FACT") + s] = 0
+m.poke("AI_SC", 0xFF)
+boat_at(m, 80, 40)
+school(m, 0, 40, 40)
+school(m, 1, 121, 40)                    # 41 away against 40
+m.call("AI_SCHOOL")
+if m.byte("AI_TX") != 40:
+    fail("first school: %d" % m.byte("AI_TX"))
+boat_at(m, 81, 40)                       # now 41 against 40
+m.call("AI_SCHOOL")
+if m.byte("AI_TX") != 40:
+    fail("kept school: went for %d" % m.byte("AI_TX"))
+boat_at(m, 100, 40)                      # far nearer the other
+m.call("AI_SCHOOL")
+if m.byte("AI_TX") != 121:
+    fail("nearer school: went for %d" % m.byte("AI_TX"))
+
 # level 1 never fishes
 m = with_boat(4, 1)
 for n in range(1500):
