@@ -19,8 +19,9 @@
 ;  BT_INIT -- from START (I flag set, D clear, a fresh stack): all RAM
 ;  and the chips' registers cleared, the vectors, the keypad scan, as
 ;  the BIOS leaves them on its normal path, then MAIN_INIT.  NMIs and
-;  IRQs stay off: PLAT_INIT turns the VBI on, and no IRQ is ever
-;  enabled (POKMSK stays 0; the keypad and buttons are polled).
+;  IRQs stay off: PLAT_INIT turns the VBI on, and the I flag stays
+;  set (the keypad IRQ's latch is polled, IN_INIT, D91; the buttons
+;  are polled).
 ;  Entered by JMP; never returns.
 ; ---------------------------------------------------------------------
 BT_INIT
@@ -132,7 +133,8 @@ BT_XIT  PLA
 BT_RTI  RTI
 
 ; ---------------------------------------------------------------------
-;  BT_IRQ -- VIMIRQ: no IRQ is enabled, so any that comes is turned off
+;  BT_IRQ -- VIMIRQ: the game keeps the I flag set (IN_INIT, D91), so
+;  an IRQ comes only between RESTART's CLI and IN_INIT; it is cleared
 ;  (IRQEN to 0, then POKMSK's) and ignored
 ; ---------------------------------------------------------------------
 BT_IRQ  PHA

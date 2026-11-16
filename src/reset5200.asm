@@ -3,7 +3,7 @@
 ;
 ;  Part of the 5200's platform layer (PLAT_5200.ASM), on its own so it
 ;  can sit in code block 2: block 1 ($4000-$4FFF) is full.  Uses
-;  PV_OLD from PLAT_5200.ASM and SK_KEY from INPUT5200.ASM.
+;  PV_OLD from PLAT_5200.ASM and SK_KEY, IQ_KEY from INPUT5200.ASM.
 ; =====================================================================
 
 ; ---------------------------------------------------------------------
@@ -33,14 +33,21 @@ RS_PM   STA GRAFP0,X    ; and nothing left in their latches
         STA VVBLKD
         LDA PV_OLD+1
         STA VVBLKD+1
-RS_KEY  LDA SKSTAT      ; until no key is held on the keypad
-        AND #SK_KEY
-        BEQ RS_KEY
-        LDX #RS_FRMS    ; then RS_FRMS frames of nothing (NMIs are
-RS_TOP  LDA VCOUNT      ; off, so VCOUNT counts them): the top of a
-        BNE RS_TOP      ; frame,
+RS_KEY  LDX #RS_FRMS    ; RS_FRMS frames in a row with no key on the
+RS_TOP  LDA #0          ; keypad (NMIs are off, so VCOUNT counts
+        STA IRQEN       ; them): the key latch cleared (IN_PAD, D91),
+        LDA #IQ_KEY
+        STA IRQEN
+RS_T1   LDA VCOUNT      ; the top of a frame,
+        BNE RS_T1
 RS_LINE LDA VCOUNT      ; then past it
         BEQ RS_LINE
+        LDA IRQST       ; a key found in that frame: count again
+        AND #IQ_KEY
+        BEQ RS_KEY
+        LDA SKSTAT      ; or one held now
+        AND #SK_KEY
+        BEQ RS_KEY
         DEX
         BNE RS_TOP
         JMP RESTART

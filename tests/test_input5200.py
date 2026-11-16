@@ -2,7 +2,8 @@
 """T-5200-2: the 5200 input layer (input5200.asm, D63) on a 6502 core.
 
 Runs the cartridge's own INPUT_POLL (build/acadia5200.bin at $4000)
-with the BIOS pot shadows, triggers, KBCODE, SKSTAT and CONSOL faked.
+with the BIOS pot shadows, triggers, KBCODE, SKSTAT, IRQST and CONSOL
+faked.
 Each frame POKEY has scanned the controller CONSOL selected the frame
 before; `pad` gives what each controller holds.
 """
@@ -43,6 +44,11 @@ def setup(players=2, gstate=PLAY):
     m.call("IN_INIT")
 
 
+REAL = False    # True: as real POKEY with SKCTL = 2 (D91): SKSTAT bit 2
+                # almost never shows the key, only the key IRQ's latch
+                # (IRQST bit 6 low) says POKEY found one this frame
+
+
 def frame(pots=(CENTRE,) * 4, trig=(1, 1), pad=(None, None), bot=(False, False)):
     """One INPUT_POLL; pad[i] / bot[i]: the key / bottom button held on
     controller i, seen only when CONSOL selects it; trig[i]: its top
@@ -53,13 +59,18 @@ def frame(pots=(CENTRE,) * 4, trig=(1, 1), pad=(None, None), bot=(False, False))
     c = m.byte("CONSOL") & 3
     check("CONSOL pots on", m.byte("CONSOL") & 4, 4)
     sk = 0xFF
+    check("key latch on (IRQEN)", m.byte("IRQEN") & 0x40, 0x40)
     if pad[c] is not None:
-        sk &= ~0x04
+        if REAL:
+            m.poke("IRQST", 0xBF)                      # bit 6: a key found
+        else:
+            sk &= ~0x04
         m.poke("KBCODE", 0x21 | CODE[pad[c]] << 1)    # bits 0, 5 set
     if bot[c]:
         sk &= ~0x08
     m.poke("SKSTAT", sk)
     m.call("INPUT_POLL")
+    check("key latch cleared, on again (IRQEN)", m.byte("IRQEN"), 0x40)
     return c
 
 
@@ -302,6 +313,39 @@ frame()
 m.poke("ATRACT", 0x55)
 frame()
 check("ATRACT, nothing touched", m.byte("ATRACT"), 0x55)
+
+# --- real POKEY (D91): keys only in the key IRQ's latch ---
+REAL = True
+for players in (1, 2):
+    setup(players=players)
+    while m.byte("CONSOL") & 3 != 0:
+        frame()
+    got = []
+    for _ in range(3):                           # 3 presses of 3
+        for _ in range(4):
+            frame(pad=("3", None))
+            got.append(key())
+            if players == 2:
+                frame()
+                got.append(key())
+        for _ in range(2 * players):
+            frame()
+    check("latch: 3 three times, %d players" % players,
+          [k for k in got if k is not None], [(3, 0)] * 3)
+    setup(players=players)
+    while m.byte("CONSOL") & 3 != 0:
+        frame()
+    hits = 0
+    for _ in range(20):                          # * held a long time
+        frame(pad=("*", None))
+        hits += m.byte("HELPK")
+        check("latch: * held, KEYDOWN", m.byte("KEYDOWN"), 1)
+    check("latch: * held, %d players: one press" % players, hits, 1)
+setup(players=1, gstate=PLAY)
+frame(pad=("S", None))
+frame(pad=("S", None))
+check("latch: START held", m.byte("CONKEY"), 1)
+REAL = False
 
 # --- the 800 stubs stay RTSes on the 5200 ---
 for r in ("FIRE_TAP", "KP_ON", "KP_OFF", "KP_AUTO"):
