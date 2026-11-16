@@ -151,6 +151,17 @@ for _ in range(50000):
     if m.mpu.pc == stop:
         fail("5200 RESET held: restarted while held")
         break
+# held, as real POKEY shows it (D91): only the key IRQ's latch
+latch = [False]
+m.on_read("IRQST", lambda: 0xBF if latch[0] else 0xFF)
+latch[0] = True
+m.poke("SKSTAT", 0xFF)
+for _ in range(50000):
+    m.mpu.step()
+    if m.mpu.pc == stop:
+        fail("5200 RESET held (latch): restarted while held")
+        break
+latch[0] = False
 check("5200 RESET held: NMIs off", m.byte("NMIEN"), 0)
 check("5200 RESET held: screen off", (m.byte("DMACTL"), m.byte("SDMCTL")), (0, 0))
 check("5200 RESET held: the VBI's end back", m.word("VVBLKD"), VBI_END)
@@ -162,6 +173,7 @@ check("5200 RESET: VBI_D first", m.word("VVBLKD"), m.addr("VBI_D"))
 check("5200 RESET: then PLAT_VBI", m.word("OLDVBD"), m.addr("PLAT_VBI"))
 check("5200 RESET: then our VBI's end", m.word("PV_OLD"), VBI_END)
 check("5200 RESET: NMIs on", m.byte("NMIEN") & 0x40, 0x40)
+check("5200 RESET: IRQs off again (D91)", m.mpu.p & m.mpu.INTERRUPT, m.mpu.INTERRUPT)
 check("5200 RESET: MAPLD", m.byte("MAPLD"), 0)
 map_ok(m, "5200 RESET", cart=True)
 

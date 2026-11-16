@@ -127,3 +127,4 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 | T-5200-4 | No BIOS title screen ("COPYRIGHT 19..", Atari logo): header `$BFFD` = `$FF`, the cartridge's own start-up and VBI (D77) | done |
 | T-5200-5 | 5200 fixes: help screen names * and * reliably closes it (keypad debounce); top and bottom buttons only begin the game on the setup screen (D86) | done |
 | T-5200-6 | 5200 status bar flicker: `CHBAS`/`GPRIOR` to the hardware in the immediate VBI, before the deferred VBI, as on the 800 (D89) | done (Claude) |
+| T-5200-7 | 5200 keypad: read keys from the key IRQ's latch (`IRQST` bit 6), not `SKSTAT` bit 2, which real POKEY only sets for one scan step with debounce off; fixes missed presses and * not closing help (D91) | in progress (Claude) |

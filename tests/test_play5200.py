@@ -39,6 +39,9 @@ for r in ("VARS_INIT", "PLAT_INIT", "SND_INIT", "DISP_INIT", "TIC_INIT",
     m.call(r)
 
 
+REAL = False    # True: as real POKEY (D91): the key only in IRQST's latch
+
+
 def frame(n=1, pots=(C, C, C, C), trig=(1, 1), pad=(None, None), bot=(False, False)):
     for _ in range(n):
         m.poke("FRAME", (m.byte("FRAME") + 1) & 0xFF)
@@ -48,7 +51,10 @@ def frame(n=1, pots=(C, C, C, C), trig=(1, 1), pad=(None, None), bot=(False, Fal
         c = m.byte("CONSOL") & 3
         sk = 0xFF
         if pad[c] is not None:
-            sk &= ~0x04
+            if REAL:
+                m.poke("IRQST", 0xBF)
+            else:
+                sk &= ~0x04
             m.poke("KBCODE", 0x21 | CODE[pad[c]] << 1)
         if bot[c]:
             sk &= ~0x08
@@ -128,6 +134,18 @@ check("* held with dropouts: help opens once", m.byte("HELPON"), 1)
 frame(6)
 press("*")
 check("* closes help again", m.byte("HELPON"), 0)
+
+# as on real POKEY (D91): * opens and closes help, held or tapped
+REAL = True
+press("*", hold=12)
+check("latch: * opens help", m.byte("HELPON"), 1)
+press("*", hold=12)
+check("latch: * closes help", m.byte("HELPON"), 0)
+press("*", hold=2)
+check("latch: * tapped opens help", m.byte("HELPON"), 1)
+press("*", hold=2)
+check("latch: * tapped closes help", m.byte("HELPON"), 0)
+REAL = False
 
 # PAUSE pauses and resumes
 press("P")

@@ -35,7 +35,8 @@
 ;  the 800's console keys, and count when pressed on one controller
 ;  while the other is not holding the same key.  (atari800 presses a
 ;  key on every controller at once, so that keeps each a single press
-;  there too.)  Keys are polled; the BIOS's keypad IRQ stays as it is.
+;  there too.)  Keys are polled, through the keypad IRQ's latch with
+;  IRQs off (IN_PAD, D91).
 ; =====================================================================
 
 FX_UP   =  0            ; FTAP: fire let go (as INPUT.ASM)
@@ -73,6 +74,7 @@ SK_KEY  =  $04          ; SKSTAT bit 2: 0 = a key held
 SK_BOT  =  $08          ; SKSTAT bit 3: 0 = the bottom side button held
 CN_POT  =  $04          ; CONSOL bit 2: pots on (bits 0-1: controller)
 IQ_BOT  =  $80          ; IRQEN bit 7: the bottom button's BREAK IRQ
+IQ_KEY  =  $40          ; IRQEN / IRQST bit 6: the keypad's IRQ (D91)
 
 ; Keypad codes, (KBCODE / 2) AND 15
 KC_HASH =  $01
@@ -84,9 +86,9 @@ KC_STRT =  $0C
 
 ; ---------------------------------------------------------------------
 ;  IN_INIT -- clear the input state, controller 1 selected, pots on,
-;  and no IRQ for the bottom button (polled; the BIOS's VTRIGR vector
-;  at $020C may not be set).  Called by PLAT_INIT.  Keeps the I flag
-;  as it is.  Trashes A, X.
+;  no IRQ for the bottom button (polled), and the keypad's IRQ enabled
+;  with the I flag set, so only its latch in IRQST is used (IN_PAD,
+;  D91).  Called by PLAT_INIT.  Trashes A, X.
 ; ---------------------------------------------------------------------
 IN_INIT LDA #0
         LDX #IN_N-1
@@ -95,13 +97,10 @@ II_CLR  STA IN_CTL,X
         BPL II_CLR
         LDA #CN_POT     ; controller 1, pots on
         STA CONSOL
-        PHP
-        SEI             ; the BIOS's IRQ handler writes IRQEN too
-        LDA POKMSK
-        AND #$FF-IQ_BOT
+        SEI             ; IRQs off for good: the key IRQ's latch is
+        LDA #IQ_KEY     ; polled (IN_PAD), and BT_IRQ would turn it off
         STA POKMSK
         STA IRQEN
-        PLP
         RTS
 
 ; ---------------------------------------------------------------------
@@ -229,16 +228,25 @@ IS_NOX  LDA IN_J
 ; ---------------------------------------------------------------------
 ;  IN_PAD -- read the keypad and bottom button of controller X, which
 ;  POKEY has scanned this frame; KEY, KEYPL, PAUSEK, HELPK and the #
-;  page on a new press.  A key counts as let go only after IN_DEB
+;  page on a new press.  The 5200 runs POKEY's keypad scan without its
+;  debounce (SKCTL = 2, as the BIOS), and then SKSTAT bit 2 shows a
+;  key only on the scan line that finds it, 4 of the 64 (real POKEY,
+;  MiSTer, Altirra), so a poll mostly misses it.  So a key counts as
+;  held if the keypad IRQ's latch (IRQST bit 6, the I flag set) says
+;  POKEY found one since IN_SEL cleared it, or SKSTAT says so (D91).
+;  A key counts as let go only after IN_DEB
 ;  reads in a row without it, so a read that misses a key still held
 ;  is no new press (on a real 5200 * opened and at once closed the
 ;  help screen, D86).  Trashes A, Y.
 ; ---------------------------------------------------------------------
 IN_PAD  LDY #0          ; Y = the code held, 0 = none
-        LDA SKSTAT
+        LDA IRQST       ; a key seen since IN_SEL selected this
+        AND #IQ_KEY     ; controller (the key IRQ's latch, D91)?
+        BEQ IA_KEY
+        LDA SKSTAT      ; or held now (emulators keep this bit)
         AND #SK_KEY
         BNE IA_UP
-        LDA KBCODE      ; bits 1-4: the key (bits 0, 5: no lines)
+IA_KEY  LDA KBCODE      ; bits 1-4: the key (bits 0, 5: no lines)
         LSR A
         AND #$0F
         TAY
@@ -366,6 +374,10 @@ IL_ONE  LDA #0
 IL_SET  STA IN_CTL
         ORA #CN_POT
         STA CONSOL
+        LDA #0          ; the key latch from now on is this
+        STA IRQEN       ; controller's (IN_PAD, D91)
+        LDA #IQ_KEY
+        STA IRQEN
         RTS
 
 ; FIRE_TAP (D60), KP_ON / KP_OFF / KP_AUTO (the 800's keypad in port
