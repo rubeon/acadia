@@ -2,6 +2,9 @@
 #
 #   make         build build/acadia.xex
 #   make run     build and run in atari800 (800XL, BASIC off)
+#   make atr     build build/acadia.atr: a 90K boot disk, no DOS, that
+#                loads the XEX at power-on (D94)
+#   make runatr  build it and boot it in atari800 (800XL, BASIC on)
 #   make test    build both, then run the unit tests in tests/ on a 6502
 #                core (needs py65: pip install py65)
 #   make 5200    build the Atari 5200 cartridge: build/acadia5200.car
@@ -19,9 +22,10 @@ XEX      := build/acadia.xex
 LAB      := build/acadia.lab
 TESTS    := $(wildcard tests/test_*.py)
 CAR      := build/acadia5200.car
+ATR      := build/acadia.atr
 LAB5200  := build/acadia5200.lab
 
-.PHONY: all run test clean 5200 run5200
+.PHONY: all run test clean 5200 run5200 atr runatr
 
 all: $(XEX)
 
@@ -42,6 +46,15 @@ $(XEX): $(SRC) tools/xexjoin.py | build
 	  printf '\000\006\000\006\000' >> $@; \
 	  echo "$@: $$size bytes is a multiple of 125, padded by 5 (D73)"; fi
 
+# the boot disk (D94): src/bootatr.asm's boot sectors, then the XEX as
+# it is, from the next sector on (tools/mkatr.py)
+atr: $(ATR)
+
+$(ATR): $(XEX) src/bootatr.asm src/hw_a800.asm tools/mkatr.py | build
+	$(ATASM) -Isrc -obuild/bootatr.xex -lbuild/bootatr.lab src/bootatr.asm
+	$(PYTHON) tools/mkatr.py $@ build/bootatr.xex build/bootatr.lab \
+	  src/bootatr.asm $(XEX)
+
 # the 5200 cartridge (D62): ATasm's segments, made into a 32K image by
 # tools/mkcart.py, which also checks the fit and prints the free bytes
 5200: $(CAR)
@@ -56,10 +69,13 @@ build:
 run: $(XEX)
 	$(ATARI800) $(EMUFLAGS) -run $(XEX)
 
+runatr: $(ATR)
+	$(ATARI800) -xl -basic $(ATR)
+
 run5200: $(CAR)
 	$(ATARI800) -5200 -cart $(CAR)
 
-test: $(XEX) $(CAR)
+test: $(XEX) $(CAR) $(ATR)
 	@for t in $(TESTS); do $(PYTHON) $$t || exit 1; done
 
 clean:
