@@ -94,7 +94,10 @@ if ldr[0][1] >= 0x8800:
 for a in range(0x8000, 0x8500):
     m.mem[a] = 0x55
 m.on_read("VCOUNT", lambda: 125)        # in vertical blank
+m.mem[0x41] = 3                         # SOUNDR as the OS leaves it
 m.call(LDR_INIT)
+if m.mem[0x41] != 0:
+    fail("SOUNDR not 0: the load still beeps")
 if any(m.mem[a] for a in range(logo, logo_end + 1)):
     fail("logo area not cleared")
 if m.mem[m.addr("NMIEN")] != 0xC0:

@@ -41,6 +41,7 @@ SF_REBL =  6
 SF_STRM =  7
 SF_THND =  8
 SF_ROAR =  9
+SF_CLIK = 10
 
 ; AUDC distortions (high nibble; low nibble is the volume)
 SD_PURE =  $A0          ; pure tone
@@ -127,6 +128,12 @@ SND_STORM
 SND_THNDR
         PHA
         LDA #SF_THND
+        JMP SND_GO
+
+; SND_CLICK -- a value changed on the setup screen
+SND_CLICK
+        PHA
+        LDA #SF_CLIK
         JMP SND_GO
 
 ; SND_ROAR -- a hurricane is out: call it every tic.  It starts the
@@ -262,36 +269,37 @@ SV_END  LDA #0          ; done: free and quiet
 ; ---------------------------------------------------------------------
 SFXPOS  .BYTE SX_BUY-SNDDAT,SX_REF-SNDDAT,SX_FISH-SNDDAT,SX_RAIN-SNDDAT
         .BYTE SX_SMIT-SNDDAT,SX_SINK-SNDDAT,SX_REBL-SNDDAT,SX_STRM-SNDDAT
-        .BYTE SX_THND-SNDDAT,SX_ROAR-SNDDAT
-SFXPRI  .BYTE 2,2,1,1,4,4,3,3,1,0
+        .BYTE SX_THND-SNDDAT,SX_ROAR-SNDDAT,SX_CLIK-SNDDAT
+SFXPRI  .BYTE 2,2,1,1,4,4,3,3,1,0,2
 
-; AUDF at the 64 kHz clock: f = 63921 / (2 x (AUDF + 1)) Hz;
-; 121 is about C4, 60 C5, 47 E5, 40 G5, 29 C6.
+; AUDF at the 64 kHz clock: f = 63921 / (2 x (AUDF + 1)) Hz.  The
+; tonal effects use A minor pentatonic (D92), notes inside the music's
+; D minor: A3 144, C3 243, D3 217, E3 193, E4 96, A4 71, C5 60, E5 47.
 SNDDAT
-; buy: a quick rising pair
-SX_BUY  .BYTE 4,60,SD_PURE+8,0, 3,40,SD_PURE+10,0, 5,40,SD_PURE+5,0
+; buy: a quick rising pair, A4 to E5
+SX_BUY  .BYTE 4,71,SD_PURE+7,0, 3,47,SD_PURE+9,0, 5,47,SD_PURE+4,0
         .BYTE 0
-; refuse: a short falling buzz
-SX_REF  .BYTE 14,140,SD_BUZZ+8,2, 4,170,SD_BUZZ+4,0
+; refuse: a soft falling minor third, C5 to A4
+SX_REF  .BYTE 7,60,SD_PURE+7,0, 12,71,SD_PURE+5,0
         .BYTE 0
-; fish: a high ping that dies away
-SX_FISH .BYTE 2,26,SD_PURE+12,0, 3,26,SD_PURE+8,0, 4,26,SD_PURE+5,0
-        .BYTE 5,26,SD_PURE+2,0
+; fish: an A4 ping that rings away over half a second
+SX_FISH .BYTE 2,71,SD_PURE+11,0, 3,71,SD_PURE+9,0, 4,71,SD_PURE+7,0
+        .BYTE 5,71,SD_PURE+5,0, 7,71,SD_PURE+3,0, 9,71,SD_PURE+1,0
         .BYTE 0
-; rain: two soft drops
-SX_RAIN .BYTE 3,47,SD_PURE+6,0, 3,47,SD_PURE+2,0, 3,35,SD_PURE+6,0
-        .BYTE 4,35,SD_PURE+2,0
+; rain: two soft drops, C5 then E5 ringing on
+SX_RAIN .BYTE 3,60,SD_PURE+6,0, 5,60,SD_PURE+3,0, 3,47,SD_PURE+6,0
+        .BYTE 6,47,SD_PURE+4,0, 10,47,SD_PURE+2,0, 14,47,SD_PURE+1,0
         .BYTE 0
 ; item destroyed: a crash of noise falling away
 SX_SMIT .BYTE 4,8,SD_NOIS+14,1, 8,20,SD_NOIS+10,3, 12,60,SD_NOIS+6,5
         .BYTE 10,120,SD_NOIS+3,6
         .BYTE 0
-; boat sunk: a falling glide, then a low gurgle
-SX_SINK .BYTE 32,30,SD_PURE+10,3, 6,140,SD_BUZZ+6,0, 6,160,SD_BUZZ+4,0
-        .BYTE 8,180,SD_BUZZ+2,0
+; boat sunk: a glide from E5 down to A3, then low bubbles E3, D3, C3
+SX_SINK .BYTE 33,47,SD_PURE+9,3, 6,193,SD_PURE+6,0, 6,217,SD_PURE+4,0
+        .BYTE 8,243,SD_PURE+2,0
         .BYTE 0
-; rebel: two low growls
-SX_REBL .BYTE 9,200,SD_BUZZ+10,0, 3,0,0,0, 14,240,SD_BUZZ+10,0
+; rebel: two low notes falling a fifth, E4 then A3
+SX_REBL .BYTE 9,96,SD_PURE+9,0, 3,0,0,0, 14,144,SD_PURE+9,0
         .BYTE 0
 ; storm: a far rumble swelling and fading
 SX_STRM .BYTE 10,230,SD_NOIS+3,0, 14,230,SD_NOIS+6,0, 16,240,SD_NOIS+4,0
@@ -306,4 +314,7 @@ SX_THND .BYTE 2,30,SD_NOIS+6,0, 6,150,SD_NOIS+5,4, 10,200,SD_NOIS+4,2
 SX_ROAR .BYTE 15,210,SD_NOIS+2,$FF, 15,195,SD_NOIS+3,1, 15,210,SD_NOIS+3,1
         .BYTE 15,225,SD_NOIS+2,$FF
 SXR_END .BYTE 0
+; setup click: a short E6 tick
+SX_CLIK .BYTE 1,23,SD_PURE+8,0, 1,23,SD_PURE+3,0
+        .BYTE 0
 SNDEND

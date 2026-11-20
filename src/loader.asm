@@ -38,6 +38,7 @@
 PB_BASOFF = $02         ; PORTB bit 1 set: BASIC ROM out (XL/XE)
 GINTLK  =  $03FA        ; XL OS: TRIG3 at power-on (cartridge there)
 BASICF  =  $03F8        ; XL OS: not 0 = BASIC out after RESET
+SOUNDR  =  $41          ; OS: 0 = SIO transfers are silent (D93)
 LDRBASE =  $8730        ; free RAM after the logo, below the BASIC ROM
 LDRB2   =  $9700        ; and after the island data (free, D81)
 LD_LOGO =  $8000        ; LOGO (TITLEGFX, MEM_A800.ASM): 26 mode D
@@ -69,6 +70,8 @@ LDR_INIT
         STA GINTLK      ; there) is not what it was at power-on
         LDA #1          ; and RESET keeps BASIC out
         STA BASICF
+        LDA #0          ; no beeps from SIO for the rest of the
+        STA SOUNDR      ; load (the OS sets it again at power-on)
 
         LDA #0          ; clear the logo area, which still holds
         TAX             ; whatever RAM held at power-on
