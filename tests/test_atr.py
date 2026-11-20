@@ -85,6 +85,8 @@ m.poke("SDMCTL", 0)
 DSKINV, JINI, RUN = m.addr("DSKINV"), m.addr("BA_JINI"), m.addr("BA_JRUN")
 skctl = []
 m.mem.subscribe_to_write([m.addr("SKCTL")], lambda a, v: skctl.append(v))
+audctl = []             # (AUDCTL reads as ALLPOT, which run6502 fakes)
+m.mem.subscribe_to_write([m.addr("AUDCTL")], lambda a, v: audctl.append(v))
 inits, reads, failed = [], [], [False]
 
 
@@ -153,9 +155,9 @@ for start, body in segs:
         if bad <= 3:
             fail("segment $%04X-$%04X not loaded as in the XEX"
                  % (start, start + len(body) - 1))
-if skctl[-2:] != [0, 3] or m.byte("SSKCTL") != 3 or m.byte("AUDCTL") != 0:
+if skctl[-2:] != [0, 3] or m.byte("SSKCTL") != 3 or audctl[-1:] != [0]:
     fail("POKEY not reset for the game: SKCTL writes %s, SSKCTL $%02X, "
-         "AUDCTL $%02X (D95)" % (skctl[-4:], m.byte("SSKCTL"), m.byte("AUDCTL")))
+         "AUDCTL writes %s (D95)" % (skctl[-4:], m.byte("SSKCTL"), audctl[-2:]))
 if m.byte("SOUNDR") != 0:
     fail("SOUNDR not 0: the load beeps")
 if m.byte("SDMCTL") != m.addr("DMA_NORM"):
