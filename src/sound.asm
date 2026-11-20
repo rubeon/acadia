@@ -275,10 +275,9 @@ SX_BUY  .BYTE 4,71,SD_PURE+7,0, 3,47,SD_PURE+9,0, 5,47,SD_PURE+4,0
 ; refuse: a soft falling minor third, C5 to A4
 SX_REF  .BYTE 7,60,SD_PURE+7,0, 12,71,SD_PURE+5,0
         .BYTE 0
-; fish: an A4 ping that rings away over a second
-SX_FISH .BYTE 2,71,SD_PURE+11,0, 4,71,SD_PURE+9,0, 5,71,SD_PURE+7,0
-        .BYTE 6,71,SD_PURE+5,0, 8,71,SD_PURE+4,0, 10,71,SD_PURE+3,0
-        .BYTE 12,71,SD_PURE+2,0, 14,71,SD_PURE+1,0
+; fish: an A4 ping that rings away over half a second
+SX_FISH .BYTE 2,71,SD_PURE+11,0, 3,71,SD_PURE+9,0, 4,71,SD_PURE+7,0
+        .BYTE 5,71,SD_PURE+5,0, 7,71,SD_PURE+3,0, 9,71,SD_PURE+1,0
         .BYTE 0
 ; rain: two soft drops, C5 then E5 ringing on
 SX_RAIN .BYTE 3,60,SD_PURE+6,0, 5,60,SD_PURE+3,0, 3,47,SD_PURE+6,0
