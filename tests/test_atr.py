@@ -6,7 +6,7 @@ sectors at BA_BASE, JSR BA_GO) with DSKINV served from the image (one
 read fails first, to check it tries again), INITAD calls recorded and
 returned at once: every segment must land at its address, INITAD be
 called after each segment that sets it, in order, and the RUNAD taken
-at the end."""
+at the end, with POKEY's SKCTL and AUDCTL reset first (D95)."""
 
 import os
 import sys
@@ -82,7 +82,9 @@ if m.word("BA_LEN") != len(xex):
 m.poke("SOUNDR", 3)
 m.poke("SDMCTL", 0)
 
-DSKINV, JINI, RUN = m.addr("DSKINV"), m.addr("BA_JINI"), m.addr("BA_RUN")
+DSKINV, JINI, RUN = m.addr("DSKINV"), m.addr("BA_JINI"), m.addr("BA_JRUN")
+skctl = []
+m.mem.subscribe_to_write([m.addr("SKCTL")], lambda a, v: skctl.append(v))
 inits, reads, failed = [], [], [False]
 
 
@@ -151,6 +153,9 @@ for start, body in segs:
         if bad <= 3:
             fail("segment $%04X-$%04X not loaded as in the XEX"
                  % (start, start + len(body) - 1))
+if skctl[-2:] != [0, 3] or m.byte("SSKCTL") != 3 or m.byte("AUDCTL") != 0:
+    fail("POKEY not reset for the game: SKCTL writes %s, SSKCTL $%02X, "
+         "AUDCTL $%02X (D95)" % (skctl[-4:], m.byte("SSKCTL"), m.byte("AUDCTL")))
 if m.byte("SOUNDR") != 0:
     fail("SOUNDR not 0: the load beeps")
 if m.byte("SDMCTL") != m.addr("DMA_NORM"):

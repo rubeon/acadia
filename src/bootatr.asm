@@ -19,7 +19,8 @@
 ;  The disk boots before the OS opens its screen, so DMA is still off:
 ;  after each INITAD call BA_GO turns it on (the loading screen's
 ;  display list is in place by then; before, ANTIC would show
-;  whatever DLISTL points at).
+;  whatever DLISTL points at).  Before the game runs it sets POKEY's
+;  SKCTL and AUDCTL as they are after power-on (D95).
 ;
 ;  Memory, while it loads: code and constants $0700-$07FF; the sector
 ;  buffer and variables $0500-$0584; the zero page pointers $43-$46,
@@ -50,6 +51,8 @@ DAUX2   =  $030B        ; DCB: and high
 BA_DRV  =  1            ; D1:
 BA_READ =  $52          ; SIO command 'R': read sector
 SOUNDR  =  $41          ; OS: 0 = SIO transfers are silent (D93)
+SSKCTL  =  $0232        ; OS: SKCTL's shadow, which SIO writes back
+BA_SKC  =  $03          ; SKCTL: keyboard debounce and scan, no serial
 
         *= BA_BASE
 ; the boot header, which the OS reads (ATR sector 1)
@@ -124,7 +127,13 @@ BA_INI  JSR BA_JINI     ; yes: call it
         STA DMACTL
         JMP BA_SEG
 
-BA_RUN  JMP (RUNAD)     ; the game
+BA_RUN  LDA #0          ; POKEY as after power-on: SIO leaves SKCTL
+        STA AUDCTL      ; in its serial mode, which ties up voices 3
+        STA SKCTL       ; and 4 (the game never sets it); 0 first
+        LDA #BA_SKC     ; resets the counters, then keyboard scan
+        STA SKCTL       ; and debounce on
+        STA SSKCTL
+BA_JRUN JMP (RUNAD)     ; the game
 
 BA_JINI JMP (INITAD)    ; JSR BA_JINI: call through INITAD
 
