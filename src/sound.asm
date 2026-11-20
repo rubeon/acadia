@@ -41,6 +41,7 @@ SF_REBL =  6
 SF_STRM =  7
 SF_THND =  8
 SF_ROAR =  9
+SF_CLIK = 10
 
 ; AUDC distortions (high nibble; low nibble is the volume)
 SD_PURE =  $A0          ; pure tone
@@ -127,6 +128,12 @@ SND_STORM
 SND_THNDR
         PHA
         LDA #SF_THND
+        JMP SND_GO
+
+; SND_CLICK -- a value changed on the setup screen
+SND_CLICK
+        PHA
+        LDA #SF_CLIK
         JMP SND_GO
 
 ; SND_ROAR -- a hurricane is out: call it every tic.  It starts the
@@ -262,8 +269,8 @@ SV_END  LDA #0          ; done: free and quiet
 ; ---------------------------------------------------------------------
 SFXPOS  .BYTE SX_BUY-SNDDAT,SX_REF-SNDDAT,SX_FISH-SNDDAT,SX_RAIN-SNDDAT
         .BYTE SX_SMIT-SNDDAT,SX_SINK-SNDDAT,SX_REBL-SNDDAT,SX_STRM-SNDDAT
-        .BYTE SX_THND-SNDDAT,SX_ROAR-SNDDAT
-SFXPRI  .BYTE 2,2,1,1,4,4,3,3,1,0
+        .BYTE SX_THND-SNDDAT,SX_ROAR-SNDDAT,SX_CLIK-SNDDAT
+SFXPRI  .BYTE 2,2,1,1,4,4,3,3,1,0,2
 
 ; AUDF at the 64 kHz clock: f = 63921 / (2 x (AUDF + 1)) Hz.  The
 ; tonal effects use A minor pentatonic (D92), notes inside the music's
@@ -307,4 +314,7 @@ SX_THND .BYTE 2,30,SD_NOIS+6,0, 6,150,SD_NOIS+5,4, 10,200,SD_NOIS+4,2
 SX_ROAR .BYTE 15,210,SD_NOIS+2,$FF, 15,195,SD_NOIS+3,1, 15,210,SD_NOIS+3,1
         .BYTE 15,225,SD_NOIS+2,$FF
 SXR_END .BYTE 0
+; setup click: a short E6 tick
+SX_CLIK .BYTE 1,23,SD_PURE+8,0, 1,23,SD_PURE+3,0
+        .BYTE 0
 SNDEND

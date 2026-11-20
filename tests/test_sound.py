@@ -9,7 +9,7 @@ from run6502 import Machine  # noqa: E402
 
 AUDF1, AUDCTL = 0xD200, 0xD208
 HOOKS = ["SND_BUY", "SND_REFUSE", "SND_FISH", "SND_RAIN", "SND_SMITE",
-         "SND_SINK", "SND_REBEL", "SND_STORM", "SND_THNDR", "SND_ROAR"]
+         "SND_SINK", "SND_REBEL", "SND_STORM", "SND_THNDR", "SND_ROAR", "SND_CLICK"]
 fails = 0
 
 
@@ -64,7 +64,7 @@ for n, hook in enumerate(HOOKS):
         continue
     length = loud[-1] + 1
     print("%-10s %3d frames on voice %d" % (hook, length, ch + 1))
-    if not 5 <= length <= 90:
+    if not (2 if hook == "SND_CLICK" else 5) <= length <= 90:
         fail("%s lasts %d frames" % (hook, length))
     if any(playing()) or frames[-1][ch][1] & 0x0F:
         fail("%s still playing after 5 s" % hook)

@@ -367,8 +367,7 @@ SU_INC  LDX SU_FLD
         BEQ SI_SET
         BCC SI_SET
 SI_MIN  LDA SU_MIN,X    ; past the top: the bottom
-SI_SET  STA SU_VAL,X
-        RTS
+SI_SET  JMP SU_SETV
 SU_DEC  LDX SU_FLD
         LDA SU_VAL,X
         SEC
@@ -377,8 +376,14 @@ SU_DEC  LDX SU_FLD
         CMP SU_MIN,X
         BCS SD_SET
 SD_MAX  LDA SU_MAX,X    ; past the bottom: the top
-SD_SET  STA SU_VAL,X
-        RTS
+SD_SET  ; fall through
+
+; SU_SETV -- store A as line X's value; click if it changed (A, X kept)
+SU_SETV CMP SU_VAL,X
+        BEQ SU_SRTS
+        STA SU_VAL,X
+        JMP SND_CLICK
+SU_SRTS RTS
 
 ; ---------------------------------------------------------------------
 ;  SU_DIGIT -- digit A typed on the current line.  Rounds and seconds
@@ -402,20 +407,18 @@ SU_DIGIT
         ASL A
         ADC SU_T        ; carry clear: value < 25
         ADC SU_D
-        STA SU_VAL,X
-        RTS
-SD_NEW  LDA SU_D
-        STA SU_VAL,X
-        LDA #1
+        JMP SU_SETV
+SD_NEW  LDA #1
         STA SU_TYPD
-        RTS
+        LDA SU_D
+        JMP SU_SETV
 SD_ONE  LDA SU_D
         CMP SU_MIN,X
         BCC SD_RTS
         CMP SU_MAX,X
         BEQ SD_OK
         BCS SD_RTS
-SD_OK   STA SU_VAL,X
+SD_OK   JMP SU_SETV
 SD_RTS  RTS
 
 ; ---------------------------------------------------------------------
