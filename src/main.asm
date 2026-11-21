@@ -28,6 +28,8 @@ DL_NBK  =  $8E          ; DLI_MAP / DLI_SQ -> DLI_ROW: the next row's
 DL_NPF  =  $8F          ; sea (COLBK), PF0 and font, ready before its
 DL_NFN  =  $90          ; first line (D55)
 DL_NDM  =  $91          ; and its DMACTL: playfield width (D67)
+                        ; $43-$46: the ATR boot loader's, while the
+                        ; disk loads only (BOOTATR.ASM, D94)
 ZPTR    =  $CB          ; 2-byte general pointer
 OLDVBD  =  $CD          ; 2-byte saved deferred VBI vector
 

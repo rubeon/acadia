@@ -19,7 +19,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 | ID | Task | Reqs | Deps | Acceptance | Status |
 |---|---|---|---|---|---|
 | T-INFRA-3 | Headless test harness: run XEX in atari800 for N frames, dump screen/RAM, compare | — | — | `make test` runs at least one check without a display | todo |
-| T-INFRA-4 | ATR build target (`make atr`) with a boot loader or DOS + autorun | — | — | ATR boots in atari800 and MiSTer | todo |
+| T-INFRA-4 | ATR build target (`make atr`) with a boot loader or DOS + autorun | — | — | ATR boots in atari800 and MiSTer | done (Claude) |
 | T-INFRA-5 | Move all variables out of code into one RAM block (`src/vars.asm`); no inline `.BYTE` variables | — | — | `grep` finds no variable storage in code modules; build and display test unchanged | done |
 | T-INFRA-6 | XEX boots on the MiSTer's disk-boot loader: never a multiple of 125 bytes long (D73) | — | — | `make` pads the XEX when needed; `tests/test_xexsize.py` passes; main's build boots on MiSTer | done |
 | T-INFRA-7 | Loading screen: the logo, LOADING and a loading bar as soon as the XEX starts loading (D81) | — | T-REL-4 | Logo shows a few seconds after power-on on a real-speed load; `tests/test_loader.py` passes; boots with BASIC in and out, on MiSTer | done (Claude) |
