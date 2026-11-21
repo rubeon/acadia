@@ -116,6 +116,7 @@ Status values: `todo`, `in progress (<who>)`, `review`, `done`,
 | T-DOC-1 | README for players: fresh screenshots, how to play, controls (800, touch pad, 5200), supported platforms | T-REL-4 | done |
 | T-MODE-1 | SANDBOX map: one player alone on one big island (about two normal ones), no CPU, rounds with no limit, ended by pause then START; ROUNDS / PLAYERS / CPU LEVEL skipped on setup (D87) | T-MAP-3 | in progress (Claude) |
 | T-DOC-2 | Printable keypad overlays: Atari 5200 controller and Video Touch Pad (CX21), SVG/PDF/PNG at real size (`docs/overlays/`) | T-DOC-1 | done |
+| T-DOC-3 | MIT licence (`LICENSE`) and a licence note in the README | — | done |
 
 ## M8 — Atari 5200 port (later)
 

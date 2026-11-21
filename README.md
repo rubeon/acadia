@@ -300,3 +300,12 @@ the same names, game code never calls OS or BIOS ROM routines (it only
 writes the DLI and VBI vectors and shadow registers), and all input
 goes through `src/input.asm` / `src/input5200.asm`, which expose
 `JOY0/JOY1`, `FIRE0/FIRE1` and `KEY`.
+
+## Licence
+
+Acadia is released under the [MIT License](LICENSE), Copyright (c) 2026
+Eric Williams. The licence covers this project's own work: its source
+code, tools, graphics, sound, music and documentation. It does not cover
+the design of the original *Utopia*, which belongs to its rights
+holders, and no Mattel code, graphics or sound is included in this
+repository.
